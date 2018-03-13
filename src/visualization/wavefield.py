@@ -1,16 +1,21 @@
 import numpy as np
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-# from matplotlib.animation import FuncAnimation
+plt.rcParams['animation.ffmpeg_path'] = 'C:\\Program Files\\ffmpeg\\bin\\ffmpeg'
 
 ims = []
 fig = plt.figure()
 
-for frame in np.arange(0,2000,5):
-    im = plt.imshow(np.transpose(np.loadtxt("output/p%i.txt" % frame)), animated=True,vmin=-5e-7, vmax=5e-7, aspect=1)
+Writer = animation.writers['ffmpeg']
+writer = Writer(fps=30, metadata=dict(artist='Lars Gebraad'), bitrate=5000)
+
+for frame in np.arange(0,3000,10):
+    im = plt.imshow(np.transpose(np.loadtxt("output/vx%i.txt" % frame)), animated=True,vmin=-5e-14, vmax=5e-14, aspect=1)
     ims.append([im])
 
 
 ani = animation.ArtistAnimation(fig, ims, interval=10, blit=True, repeat_delay=0)
 plt.colorbar()
-plt.show()
+ani.save('animation.mp4', writer=writer)
