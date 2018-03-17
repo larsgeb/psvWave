@@ -8,13 +8,13 @@
 int main(int argc, char *argv[]) {
     // Simulation settings
     const int nt = 3000;
-    const double dt = 0.00001;
-    const double dx = 0.0667;
-    const double dz = 0.0667;
-    const arma::uword nx_domain = 300;
-    const arma::uword nz_domain = 300;
-    const arma::uword np_boundary = 0;
-    const double np_factor = 0.015;
+    const double dt = 0.00025;
+    const double dx = 1.249;
+    const double dz = 1.249;
+    const arma::uword nx_domain = 400;
+    const arma::uword nz_domain = 200;
+    const arma::uword np_boundary = 50;
+    const double np_factor = 0.0075;
     const arma::uword nx = nx_domain + 2 * np_boundary;
     const arma::uword nz = nz_domain + np_boundary;
 
@@ -25,30 +25,28 @@ int main(int argc, char *argv[]) {
     arma::Mat<double> tzz = arma::zeros(nx, nz);
     arma::Mat<double> txz = arma::zeros(nx, nz);
 
-    // Set these quantities
-    double rho = 1500.0;
-    double vp = 2000;
-    double poissons = 0.25;
+    // Load static fields
+    arma::mat la;
+    la.load("la.txt");
+    arma::mat mu;
+    mu.load("mu.txt");
+    arma::mat lm;
+    lm.load("lm.txt");
+    arma::mat b;
+    b.load("de.txt");
+    b = 1.0 / b;
 
-    // Compute the material properties ...
-    double b_val = 1.0 / rho;
-    double vs = vp * sqrt(0.5 * ((1 - 2 * poissons) / (2 * (1 - poissons))));
-    double mu_val = vs * vs * rho;
-    double la2mu_val = vp * vp * rho;
-    double lambda_val = la2mu_val - 2 * mu_val;
-    // ... and static fields
-    const arma::Mat<double> b = b_val * arma::ones(nx, nz);
-    const arma::Mat<double> mu = mu_val * arma::ones(nx, nz);
-    const arma::Mat<double> la2mu = la2mu_val * arma::ones(nx, nz);
-    const arma::Mat<double> lambda = lambda_val * arma::ones(nx, nz);
+    std::cout << "lm rows: " << lm.n_rows << ", lm cols: " << lm.n_cols << std::endl;
+    std::cout << "vx rows: " << vx.n_rows << ", vx cols: " << vx.n_cols << std::endl;
 
-    std::cout << "P-wave speed: " << sqrt(la2mu_val * b_val) << std::endl;
-    std::cout << "S-wave speed: " << sqrt(mu_val * b_val) << std::endl;
-    std::cout << "Stability number: " << sqrt(la2mu_val * b_val) * dt * sqrt(1.0 / (dx * dx) + 1.0 / (dz * dz))
+    std::cout << "P-wave speed: " << sqrt(lm.max() * b.max()) << std::endl;
+    std::cout << "S-wave speed: " << sqrt(mu.max() * b.max()) << std::endl;
+    std::cout << "Stability number: " << sqrt(lm.max() * b.max()) * dt * sqrt(1.0 / (dx * dx) + 1.0 / (dz * dz))
               << std::endl;
 
+
     // Source function (Ricker wavelet)
-    double centralFrequency = 1000.0;
+    double centralFrequency = 50.0;
     double tsource = 1.0 / centralFrequency;
     arma::vec time = arma::linspace(0, dt * (nt - 1), nt);
     double t0 = tsource * 1.5;
@@ -64,72 +62,111 @@ int main(int argc, char *argv[]) {
     }
     taper = arma::exp(-arma::square(np_factor * (np_boundary - taper)));
 
+    arma::cube acc(nx, nz, nt);
+
+    double coeff1 = 4.0 / 3.0;
+    double coeff2 = 2.0 / 12.0;
+
+
     // Time marching
     for (int it = 0; it < nt; ++it) {
         // Inject time source
+
         txx(51 + np_boundary, 5) += 0.5 * dt * source[it];
         tzz(51 + np_boundary, 5) += 0.5 * dt * source[it];
 
-        // Update stresses
-        txx(arma::span(1, nx - 1), arma::span(1, nz - 1)) +=
-                ((dt / dx) * la2mu(arma::span(1, nx - 1), arma::span(1, nz - 1))) %
-                (vx(arma::span(1, nx - 1), arma::span(0, nz - 2)) -
-                 vx(arma::span(0, nx - 2), arma::span(0, nz - 2)))
-                +
-                ((dt / dz) * lambda(arma::span(1, nx - 1), arma::span(1, nz - 1))) %
-                (vz(arma::span(0, nx - 2), arma::span(1, nz - 1)) -
-                 vz(arma::span(0, nx - 2), arma::span(0, nz - 2)));
+#pragma omp parallel
+#pragma omp for
+        for (int ix = 0; ix < nx; ++ix) {
+            for (int iz = 0; iz < nz; ++iz) {
+                if (iz > 1 and ix > 1 and ix < nx - 1 and iz < nz - 1) {
+                    txx(ix, iz) = taper(ix, iz) *
+                                  (txx(ix, iz) +
+                                   (dt * lm(ix, iz) * (
+                                           -coeff2 * vx(ix + 1, iz - 1) + coeff1 * vx(ix, iz - 1)
+                                           - coeff1 * vx(ix - 1, iz - 1) + coeff2 * vx(ix - 2, iz - 1)
+                                   ) / dx +
+                                    (dt * la(ix, iz)) * (
+                                            -coeff2 * vz(ix - 1, iz + 1) + coeff1 * vz(ix - 1, iz)
+                                            - coeff1 * vz(ix - 1, iz - 1) + coeff2 * vz(ix - 1, iz - 2)
+                                    ) / dz));
+                    tzz(ix, iz) = taper(ix, iz) *
+                                  (tzz(ix, iz) +
+                                   (dt * la(ix, iz) * (
+                                           -coeff2 * vx(ix + 1, iz - 1) + coeff1 * vx(ix, iz - 1)
+                                           - coeff1 * vx(ix - 1, iz - 1) + coeff2 * vx(ix - 2, iz - 1)
+                                   ) / dx +
+                                    (dt * lm(ix, iz)) * (
+                                            -coeff2 * vz(ix - 1, iz + 1) + coeff1 * vz(ix - 1, iz)
+                                            - coeff1 * vz(ix - 1, iz - 1) + coeff2 * vz(ix - 1, iz - 2)
+                                    ) / dz));
+                    txz(ix, iz) = taper(ix, iz) *
+                                  (txz(ix, iz) + dt * mu(ix, iz) * (
+                                          (
+                                                  -coeff2 * vx(ix - 1, iz + 1) + coeff1 * vx(ix - 1, iz)
+                                                  - coeff1 * vx(ix - 1, iz - 1) + coeff2 * vx(ix - 1, iz - 2)
+                                          ) / dz +
+                                          (
+                                                  -coeff2 * vz(ix + 1, iz - 1) + coeff1 * vz(ix, iz - 1)
+                                                  - coeff1 * vz(ix - 1, iz - 1) + coeff2 * vz(ix - 2, iz - 1)
+                                          ) / dx));
+                } else {
+                    txx(ix, iz) = txx(ix, iz) * taper(ix, iz);
+                    txz(ix, iz) = txz(ix, iz) * taper(ix, iz);
+                    tzz(ix, iz) = tzz(ix, iz) * taper(ix, iz);
+                }
+            }
+        }
 
-        tzz(arma::span(1, nx - 1), arma::span(1, nz - 1)) +=
-                ((dt / dx) * lambda(arma::span(1, nx - 1), arma::span(1, nz - 1))) %
-                (vx(arma::span(1, nx - 1), arma::span(0, nz - 2)) -
-                 vx(arma::span(0, nx - 2), arma::span(0, nz - 2)))
-                +
-                ((dt / dz) * la2mu(arma::span(1, nx - 1), arma::span(1, nz - 1))) %
-                (vz(arma::span(0, nx - 2), arma::span(1, nz - 1)) -
-                 vz(arma::span(0, nx - 2), arma::span(0, nz - 2)));
+#pragma omp parallel
+#pragma omp for
+        for (int ix = 0; ix < nx; ++ix) {
+            for (int iz = 0; iz < nz; ++iz) {
+                if (iz < nz - 2 and ix < nx - 2 and ix > 0 and iz > 0) {
+                    vx(ix, iz) =
+                            taper(ix, iz) *
+                            (vx(ix, iz) + b(ix, iz) *
+                                          (dt * (
+                                                  -coeff2 * txx(ix + 2, iz + 1) +
+                                                  coeff1 * txx(ix + 1, iz + 1)
+                                                  - coeff1 * txx(ix, iz + 1) +
+                                                  coeff2 * txx(ix - 1, iz + 1)
+                                          ) / dx +
+                                           dt * (
+                                                   -coeff2 * txz(ix + 1, iz + 2) +
+                                                   coeff1 * txz(ix + 1, iz + 1)
+                                                   - coeff1 * txz(ix + 1, iz) +
+                                                   coeff2 * txz(ix + 1, iz - 1)
+                                           ) / dz));
+                    vz(ix, iz) =
+                            taper(ix, iz) *
+                            (vz(ix, iz) + b(ix, iz) *
+                                          (dt * (
+                                                  -coeff2 * txz(ix + 2, iz + 1) +
+                                                  coeff1 * txz(ix + 1, iz + 1)
+                                                  - coeff1 * txz(ix, iz + 1) + coeff2 * txz(ix - 1, iz + 1)
+                                          ) / dx +
+                                           dt * (
+                                                   -coeff2 * tzz(ix + 1, iz + 2) +
+                                                   coeff1 * tzz(ix + 1, iz + 1)
+                                                   - coeff1 * tzz(ix + 1, iz) + coeff2 * tzz(ix + 1, iz - 1)
+                                           ) / dz));
+                } else {
+                    vx(ix, iz) = vx(ix, iz) * taper(ix, iz);
+                    vz(ix, iz) = vz(ix, iz) * taper(ix, iz);
+                }
+            }
+        }
 
-        txz(arma::span(1, nx - 1), arma::span(1, nz - 1)) +=
-                (dt * mu(arma::span(1, nx - 1), arma::span(1, nz - 1))) %
-                (
-                        (vx(arma::span(0, nx - 2), arma::span(1, nz - 1)) -
-                         vx(arma::span(0, nx - 2), arma::span(0, nz - 2))) / dz
-                        +
-                        (vz(arma::span(1, nx - 1), arma::span(0, nz - 2)) -
-                         vz(arma::span(0, nx - 2), arma::span(0, nz - 2))) / dx
-                );
-
-//        txx = txx % taper;
-//        tzz = tzz % taper;
-//        txz = txz % taper;
-
-        // Update velocities
-        vx(arma::span(0, nx - 2), arma::span(0, nz - 2)) +=
-                b(arma::span(0, nx - 2), arma::span(0, nz - 2)) % (
-                        (dt / dx) *
-                        (txx(arma::span(1, nx - 1), arma::span(1, nz - 1)) -
-                         txx(arma::span(0, nx - 2), arma::span(1, nz - 1))) +
-                        (dt / dz) *
-                        (txz(arma::span(1, nx - 1), arma::span(1, nz - 1)) -
-                         txz(arma::span(1, nx - 1), arma::span(0, nz - 2)))
-                );
-
-        vz(arma::span(0, nx - 2), arma::span(0, nz - 2)) +=
-                b(arma::span(0, nx - 2), arma::span(0, nz - 2)) % (
-                        (dt / dz) *
-                        (tzz(arma::span(1, nx - 1), arma::span(1, nz - 1)) -
-                         tzz(arma::span(1, nx - 1), arma::span(0, nz - 2))) +
-                        (dt / dx) *
-                        (txz(arma::span(1, nx - 1), arma::span(1, nz - 1)) -
-                         txz(arma::span(0, nx - 2), arma::span(1, nz - 1)))
-                );
-
-//        vx = vx % taper;
-//        vz = vz % taper;
-
+        acc.slice(it) = vx; // takes a lot of ram
+    }
+//
+#pragma omp parallel
+#pragma omp for
+    for (int it = 0; it < nt; ++it) { // takes a lot of time
         char filename[1024];
         sprintf(filename, "output/vx%i.txt", it);
-        vx.save(filename, arma::raw_ascii);
+        acc.slice(it).save(filename, arma::raw_ascii);
     }
     return 0;
 }
