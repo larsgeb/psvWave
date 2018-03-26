@@ -1,19 +1,18 @@
 cmake_minimum_required(VERSION 3.5)
 project(hmc-forward-fd C CXX)
-#set(CMAKE_PREFIX_PATH ~/Documents/armadillo-code/include)
+
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lopenblas -O2 -fopenmp")
-include_directories(~/Documents/armadillo-code/include)
+set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lopenblas -O3 -Wall")
 
-#add_executable(legacy_forwardAc src/legacy/forward-acoustic-legacy.cpp)
-#add_executable(legacy_forwardEl src/legacy/forward-elastic-legacy.cpp)
-add_executable(forward src/forward-elastic.cpp)
-add_executable(forwardBlob src/forward-elastic-blob.cpp)
+include_directories(../armadillo-code/include)
 
-#target_link_libraries(forwardAc openblas)
-#target_link_libraries(forwardEl openblas)
-target_link_libraries(forward openblas)
-target_link_libraries(forwardBlob openblas)
+add_executable(main src/main.cpp src/forward-psv/propagator.cpp src/forward-psv/propagator.h src/forward-psv/model.h
+        src/forward-psv/model.cpp src/forward-psv/experiment.h src/forward-psv/experiment.cpp src/forward-psv/shot.cpp
+        src/forward-psv/shot.h)
+
+target_link_libraries(main openblas)
