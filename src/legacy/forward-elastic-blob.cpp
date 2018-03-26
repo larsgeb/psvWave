@@ -13,8 +13,8 @@ int main(int argc, char *argv[]) {
     const double dz = 1.249;
     const arma::uword nx_domain = 400;
     const arma::uword nz_domain = 200;
-    const arma::uword np_boundary = 50;
-    const double np_factor = 0.0075;
+    const arma::uword np_boundary = 75;
+    const double np_factor = 0.004;
     const arma::uword nx = nx_domain + 2 * np_boundary;
     const arma::uword nz = nz_domain + np_boundary;
 
