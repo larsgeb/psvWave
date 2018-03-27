@@ -6,22 +6,41 @@
 #include "experiment.h"
 #include "propagator.h"
 
-experiment::experiment(arma::imat _receivers, arma::imat _sources, arma::vec _sourceFunction, int nt, double dt) {
+experiment::experiment(arma::imat _receivers, arma::imat _sources, arma::vec _sourceFunction, int _nt, double _dt) {
     // Create a seismic experiment
     receivers = std::move(_receivers);
     sources = std::move(_sources);
     sourceFunction = std::move(_sourceFunction);
-    dt = dt;
-    nt = nt;
+    dt = _dt;
+    nt = _nt;
     tTot = (nt - 1) * dt;
+
+    // Check for positions
+    for (auto &&yPosReceiver : receivers.col(1)) {
+        if (yPosReceiver == 0) {
+            throw std::invalid_argument("Invalid y position for receiver (in the free surface layer).");
+        }
+        if (yPosReceiver >= currentModel.nz_domain) {
+            throw std::invalid_argument("Invalid y position for receiver (in or beyond the Gaussian taper).");
+        }
+    }
+
+    for (auto &&yPosSource : sources.col(1)) {
+        if (yPosSource == 0) {
+            throw std::invalid_argument("Invalid y position for source (in the free surface layer).");
+        }
+        if (yPosSource >= currentModel.nz_domain) {
+            throw std::invalid_argument("Invalid y position for receiver (in or beyond the Gaussian taper).");
+        }
+    }
 
     // This way all shots have the same receivers and sources
     for (int iShot = 0; iShot < sources.n_rows; ++iShot) {
-        shots.emplace_back(shot(sources.row(iShot), receivers, sourceFunction, nt, dt));
+        shots.emplace_back(shot(sources.row(iShot), receivers, sourceFunction, nt, dt, currentModel));
     }
 }
 
-void experiment::forwardData() {
+void experiment::forwardData(bool storeWavefields) {
     // Calculate forward data from each shot
     std::cout << "Starting forward modeling of shots." << std::endl;
     std::cout << "Total of " << sources.n_rows << " shots." << std::endl;
@@ -31,7 +50,7 @@ void experiment::forwardData() {
     for (int iShot = 0; iShot < sources.n_rows; ++iShot) {
         // This directly modifies the forwardData fields
         std::cout << " -- Running shot: " << iShot + 1 << std::endl;
-        propagator::propagateForward(currentModel, shots[iShot]);
+        propagator::propagateForward(currentModel, shots[iShot], storeWavefields, iShot);
         std::cout << "    Done! " << std::endl;
     }
     double stopTime = omp_get_wtime();
@@ -40,7 +59,7 @@ void experiment::forwardData() {
     std::cout << "Finished forward modeling of shots, elapsed time: " << secsElapsed << " seconds (wall)." << std::endl
               << std::endl;
 }
-//
+
 //void experiment::writeShots() {
 //    // Write forward data from shots out to text files
 //    for (int iShot = 0; iShot < sources.n_rows; ++iShot) {
