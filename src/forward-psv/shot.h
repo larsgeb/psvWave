@@ -7,6 +7,7 @@
 
 
 #include <armadillo>
+#include "model.h"
 
 class shot {
 public:
@@ -18,10 +19,34 @@ public:
     arma::mat forwardData_vz;
     double dt;
     int nt;
-//    arma::vec adjointSource;
+    arma::vec adjointSource;
+
+    arma::mat boundaryRecVxTop;
+    arma::mat boundaryRecVzTop;
+    arma::mat boundaryRecTxxTop;
+    arma::mat boundaryRecTzzTop;
+    arma::mat boundaryRecTxzTop;
+
+    arma::mat boundaryRecVxBottom;
+    arma::mat boundaryRecVzBottom;
+    arma::mat boundaryRecTxxBottom;
+    arma::mat boundaryRecTzzBottom;
+    arma::mat boundaryRecTxzBottom;
+
+    arma::mat boundaryRecVxLeft;
+    arma::mat boundaryRecVzLeft;
+    arma::mat boundaryRecTxxLeft;
+    arma::mat boundaryRecTzzLeft;
+    arma::mat boundaryRecTxzLeft;
+
+    arma::mat boundaryRecVxRight;
+    arma::mat boundaryRecVzRight;
+    arma::mat boundaryRecTxxRight;
+    arma::mat boundaryRecTzzRight;
+    arma::mat boundaryRecTxzRight;
 
     // Constructor
-    shot(arma::irowvec source, arma::imat &_receivers, arma::vec &_sourceFunction, int nt, double dt);
+    shot(arma::irowvec source, arma::imat &_receivers, arma::vec &_sourceFunction, int nt, double dt, model &_model);
 
     // Methods
     void writeShot(const std::string& filename);

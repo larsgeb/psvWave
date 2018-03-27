@@ -12,8 +12,8 @@
 
 int main() {
 
-    arma::imat receivers = "50 1; 100 1; 150 1;";
-    arma::imat sources = "0 20;";
+    arma::imat receivers = "50 0; 100 0; 150 0;";
+    arma::imat sources = "0 0;0 10;0 20;";
 
     double dt = 0.00025;
     int nt = 3000;
@@ -26,10 +26,12 @@ int main() {
     arma::vec sourceFunction = (1 - 4 * tau % tau) % arma::exp(-2.0 * tau % tau);
 
     experiment experiment_1(receivers, sources, sourceFunction, nt, dt);
+
     experiment_1.currentModel.mu(arma::span(200, 250), arma::span(125, 150)) = 1.5 * experiment_1.currentModel.mu(arma::span(200, 250), arma::span(125, 150));
+
     experiment_1.forwardData(true);
 
-    experiment_1.shots[0].boundaryRecVxTop.save("vxTop.txt",arma::raw_ascii);
+    experiment_1.writeShots();
 
     return 0;
 }
