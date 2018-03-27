@@ -7,7 +7,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lopenblas -O3 -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lopenblas -fopenmp -O3 -Wall")
 
 include_directories(../armadillo-code/include)
 

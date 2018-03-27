@@ -11,9 +11,9 @@ void propagator::propagate(model &_currentModel, bool accTraces, bool accFields,
                            arma::mat &data_obj_vz, int nt, double dt, bool sameSource) {
 
     // Some standard output
-    std::cout << "P-wave speed: " << sqrt(_currentModel.lm.max() * _currentModel.b_vx.max()) << std::endl;
-    std::cout << "S-wave speed: " << sqrt(_currentModel.mu.max() * _currentModel.b_vx.max()) << std::endl;
-    std::cout << "Stability number: " << sqrt(_currentModel.lm.max() * _currentModel.b_vx.max()) * dt *
+//    std::cout << "P-wave speed: " << sqrt(_currentModel.lm.max() * _currentModel.b_vx.max()) << std::endl;
+//    std::cout << "S-wave speed: " << sqrt(_currentModel.mu.max() * _currentModel.b_vx.max()) << std::endl;
+    std::cout << "    Stability number: " << sqrt(_currentModel.lm.max() * _currentModel.b_vx.max()) * dt *
                                          sqrt(1.0 / (_currentModel.dx * _currentModel.dx) +
                                               1.0 / (_currentModel.dz * _currentModel.dz)) << std::endl;
 

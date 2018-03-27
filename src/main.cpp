@@ -16,7 +16,7 @@ int main() {
     arma::imat sources = "0 0;0 10;0 20;";
 
     double dt = 0.00025;
-    int nt = 300;
+    int nt = 3000;
 
     double centralFrequency = 50.0;
     double tsource = 1.0 / centralFrequency;
