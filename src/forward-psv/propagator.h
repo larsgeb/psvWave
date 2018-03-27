@@ -16,7 +16,8 @@ public:
     constexpr static double coeff2 = 1.0 / 24.0;
 
     // static propagators
-    static void propagateForward(model &_currentModel, shot &_shot);
+    static void propagateForward(model &_currentModel, shot &_shot, bool storeWavefield, int n);
+
 };
 
 

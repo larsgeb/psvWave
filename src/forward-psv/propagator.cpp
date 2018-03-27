@@ -6,11 +6,9 @@
 #include "propagator.h"
 #include "experiment.h"
 
-void propagator::propagateForward(model &_currentModel, shot &_shot) {
+void propagator::propagateForward(model &_currentModel, shot &_shot, bool storeWavefield, int n) {
 
     // Some standard output
-//    std::cout << "P-wave speed: " << sqrt(_currentModel.lm.max() * _currentModel.b_vx.max()) << std::endl;
-//    std::cout << "S-wave speed: " << sqrt(_currentModel.mu.max() * _currentModel.b_vx.max()) << std::endl;
     std::cout << "    Stability number: " << sqrt(_currentModel.lm.max() * _currentModel.b_vx.max()) * _shot.dt *
                                              sqrt(1.0 / (_currentModel.dx * _currentModel.dx) +
                                                   1.0 / (_currentModel.dz * _currentModel.dz)) << std::endl;
@@ -37,9 +35,8 @@ void propagator::propagateForward(model &_currentModel, shot &_shot) {
     taper = arma::exp(-arma::square(_currentModel.np_factor * (_currentModel.np_boundary - taper)));
 
 
-    // Time marching
-    for (int it = 0; it < _shot.nt - 1; ++it) {
-//        std::cout << it << std::endl;
+    // Time marching through all time levels
+    for (int it = 0; it < _shot.nt; ++it) {
         // Inject source
         for (int source = 0; source < _shot.source.n_rows; ++source) {
             int ix = _shot.source.row(source)[0];
@@ -58,6 +55,78 @@ void propagator::propagateForward(model &_currentModel, shot &_shot) {
             _shot.forwardData_vx(receiver, it) = vz(ix + _currentModel.np_boundary, iz);
         }
 
+        if (true) {
+            auto horSpanX = arma::span(_currentModel.np_boundary, nx - _currentModel.np_boundary - 1);
+            auto topSpanY = arma::span(1, 1);
+
+            _shot.boundaryRecVxTop.col(it) = vx(horSpanX, topSpanY);
+            _shot.boundaryRecVzTop.col(it) = vz(horSpanX, topSpanY);
+            _shot.boundaryRecTxxTop.col(it) = txx(horSpanX, topSpanY);
+            _shot.boundaryRecTzzTop.col(it) = tzz(horSpanX, topSpanY);
+            _shot.boundaryRecTxzTop.col(it) = txz(horSpanX, topSpanY);
+
+            auto bottomSpanY = arma::span(_currentModel.nz_domain - 1, _currentModel.nz_domain - 1);
+            _shot.boundaryRecVxBottom.col(it) = vx(horSpanX, bottomSpanY);
+            _shot.boundaryRecVzBottom.col(it) = vz(horSpanX, bottomSpanY);
+            _shot.boundaryRecTxxBottom.col(it) = txx(horSpanX, bottomSpanY);
+            _shot.boundaryRecTzzBottom.col(it) = tzz(horSpanX, bottomSpanY);
+            _shot.boundaryRecTxzBottom.col(it) = txz(horSpanX, bottomSpanY);
+
+            auto verSpanY = arma::span(0 + 1, _currentModel.nz_domain - 2);
+            auto leftSpanX = arma::span(_currentModel.np_boundary, _currentModel.np_boundary);
+            _shot.boundaryRecVxLeft.row(it) = vx(leftSpanX, verSpanY);
+            _shot.boundaryRecVzLeft.row(it) = vz(leftSpanX, verSpanY);
+            _shot.boundaryRecTxxLeft.row(it) = txx(leftSpanX, verSpanY);
+            _shot.boundaryRecTzzLeft.row(it) = tzz(leftSpanX, verSpanY);
+            _shot.boundaryRecTxzLeft.row(it) = txz(leftSpanX, verSpanY);
+
+            auto rightSpanX = arma::span(nx - _currentModel.np_boundary - 1, nx - _currentModel.np_boundary - 1);
+            _shot.boundaryRecVxRight.row(it) = vx(rightSpanX, verSpanY);
+            _shot.boundaryRecVzRight.row(it) = vz(rightSpanX, verSpanY);
+            _shot.boundaryRecTxxRight.row(it) = txx(rightSpanX, verSpanY);
+            _shot.boundaryRecTzzRight.row(it) = tzz(rightSpanX, verSpanY);
+            _shot.boundaryRecTxzRight.row(it) = txz(rightSpanX, verSpanY);
+        } else {
+            // Record wavefield on top and bottom boundary
+#pragma omp parallel
+#pragma omp for
+            for (auto ix = (int) _currentModel.np_boundary; ix < _currentModel.nx - _currentModel.np_boundary; ++ix) {
+                _shot.boundaryRecVxTop(ix - _currentModel.np_boundary, it) = vx(ix, 0);
+                _shot.boundaryRecVzTop(ix - _currentModel.np_boundary, it) = vz(ix, 0);
+                _shot.boundaryRecTxxTop(ix - _currentModel.np_boundary, it) = txx(ix, 0);
+                _shot.boundaryRecTzzTop(ix - _currentModel.np_boundary, it) = tzz(ix, 0);
+                _shot.boundaryRecTxzTop(ix - _currentModel.np_boundary, it) = txz(ix, 0);
+
+                _shot.boundaryRecVxBottom(ix - _currentModel.np_boundary, it) = vx(ix, _currentModel.nz_domain - 1);
+                _shot.boundaryRecVzBottom(ix - _currentModel.np_boundary, it) = vz(ix, _currentModel.nz_domain - 1);
+                _shot.boundaryRecTxxBottom(ix - _currentModel.np_boundary, it) = txx(ix, _currentModel.nz_domain - 1);
+                _shot.boundaryRecTzzBottom(ix - _currentModel.np_boundary, it) = tzz(ix, _currentModel.nz_domain - 1);
+                _shot.boundaryRecTxzBottom(ix - _currentModel.np_boundary, it) = txz(ix, _currentModel.nz_domain - 1);
+            }
+
+#pragma omp parallel
+#pragma omp for
+            for (int iz = 0; iz < _currentModel.nz - _currentModel.np_boundary; ++iz) {
+                _shot.boundaryRecVxLeft(iz, it) = vx(_currentModel.np_boundary, iz);
+                _shot.boundaryRecVzLeft(iz, it) = vz(_currentModel.np_boundary, iz);
+                _shot.boundaryRecTxxLeft(iz, it) = txx(_currentModel.np_boundary, iz);
+                _shot.boundaryRecTzzLeft(iz, it) = tzz(_currentModel.np_boundary, iz);
+                _shot.boundaryRecTxzLeft(iz, it) = txz(_currentModel.np_boundary, iz);
+
+                _shot.boundaryRecVxRight(iz, it) = vx(_currentModel.nx - _currentModel.np_boundary, iz);
+                _shot.boundaryRecVzRight(iz, it) = vz(_currentModel.nx - _currentModel.np_boundary, iz);
+                _shot.boundaryRecTxxRight(iz, it) = txx(_currentModel.nx - _currentModel.np_boundary, iz);
+                _shot.boundaryRecTzzRight(iz, it) = tzz(_currentModel.nx - _currentModel.np_boundary, iz);
+                _shot.boundaryRecTxzRight(iz, it) = txz(_currentModel.nx - _currentModel.np_boundary, iz);
+            }
+        }
+
+        // After this point is only integration, which doesn't have to be done at the last time level
+        if (it == _shot.nt - 1) {
+            break;
+        }
+
+        // Time integrate stress
 #pragma omp parallel
 #pragma omp for
         for (int ix = 0; ix < nx; ++ix) {
@@ -101,6 +170,7 @@ void propagator::propagateForward(model &_currentModel, shot &_shot) {
             }
         }
 
+        // Time integrate velocity
 #pragma omp parallel
 #pragma omp for
         for (int ix = 0; ix < nx; ++ix) {
