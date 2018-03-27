@@ -29,7 +29,7 @@ public:
     // Methods
     void writeShots();
 
-    void forwardData(bool storeWavefields);
+    void forwardData();
 
     arma::vec getModelVector();
 
@@ -42,6 +42,8 @@ public:
     arma::vec getMisfitGradient();
 
     arma::vec calculateMisfitGradient();
+
+    void backwardData();
 };
 
 

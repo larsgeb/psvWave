@@ -45,6 +45,12 @@ public:
     arma::mat boundaryRecTzzRight;
     arma::mat boundaryRecTxzRight;
 
+    arma::mat lastVx;
+    arma::mat lastVz;
+    arma::mat lastTxx;
+    arma::mat lastTzz;
+    arma::mat lastTxz;
+
     // Constructor
     shot(arma::irowvec source, arma::imat &_receivers, arma::vec &_sourceFunction, int nt, double dt, model &_model);
 

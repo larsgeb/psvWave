@@ -38,4 +38,10 @@ shot::shot(arma::irowvec _source, arma::imat &_receivers, arma::vec &_sourceFunc
     boundaryRecTxxRight = arma::mat(nt, _model.nz_domain - 2, arma::fill::zeros);
     boundaryRecTzzRight = arma::mat(nt, _model.nz_domain - 2, arma::fill::zeros);
     boundaryRecTxzRight = arma::mat(nt, _model.nz_domain - 2, arma::fill::zeros);
+
+    lastVx = arma::mat(_model.nx, _model.nz, arma::fill::zeros);
+    lastVz = arma::mat(_model.nx, _model.nz, arma::fill::zeros);
+    lastTxx = arma::mat(_model.nx, _model.nz, arma::fill::zeros);
+    lastTzz = arma::mat(_model.nx, _model.nz, arma::fill::zeros);
+    lastTxz = arma::mat(_model.nx, _model.nz, arma::fill::zeros);
 }

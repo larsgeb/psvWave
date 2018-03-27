@@ -40,7 +40,7 @@ experiment::experiment(arma::imat _receivers, arma::imat _sources, arma::vec _so
     }
 }
 
-void experiment::forwardData(bool storeWavefields) {
+void experiment::forwardData() {
     // Calculate forward data from each shot
     std::cout << "Starting forward modeling of shots." << std::endl;
     std::cout << "Total of " << sources.n_rows << " shots." << std::endl;
@@ -50,13 +50,33 @@ void experiment::forwardData(bool storeWavefields) {
     for (int iShot = 0; iShot < sources.n_rows; ++iShot) {
         // This directly modifies the forwardData fields
         std::cout << " -- Running shot: " << iShot + 1 << std::endl;
-        propagator::propagateForward(currentModel, shots[iShot], storeWavefields, iShot);
+        propagator::propagateForward(currentModel, shots[iShot], true);
         std::cout << "    Done! " << std::endl;
     }
     double stopTime = omp_get_wtime();
     double secsElapsed = stopTime - startTime;
 
     std::cout << "Finished forward modeling of shots, elapsed time: " << secsElapsed << " seconds (wall)." << std::endl
+              << std::endl;
+}
+
+void experiment::backwardData() {
+    // Calculate backward data from each shot
+    std::cout << "Starting backward modeling of shots." << std::endl;
+    std::cout << "Total of " << sources.n_rows << " shots." << std::endl;
+
+    double startTime = omp_get_wtime(); // for timing multithread code
+    // Run forward simulation for all shots
+    for (int iShot = 0; iShot < sources.n_rows; ++iShot) {
+        // This directly modifies the forwardData fields
+        std::cout << " -- Running shot: " << iShot + 1 << std::endl;
+        propagator::propagateBackward(currentModel, shots[iShot]);
+        std::cout << "    Done! " << std::endl;
+    }
+    double stopTime = omp_get_wtime();
+    double secsElapsed = stopTime - startTime;
+
+    std::cout << "Finished backward modeling of shots, elapsed time: " << secsElapsed << " seconds (wall)." << std::endl
               << std::endl;
 }
 
