@@ -17,18 +17,32 @@ public:
     arma::vec sourceFunction;
     model currentModel;
     std::vector<shot> shots;
-    double timestep = 0.00025;
-    int experimentSteps = 3000;
-    double experimentTime = (experimentSteps - 1) * timestep;
+    double dt = 0.00025;
+    int nt = 3000;
+    double tTot = (nt - 1) * dt;
+    double misfit;
+    arma::vec misfitGradient;
 
     // Constructors
     experiment(arma::imat _receivers, arma::imat _sources, arma::vec _sourceFunction, int nt, double dt);
 
     // Methods
-    // TODO method to calculate forward field of current model and store in the shot subobjects.
     void writeShots();
 
     void forwardData();
+
+    arma::vec getModelVector();
+
+    arma::vec getDataVector();
+
+    double getMisfit();
+
+    double calculateMisfit();
+
+    arma::vec getMisfitGradient();
+
+    arma::vec calculateMisfitGradient();
+
 };
 
 

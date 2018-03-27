@@ -23,7 +23,7 @@ int main() {
     arma::vec time = arma::linspace(0,  dt * (nt - 1), nt);
     double t0 = tsource * 1.5;
     arma::vec tau = M_PI * (time - t0) / t0;
-    arma::vec sourceFunction = (1 - 4 * tau % tau) % arma::exp(-2 * tau % tau);
+    arma::vec sourceFunction = (1 - 4 * tau % tau) % arma::exp(-2.0 * tau % tau);
 
     experiment experiment_1(receivers, sources, sourceFunction, nt, dt);
 

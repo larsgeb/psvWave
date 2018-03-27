@@ -23,7 +23,6 @@ public:
     arma::mat lm = la + 2.0 * mu;
     arma::mat b_vx = (1.0 / 1500.0) * arma::ones(nx, nz);
     arma::mat b_vz = b_vx;
-    arma::vec model_vector;
 
     // Constructors
     model();

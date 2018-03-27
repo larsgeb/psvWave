@@ -11,15 +11,17 @@
 class shot {
 public:
     // Fields
-    arma::Row<arma::sword> source;
+    arma::irowvec source;
     arma::imat receivers;
     arma::vec sourceFunction;
     arma::mat forwardData_vx;
     arma::mat forwardData_vz;
+    double dt;
+    int nt;
 //    arma::vec adjointSource;
 
     // Constructor
-    shot(arma::Row<arma::sword> source, arma::imat &_receivers, arma::vec &_sourceFunction, int nt);
+    shot(arma::irowvec source, arma::imat &_receivers, arma::vec &_sourceFunction, int nt, double dt);
 
     // Methods
     void writeShot(const std::string& filename);

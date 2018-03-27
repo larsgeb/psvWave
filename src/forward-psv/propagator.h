@@ -16,9 +16,7 @@ public:
     constexpr static double coeff2 = 1.0 / 24.0;
 
     // static propagators
-    static void propagate(model &_currentModel, bool accTraces, bool accFields, arma::imat &receivers,
-                          arma::imat &sources, arma::mat &sourceFunctions, arma::mat &data_obj_vx,
-                          arma::mat &data_obj_vz, int nt, double dt, bool sameSource);
+    static void propagateForward(model &_currentModel, shot &_shot);
 };
 
 
