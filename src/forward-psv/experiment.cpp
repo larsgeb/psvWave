@@ -17,7 +17,7 @@ experiment::experiment(arma::imat _receivers, arma::imat _sources, arma::vec _so
 
     // Check for positions
     for (auto &&yPosReceiver : receivers.col(1)) {
-        if (yPosReceiver == 0) {
+        if (yPosReceiver < 2) {
             throw std::invalid_argument("Invalid y position for receiver (in the free surface layer).");
         }
         if (yPosReceiver >= currentModel.nz_domain) {
@@ -26,7 +26,7 @@ experiment::experiment(arma::imat _receivers, arma::imat _sources, arma::vec _so
     }
 
     for (auto &&yPosSource : sources.col(1)) {
-        if (yPosSource == 0) {
+        if (yPosSource < 2) {
             throw std::invalid_argument("Invalid y position for source (in the free surface layer).");
         }
         if (yPosSource >= currentModel.nz_domain) {

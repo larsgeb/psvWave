@@ -37,11 +37,13 @@ void propagator::propagateForward(model &_currentModel, shot &_shot, bool storeW
 
     // Create indices for injection
     auto horSpanX = arma::span(_currentModel.np_boundary, nx - _currentModel.np_boundary - 1);
-    auto topSpanY = arma::span(1, 1);
+    auto topSpanY = arma::span(2, 2);
     auto bottomSpanY = arma::span(_currentModel.nz_domain - 1, _currentModel.nz_domain - 1);
     auto verSpanY = arma::span(0 + 1, _currentModel.nz_domain - 2);
     auto leftSpanX = arma::span(_currentModel.np_boundary, _currentModel.np_boundary);
     auto rightSpanX = arma::span(nx - _currentModel.np_boundary - 1, nx - _currentModel.np_boundary - 1);
+
+    arma::cube acc(nx, nz, static_cast<const arma::uword>(_shot.nt));
 
     // Time marching through all time levels
     for (int it = 0; it < _shot.nt; ++it) {
@@ -130,6 +132,10 @@ void propagator::propagateForward(model &_currentModel, shot &_shot, bool storeW
                     _shot.boundaryRecTxzRight(it, iz) = txz(_currentModel.nx - _currentModel.np_boundary, iz);
                 }
             }
+        }
+
+        if (true) {
+            acc.slice(it) = vx; // takes a lot of ram
         }
 
         if (it == _shot.nt - 1) {
@@ -221,6 +227,13 @@ void propagator::propagateForward(model &_currentModel, shot &_shot, bool storeW
             }
         }
     }
+#pragma omp parallel
+#pragma omp for
+    for (int it = 0; it < _shot.nt; ++it) { // takes a lot of time
+        char filename[1024];
+        sprintf(filename, "outputforward/vx%i.txt", it);
+        acc.slice(it).save(filename, arma::raw_ascii);
+    }
 }
 
 void propagator::propagateBackward(model &_currentModel, shot &_shot) {
@@ -253,7 +266,7 @@ void propagator::propagateBackward(model &_currentModel, shot &_shot) {
 
     // Create indices for injection
     auto horSpanX = arma::span(_currentModel.np_boundary, nx - _currentModel.np_boundary - 1);
-    auto topSpanY = arma::span(1, 1);
+    auto topSpanY = arma::span(2, 2);
     auto bottomSpanY = arma::span(_currentModel.nz_domain - 1, _currentModel.nz_domain - 1);
     auto verSpanY = arma::span(0 + 1, _currentModel.nz_domain - 2);
     auto leftSpanX = arma::span(_currentModel.np_boundary, _currentModel.np_boundary);
@@ -288,8 +301,17 @@ void propagator::propagateBackward(model &_currentModel, shot &_shot) {
         tzz(rightSpanX, verSpanY) = _shot.boundaryRecTzzRight.row(it);
         txz(rightSpanX, verSpanY) = _shot.boundaryRecTxzRight.row(it);
 
-        if(true){
-            acc.slice(it) = vx; // takes a lot of ram
+        // Remove source
+        for (int source = 0; source < _shot.source.n_rows; ++source) {
+            int ix = _shot.source.row(source)[0];
+            int iz = _shot.source.row(source)[1];
+
+            txx(ix + _currentModel.np_boundary, iz) -= 0.5 * _shot.dt * _shot.sourceFunction[it];
+            tzz(ix + _currentModel.np_boundary, iz) -= 0.5 * _shot.dt * _shot.sourceFunction[it];
+        }
+
+        if (true) {
+            acc.slice(it) = -vx; // takes a lot of ram
         }
 
 
@@ -382,7 +404,7 @@ void propagator::propagateBackward(model &_currentModel, shot &_shot) {
 #pragma omp for
     for (int it = 0; it < _shot.nt; ++it) { // takes a lot of time
         char filename[1024];
-        sprintf(filename, "output/vx%i.txt", it);
+        sprintf(filename, "outputbackward/vx%i.txt", it);
         acc.slice(it).save(filename, arma::raw_ascii);
     }
 }
