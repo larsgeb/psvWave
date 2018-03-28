@@ -19,15 +19,16 @@ public:
     arma::mat seismogramSyn_uz;
     double dt;
     int nt;
+    int ishot;
 
     arma::mat seismogramObs_ux;
     arma::mat seismogramObs_uz;
 
     // Constructor
-    shot(arma::irowvec source, arma::imat &_receivers, arma::vec &_sourceFunction, int nt, double dt, model &_model);
+    shot(arma::irowvec source, arma::imat &_receivers, arma::vec &_sourceFunction, int nt, double dt, model &_model, int ishot);
 
     // Methods
-    void writeShot(const std::string& filename);
+    void writeShot();
 };
 
 

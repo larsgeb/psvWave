@@ -30,7 +30,7 @@ experiment::experiment(arma::imat _receivers, arma::imat _sources, arma::vec _so
 
     // This way all shots have the same receivers and sources
     for (int iShot = 0; iShot < sources.n_rows; ++iShot) {
-        shots.emplace_back(shot(sources.row(iShot), receivers, sourceFunction, nt, dt, currentModel));
+        shots.emplace_back(shot(sources.row(iShot), receivers, sourceFunction, nt, dt, currentModel, iShot));
     }
 }
 
@@ -43,7 +43,7 @@ void experiment::forwardData() {
     // Run forward simulation for all shots
     for (int iShot = 0; iShot < sources.n_rows; ++iShot) {
         // This directly modifies the forwardData fields
-        std::cout << " -- Running shot: " << iShot + 1 << std::endl;
+        std::cout << " -- Running shot: " << iShot << std::endl;
         propagator::propagateForward(currentModel, shots[iShot], true);
         std::cout << "    Done! " << std::endl;
     }
@@ -59,10 +59,8 @@ void experiment::writeShots() {
     // Write forward data from shots out to text files
     for (int iShot = 0; iShot < sources.n_rows; ++iShot) {
         // This directly modifies the forwardData fields
-        std::cout << " -- Exporting shot (using 1 based index): " << iShot + 1 << std::endl;
-        std::stringstream filename;
-        filename << "shot-" << iShot << ".txt" << std::endl;
-        shots[iShot].writeShot(filename.str());
+        std::cout << " -- Exporting shot: " << iShot << std::endl;
+        shots[iShot].writeShot();
         std::cout << "    Done! " << std::endl;
     }
 }

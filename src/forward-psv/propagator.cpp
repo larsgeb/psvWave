@@ -36,6 +36,9 @@ void propagator::propagateForward(model &_currentModel, shot &_shot, bool storeW
     taper = arma::exp(-arma::square(_currentModel.np_factor * (_currentModel.np_boundary - taper)));
 
 
+    // Create accumulator for visualization
+//    arma::cube acc(nx, nz, static_cast<const arma::uword>(_shot.nt));
+
     // Time marching through all time levels
     for (int it = 0; it < _shot.nt; ++it) {
 
@@ -55,12 +58,12 @@ void propagator::propagateForward(model &_currentModel, shot &_shot, bool storeW
 
             if (it == 0) {
                 _shot.seismogramSyn_ux(receiver, it) = _shot.dt * vx(ix + _currentModel.np_boundary, iz);
-                _shot.seismogramSyn_ux(receiver, it) = _shot.dt * vz(ix + _currentModel.np_boundary, iz);
+                _shot.seismogramSyn_uz(receiver, it) = _shot.dt * vz(ix + _currentModel.np_boundary, iz);
             } else {
                 _shot.seismogramSyn_ux(receiver, it) =
                         _shot.seismogramSyn_ux(receiver, it - 1) + _shot.dt * vx(ix + _currentModel.np_boundary, iz);
-                _shot.seismogramSyn_ux(receiver, it) =
-                        _shot.seismogramSyn_ux(receiver, it - 1) + _shot.dt * vz(ix + _currentModel.np_boundary, iz);
+                _shot.seismogramSyn_uz(receiver, it) =
+                        _shot.seismogramSyn_uz(receiver, it - 1) + _shot.dt * vz(ix + _currentModel.np_boundary, iz);
             }
 
         }
@@ -143,7 +146,7 @@ void propagator::propagateForward(model &_currentModel, shot &_shot, bool storeW
 //#pragma omp for
 //    for (int it = 0; it < _shot.nt; ++it) { // takes a lot of time
 //        char filename[1024];
-//        sprintf(filename, "output/vx%i.txt", it);
+//        sprintf(filename, "output/shot%i/vx%i.txt", _shot.ishot, it);
 //        acc.slice(it).save(filename, arma::raw_ascii);
 //    }
 }
