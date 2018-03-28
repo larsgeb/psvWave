@@ -15,41 +15,13 @@ public:
     arma::irowvec source;
     arma::imat receivers;
     arma::vec sourceFunction;
-    arma::mat forwardData_vx;
-    arma::mat forwardData_vz;
+    arma::mat seismogramSyn_ux;
+    arma::mat seismogramSyn_uz;
     double dt;
     int nt;
-    arma::vec adjointSource;
 
-    arma::mat boundaryRecVxTop;
-    arma::mat boundaryRecVzTop;
-    arma::mat boundaryRecTxxTop;
-    arma::mat boundaryRecTzzTop;
-    arma::mat boundaryRecTxzTop;
-
-    arma::mat boundaryRecVxBottom;
-    arma::mat boundaryRecVzBottom;
-    arma::mat boundaryRecTxxBottom;
-    arma::mat boundaryRecTzzBottom;
-    arma::mat boundaryRecTxzBottom;
-
-    arma::mat boundaryRecVxLeft;
-    arma::mat boundaryRecVzLeft;
-    arma::mat boundaryRecTxxLeft;
-    arma::mat boundaryRecTzzLeft;
-    arma::mat boundaryRecTxzLeft;
-
-    arma::mat boundaryRecVxRight;
-    arma::mat boundaryRecVzRight;
-    arma::mat boundaryRecTxxRight;
-    arma::mat boundaryRecTzzRight;
-    arma::mat boundaryRecTxzRight;
-
-    arma::mat lastVx;
-    arma::mat lastVz;
-    arma::mat lastTxx;
-    arma::mat lastTzz;
-    arma::mat lastTxz;
+    arma::mat seismogramObs_ux;
+    arma::mat seismogramObs_uz;
 
     // Constructor
     shot(arma::irowvec source, arma::imat &_receivers, arma::vec &_sourceFunction, int nt, double dt, model &_model);

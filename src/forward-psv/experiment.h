@@ -17,9 +17,9 @@ public:
     arma::vec sourceFunction;
     model currentModel;
     std::vector<shot> shots;
-    double dt = 0.00025;
-    int nt = 3000;
-    double tTot = (nt - 1) * dt;
+    double dt;
+    int nt;
+    double tTot;
     double misfit;
     arma::vec misfitGradient;
 
