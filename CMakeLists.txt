@@ -11,12 +11,12 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lopenblas -fopenmp")
 
 include_directories(../armadillo-code/include)
 
-add_executable(forwardProp src/main.cpp src/forward-psv/propagator.cpp src/forward-psv/propagator.h src/forward-psv/model.h
+add_executable(forwardObs src/forwardObservedData.cpp src/forward-psv/propagator.cpp src/forward-psv/propagator.h src/forward-psv/model.h
         src/forward-psv/model.cpp src/forward-psv/experiment.h src/forward-psv/experiment.cpp src/forward-psv/shot.cpp
         src/forward-psv/shot.h)
-add_executable(generateSynthetics src/generateSynthetics.cpp src/forward-psv/propagator.cpp src/forward-psv/propagator.h src/forward-psv/model.h
+add_executable(calculateKernel src/calculateKernel.cpp src/forward-psv/propagator.cpp src/forward-psv/propagator.h src/forward-psv/model.h
         src/forward-psv/model.cpp src/forward-psv/experiment.h src/forward-psv/experiment.cpp src/forward-psv/shot.cpp
         src/forward-psv/shot.h)
 
-target_link_libraries(forwardProp openblas)
-target_link_libraries(generateSynthetics openblas)
+target_link_libraries(forwardObs openblas)
+target_link_libraries(calculateKernel openblas)

@@ -6,14 +6,13 @@
 #include "experiment.h"
 #include "propagator.h"
 
-experiment::experiment(arma::imat _receivers, arma::imat _sources, arma::vec _sourceFunction, int _nt, double _dt) {
+experiment::experiment(arma::imat _receivers, arma::imat _sources, arma::vec _sourceFunction) {
     // Create a seismic experiment
     receivers = std::move(_receivers);
     sources = std::move(_sources);
     sourceFunction = std::move(_sourceFunction);
-    dt = _dt;
-    nt = _nt;
-    tTot = (nt - 1) * dt;
+    dt = 0.00025;
+    nt = 3500;
 
     // Check for positions
     for (auto &&yPosReceiver : receivers.col(1)) {
@@ -29,8 +28,8 @@ experiment::experiment(arma::imat _receivers, arma::imat _sources, arma::vec _so
     }
 
     // This way all shots have the same receivers and sources
-    for (int iShot = 0; iShot < sources.n_rows; ++iShot) {
-        shots.emplace_back(shot(sources.row(iShot), receivers, sourceFunction, nt, dt, currentModel, iShot));
+    for (int ishot = 0; ishot < sources.n_rows; ++ishot) {
+        shots.emplace_back(shot(sources.row(ishot), receivers, sourceFunction, nt, dt, currentModel, ishot, snapshotInterval));
     }
 }
 
@@ -57,10 +56,32 @@ void experiment::forwardData() {
 
 void experiment::writeShots() {
     // Write forward data from shots out to text files
-    for (int iShot = 0; iShot < sources.n_rows; ++iShot) {
-        // This directly modifies the forwardData fields
-        std::cout << " -- Exporting shot: " << iShot << std::endl;
-        shots[iShot].writeShot();
+    for (auto &&shot : shots) {
+        std::cout << " -- Exporting shot: " << shot.ishot << std::endl;
+        shot.writeShot();
         std::cout << "    Done! " << std::endl;
     }
+}
+
+void experiment::computeKernel() {
+
+}
+
+double experiment::calculateMisfit() {
+    std::cout << "Calculating misfit... ";
+    misfit = 0;
+    for (auto &&shot : shots) {
+        misfit += arma::accu(arma::square(shot.seismogramObs_ux - shot.seismogramSyn_ux));
+        misfit += arma::accu(arma::square(shot.seismogramObs_uz - shot.seismogramSyn_uz));
+    }
+    misfit = sqrt(misfit);
+    std::cout << "done!"<< std::endl;
+}
+
+void experiment::calculateAdjointSources() {
+    std::cout << "Calculating adjoint sources... ";
+    for (auto &&shot : shots) {
+        shot.calculateAdjointSources();
+    }
+    std::cout << "done!"<< std::endl;
 }

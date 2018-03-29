@@ -19,31 +19,29 @@ public:
     std::vector<shot> shots;
     double dt;
     int nt;
-    double tTot;
+
+    // FWI parameters
+    int snapshotInterval = 10;
     double misfit;
     arma::vec misfitGradient;
 
     // Constructors
-    experiment(arma::imat _receivers, arma::imat _sources, arma::vec _sourceFunction, int nt, double dt);
+    experiment(arma::imat _receivers, arma::imat _sources, arma::vec _sourceFunction);
 
     // Methods
     void writeShots();
 
     void forwardData();
 
-    arma::vec getModelVector();
-
-    arma::vec getDataVector();
-
-    double getMisfit();
+    void calculateAdjointSources();
 
     double calculateMisfit();
-
-    arma::vec getMisfitGradient();
 
     arma::vec calculateMisfitGradient();
 
     void backwardData();
+
+    void computeKernel();
 };
 
 
