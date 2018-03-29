@@ -51,6 +51,16 @@ void propagator::propagateForward(model &_currentModel, shot &_shot, bool storeW
             tzz(ix + _currentModel.np_boundary, iz) += 0.5 * _shot.dt * _shot.sourceFunction[it];
         }
 
+        // Take snapshot of fields
+        if(it % _shot.snapshotInterval == 0){
+            auto a = vx(_currentModel.interiorX,_currentModel.interiorZ);
+            _shot.vxSnapshots.slice(it/_shot.snapshotInterval) = vx(_currentModel.interiorX,_currentModel.interiorZ);
+            _shot.vzSnapshots.slice(it/_shot.snapshotInterval) = vz(_currentModel.interiorX,_currentModel.interiorZ);
+            _shot.txxSnapshots.slice(it/_shot.snapshotInterval) = txx(_currentModel.interiorX,_currentModel.interiorZ);
+            _shot.tzzSnapshots.slice(it/_shot.snapshotInterval) = tzz(_currentModel.interiorX,_currentModel.interiorZ);
+            _shot.txzSnapshots.slice(it/_shot.snapshotInterval) = txz(_currentModel.interiorX,_currentModel.interiorZ);
+        }
+
         // Record wavefield at receivers
         for (int receiver = 0; receiver < _shot.receivers.n_rows; ++receiver) {
             int ix = _shot.receivers.row(receiver)[0];
@@ -68,9 +78,7 @@ void propagator::propagateForward(model &_currentModel, shot &_shot, bool storeW
 
         }
 
-//        if (true) {
-//            acc.slice(it) = vx; // takes a lot of ram
-//        }
+//        acc.slice(it) = vx; // takes a lot of ram
 
         // After this point is only integration, which doesn't have to be done at the last time level
 
@@ -140,6 +148,12 @@ void propagator::propagateForward(model &_currentModel, shot &_shot, bool storeW
                     vz(ix, iz) = vz(ix, iz) * taper(ix, iz);
                 }
             }
+        }
+        if (it % (_shot.nt / 50) == 0) {
+            char message[1024];
+            sprintf(message, "\r \r    %i%%",
+                    static_cast<int>(static_cast<double>(it) * 100.0 / static_cast<double>(_shot.nt)));
+            std::cout << message << std::flush;
         }
     }
 //#pragma omp parallel
