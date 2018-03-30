@@ -47,23 +47,6 @@ void shot::writeShot() {
 void shot::calculateAdjointSources() {
     vxAdjointSource = seismogramSyn_ux - seismogramObs_ux;
     vzAdjointSource = seismogramSyn_uz - seismogramObs_uz;
-
-    // Use FD scheme to get velocities
-    auto last = static_cast<const arma::uword>(nt - 1);
-    vxAdjointSource(arma::span::all, arma::span(1, last - 1))
-            = (vxAdjointSource(arma::span::all, arma::span(2, last)) -
-               vxAdjointSource(arma::span::all, arma::span(0, last - 2))) / (2 * dt);
-    vxAdjointSource(arma::span::all, 0) =
-            (vxAdjointSource(arma::span::all, 1) - vxAdjointSource(arma::span::all, 0)) / dt;
-    vxAdjointSource(arma::span::all, last) =
-            (vxAdjointSource(arma::span::all, last) - vxAdjointSource(arma::span::all, last - 1)) / dt;
-    vzAdjointSource(arma::span::all, arma::span(1, last - 1))
-            = (vzAdjointSource(arma::span::all, arma::span(2, last)) -
-               vzAdjointSource(arma::span::all, arma::span(0, last - 2))) / (2 * dt);
-    vzAdjointSource(arma::span::all, 0) =
-            (vzAdjointSource(arma::span::all, 1) - vzAdjointSource(arma::span::all, 0)) / dt;
-    vzAdjointSource(arma::span::all, last) =
-            (vzAdjointSource(arma::span::all, last) - vzAdjointSource(arma::span::all, last - 1)) / dt;
 }
 
 

@@ -23,7 +23,9 @@ public:
     // FWI parameters
     int snapshotInterval = 10;
     double misfit;
-    arma::vec misfitGradient;
+    arma::mat muKernel;
+    arma::mat densityKernel;
+    arma::mat lambdaKernel;
 
     // Constructors
     experiment(arma::imat _receivers, arma::imat _sources, arma::vec _sourceFunction);
@@ -35,13 +37,11 @@ public:
 
     void calculateAdjointSources();
 
-    double calculateMisfit();
-
-    arma::vec calculateMisfitGradient();
-
-    void backwardData();
+    void calculateMisfit();
 
     void computeKernel();
+
+    void backwardAdjoint();
 };
 
 

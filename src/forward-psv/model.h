@@ -42,11 +42,6 @@ public:
     // Constructors
     model();
 
-    // Methods
-    static arma::vec fieldToVec(arma::mat &mat);
-
-    static arma::mat vecToField(arma::vec &vec);
-
     void updateFields(arma::vec lambda, arma::vec mu, arma::vec lightness);
 };
 
