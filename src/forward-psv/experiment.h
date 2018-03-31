@@ -31,7 +31,7 @@ public:
     experiment(arma::imat _receivers, arma::imat _sources, arma::vec _sourceFunction);
 
     // Methods
-    void writeShots();
+    void writeShots(arma::file_type type);
 
     void forwardData();
 

@@ -35,22 +35,8 @@ void propagator::propagateForward(model &_currentModel, shot &_shot) {
     }
     taper = arma::exp(-arma::square(_currentModel.np_factor * (_currentModel.np_boundary - taper)));
 
-
-    // Create accumulator for visualization
-//    arma::cube acc(nx, nz, static_cast<const arma::sword>(_shot.nt));
-
     // Time marching through all time levels
     for (int it = 0; it < _shot.nt; ++it) {
-
-        // Inject explosive source
-        for (arma::uword source = 0; source < _shot.source.n_rows; ++source) {
-            int ix = _shot.source.row(source)[0];
-            int iz = _shot.source.row(source)[1];
-
-            txx(ix + _currentModel.np_boundary, iz) += 0.5 * _shot.dt * _shot.sourceFunction[it];
-            tzz(ix + _currentModel.np_boundary, iz) += 0.5 * _shot.dt * _shot.sourceFunction[it];
-        }
-
         // Take snapshot of fields
         if (it % _shot.snapshotInterval == 0) {
             auto a = vx(_currentModel.interiorX, _currentModel.interiorZ);
@@ -65,22 +51,20 @@ void propagator::propagateForward(model &_currentModel, shot &_shot) {
         }
 
         // Record wavefield at receivers
+#pragma omp parallel for collapse(1)
         for (arma::uword receiver = 0; receiver < _shot.receivers.n_rows; ++receiver) {
-            int ix = _shot.receivers.row(receiver)[0];
+            int ix = _shot.receivers.row(receiver)[0] + _currentModel.np_boundary;
             int iz = _shot.receivers.row(receiver)[1];
 
             if (it == 0) {
-                _shot.seismogramSyn_ux(receiver, it) = _shot.dt * vx(ix + _currentModel.np_boundary, iz);
-                _shot.seismogramSyn_uz(receiver, it) = _shot.dt * vz(ix + _currentModel.np_boundary, iz);
+                _shot.seismogramSyn_ux(receiver, it) = _shot.dt * vx(ix, iz);
+                _shot.seismogramSyn_uz(receiver, it) = _shot.dt * vz(ix, iz);
             } else {
-                _shot.seismogramSyn_ux(receiver, it) =
-                        _shot.seismogramSyn_ux(receiver, it - 1) + _shot.dt * vx(ix + _currentModel.np_boundary, iz);
-                _shot.seismogramSyn_uz(receiver, it) =
-                        _shot.seismogramSyn_uz(receiver, it - 1) + _shot.dt * vz(ix + _currentModel.np_boundary, iz);
+                _shot.seismogramSyn_ux(receiver, it) = _shot.seismogramSyn_ux(receiver, it - 1) + _shot.dt * vx(ix, iz);
+                _shot.seismogramSyn_uz(receiver, it) = _shot.seismogramSyn_uz(receiver, it - 1) + _shot.dt * vz(ix, iz);
             }
 
         }
-
 
         // After this point is only integration, which doesn't have to be done at the last time level
         // Time integrate stress
@@ -147,6 +131,14 @@ void propagator::propagateForward(model &_currentModel, shot &_shot) {
                     vz(ix, iz) = vz(ix, iz) * taper(ix, iz);
                 }
             }
+        }
+
+        // Inject explosive source
+        for (arma::uword source = 0; source < _shot.source.n_rows; ++source) {
+            int ix = _shot.source.row(source)[0] + _currentModel.np_boundary;
+            int iz = _shot.source.row(source)[1];
+            vx(ix, iz) += 0.5 * _shot.sourceFunction[it] / (dx * dz);
+            vz(ix, iz) += 0.5 * _shot.sourceFunction[it] / (dx * dz);
         }
 
         // Print status bar
@@ -194,6 +186,7 @@ void propagator::propagateAdjoint(model &_currentModel, shot &_shot, arma::mat &
                                                          _shot.vzSnapshots.slice(it / _shot.snapshotInterval) %
                                                          vz(_currentModel.interiorX, _currentModel.interiorZ));
 
+            // Compute strain
             arma::mat exxAdj = (txx(_currentModel.interiorX, _currentModel.interiorZ) -
                                 (tzz(_currentModel.interiorX, _currentModel.interiorZ) %
                                  _currentModel.la(_currentModel.interiorX, _currentModel.interiorZ)) /
@@ -239,7 +232,7 @@ void propagator::propagateAdjoint(model &_currentModel, shot &_shot, arma::mat &
             for (int iz = 0; iz < nz; ++iz) {
                 if (ix > 1 and ix < nx - 2 and iz < nz - 2) {
                     txx(ix, iz) = taper(ix, iz) *
-                                  (txx(ix, iz) +
+                                  (txx(ix, iz) -
                                    _shot.dt *
                                    (_currentModel.lm(ix, iz) * (
                                            coeff1 * (vx(ix + 1, iz) - vx(ix, iz)) +
@@ -248,7 +241,7 @@ void propagator::propagateAdjoint(model &_currentModel, shot &_shot, arma::mat &
                                             coeff1 * (vz(ix, iz) - (iz > 0 ? vz(ix, iz - 1) : 0)) +
                                             coeff2 * ((iz > 1 ? vz(ix, iz - 2) : 0) - vz(ix, iz + 1))) / dz));
                     tzz(ix, iz) = taper(ix, iz) *
-                                  (tzz(ix, iz) +
+                                  (tzz(ix, iz) -
                                    _shot.dt *
                                    (_currentModel.la(ix, iz) * (
                                            coeff1 * (vx(ix + 1, iz) - vx(ix, iz)) +
@@ -257,7 +250,7 @@ void propagator::propagateAdjoint(model &_currentModel, shot &_shot, arma::mat &
                                             coeff1 * (vz(ix, iz) - (iz > 0 ? vz(ix, iz - 1) : 0)) +
                                             coeff2 * ((iz > 1 ? vz(ix, iz - 2) : 0) - vz(ix, iz + 1))) / dz));
                     txz(ix, iz) = taper(ix, iz) *
-                                  (txz(ix, iz) + _shot.dt * _currentModel.mu(ix, iz) * (
+                                  (txz(ix, iz) - _shot.dt * _currentModel.mu(ix, iz) * (
                                           (coeff1 * (vx(ix, iz + 1) - vx(ix, iz)) +
                                            coeff2 * ((iz > 0 ? vx(ix, iz - 1) : 0) - vx(ix, iz + 2))) / dz +
                                           (coeff1 * (vz(ix, iz) - vz(ix - 1, iz)) +
@@ -278,7 +271,7 @@ void propagator::propagateAdjoint(model &_currentModel, shot &_shot, arma::mat &
                     vx(ix, iz) =
                             taper(ix, iz) *
                             (vx(ix, iz)
-                             + _currentModel.b_vx(ix, iz) * _shot.dt * (
+                             - _currentModel.b_vx(ix, iz) * _shot.dt * (
                                     (coeff1 * (txx(ix, iz) - txx(ix - 1, iz)) +
                                      coeff2 * (txx(ix - 2, iz) - txx(ix + 1, iz))) / dx +
                                     (coeff1 * (txz(ix, iz) - (iz > 0 ? txz(ix, iz - 1) : 0)) +
@@ -287,7 +280,7 @@ void propagator::propagateAdjoint(model &_currentModel, shot &_shot, arma::mat &
                     vz(ix, iz) =
                             taper(ix, iz) *
                             (vz(ix, iz)
-                             + _currentModel.b_vz(ix, iz) * _shot.dt * (
+                             - _currentModel.b_vz(ix, iz) * _shot.dt * (
                                     (coeff1 * (txz(ix + 1, iz) - txz(ix, iz)) +
                                      coeff2 * (txz(ix - 1, iz) - txz(ix + 2, iz))) / dx +
                                     (coeff1 * (tzz(ix, iz + 1) - tzz(ix, iz)) +
@@ -300,10 +293,10 @@ void propagator::propagateAdjoint(model &_currentModel, shot &_shot, arma::mat &
         }
         // Inject adjoint sources
         for (arma::uword receiver = 0; receiver < _shot.receivers.n_rows; ++receiver) {
-            int ix = _shot.receivers.row(receiver)[0];
+            int ix = _shot.receivers.row(receiver)[0] + _currentModel.np_boundary;
             int iz = _shot.receivers.row(receiver)[1];
-            vx(ix + _currentModel.np_boundary, iz) += _shot.dt * _shot.vxAdjointSource(receiver, it) / (dz * dx);
-            vz(ix + _currentModel.np_boundary, iz) += _shot.dt * _shot.vzAdjointSource(receiver, it) / (dz * dx);
+            vx(ix, iz) += _shot.vxAdjointSource(receiver, it) / (dz * dx);
+            vz(ix, iz) += _shot.vzAdjointSource(receiver, it) / (dz * dx);
         }
         if (it % (_shot.nt / 50) == 0) {
             char message[1024];

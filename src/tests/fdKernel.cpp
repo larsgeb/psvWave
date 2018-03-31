@@ -20,7 +20,7 @@ int main() {
     arma::vec sourceFunction;
 
     receivers.load("experimentResult/receivers.txt");
-    sources.load("experimentResult/sources_1.txt");
+    sources.load("experimentResult/sources.txt");
     sourceFunction.load("experimentResult/source.txt");
 
     experiment experiment_1(receivers, sources, sourceFunction);
@@ -34,34 +34,36 @@ int main() {
     mu(5) *= 1.5;
 
     experiment_1.currentModel.updateFields(lambda, mu, density);
-    double deltam = 1;
-    experiment_1.currentModel.b_vx(70+50,70) = 1.0 / (1500.0 + deltam);
-    experiment_1.currentModel.b_vz(70+50,70) = 1.0 / (1500.0 + deltam);
-
+    double deltam = 100;
+    experiment_1.currentModel.b_vx(70 + 50, 70) = 1.0 / (1500.0 + deltam);
+    experiment_1.currentModel.b_vz(70 + 50, 70) = 1.0 / (1500.0 + deltam);
 
     // Calculate misfit and gradient
     experiment_1.forwardData();
     experiment_1.calculateMisfit();
     double misfit1 = experiment_1.misfit;
-    std::cout << "Misfit 1: " << misfit1 << std::endl;
     experiment_1.calculateAdjointSources();
     experiment_1.computeKernel();
 
-    // Now we choose one direction (a specific parameter to change);
+    experiment_1.densityKernel.save("densityKernel.txt", arma::raw_ascii);
+    experiment_1.muKernel.save("muKernel.txt", arma::raw_ascii);
+    experiment_1.lambdaKernel.save("lambdaKernel.txt", arma::raw_ascii);
 
-
-    std::cout << deltam << std::endl;
-    std::cout << "Directional derivative: " << experiment_1.densityKernel(70, 70) << std::endl;
-
-    experiment_1.currentModel.b_vx(70+50,70) = 1.0 / 1500.0;
-    experiment_1.currentModel.b_vz(70+50,70) = 1.0 / 1500.0;
+    experiment_1.currentModel.b_vx(70 + 50, 70) = 1.0 / 1500.0;
+    experiment_1.currentModel.b_vz(70 + 50, 70) = 1.0 / 1500.0;
     // Calculate misfit and gradient
     experiment_1.forwardData();
     experiment_1.calculateMisfit();
     double misfit2 = experiment_1.misfit;
+
+    // Now we choose one direction (a specific parameter to change);
+    std::cout << std::endl << "Misfit 1: " << misfit1 << std::endl;
+    std::cout << "Direction: " << -deltam << std::endl;
+    std::cout << "Directional derivative: " << experiment_1.densityKernel(70, 70) << std::endl;
+    std::cout << "Predicted misfit 2: " << misfit1 - deltam * (experiment_1.densityKernel(70, 70))<< std::endl;
     std::cout << "Misfit 2: " << misfit2 << std::endl;
-    experiment_1.calculateAdjointSources();
-    experiment_1.computeKernel();
+    std::cout << "Factor difference: " << misfit1/( - deltam * (experiment_1.densityKernel(70, 70))) << std::endl;
+
 
     return 0;
 }

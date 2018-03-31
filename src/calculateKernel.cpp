@@ -27,10 +27,11 @@ int main() {
 
 //    // Exact observed data
     mu(2) *= 1.5;
-    mu(5) *= 1.5;
+//    mu(5) *= 1.5;
 
     // Set startind model
     experiment_1.currentModel.updateFields(lambda, mu, lightness);
+    experiment_1.currentModel.mu.save("mu.txt",arma::raw_ascii);
 
     experiment_1.forwardData();
 

@@ -39,7 +39,7 @@ public:
          model &_model, int ishot, int _snapshotInterval);
 
     // Methods
-    void writeShot();
+    void writeShot(arma::file_type type);
 
     void calculateAdjointSources();
 };

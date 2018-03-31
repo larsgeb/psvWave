@@ -30,18 +30,18 @@ shot::shot(arma::irowvec _source, arma::imat &_receivers, arma::vec &_sourceFunc
 
     // Load observed data for shot i
     char filename[1024];
-    sprintf(filename, "experimentResult/seismogram%i%s", ishot, "_ux.txt");
+    sprintf(filename, "experimentResult/seismogram%i%s", ishot, "_ux.bin");
     seismogramObs_ux.load(filename);
-    sprintf(filename, "experimentResult/seismogram%i%s", ishot, "_uz.txt");
+    sprintf(filename, "experimentResult/seismogram%i%s", ishot, "_uz.bin");
     seismogramObs_uz.load(filename);
 }
 
-void shot::writeShot() {
+void shot::writeShot(arma::file_type type) {
     char filename[1024];
-    sprintf(filename, "output/seismogram%i%s", ishot, "_ux.txt");
-    seismogramSyn_ux.save(filename, arma::arma_binary);
-    sprintf(filename, "output/seismogram%i%s", ishot, "_uz.txt");
-    seismogramSyn_uz.save(filename, arma::arma_binary);
+    sprintf(filename, "output/seismogram%i%s", ishot, "_ux.bin");
+    seismogramSyn_ux.save(filename, type);
+    sprintf(filename, "output/seismogram%i%s", ishot, "_uz.bin");
+    seismogramSyn_uz.save(filename, type);
 }
 
 void shot::calculateAdjointSources() {

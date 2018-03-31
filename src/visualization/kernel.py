@@ -9,27 +9,36 @@ densityKernel = np.transpose(np.loadtxt("densityKernel.txt"))
 lambdaKernel = np.transpose(np.loadtxt("lambdaKernel.txt"))
 muKernel = np.transpose(np.loadtxt("muKernel.txt"))
 
-max1 = np.max(np.abs(densityKernel))
-max2 = np.max(np.abs(lambdaKernel))
-max3 = np.max(np.abs(muKernel))
+max1 = np.max(np.abs(densityKernel))/1
+max2 = np.max(np.abs(lambdaKernel))/1
+max3 = np.max(np.abs(muKernel))/1
 link = False
 maxC = max(max2,max3)
 
 customCMAP = plt.get_cmap('seismic')
 customCMAP._segmentdata['alpha'] =  [(0.0, 0.8, 0.8), (0.5, 0.5, 0.5), (1.0, 0.8, 0.8)]
 
-mu = np.loadtxt("mu.txt")[50:-50,:-50]
+mu = np.ones((400,200)) * 1e9
+overlay = np.zeros((400,200)) * 1e9
 
-plt.subplot(3,1,1)
-# imMedium = plt.imshow(np.transpose(mu), animated=True, aspect=1, cmap=plt.get_cmap("copper"))
+mu[100:200,0:100] = mu[100:200,0:100] * 1.5
+
+mu[200:300,100:200] = mu[200:300,100:200] * 1.5
+plt.subplot(2,2,1)
+imMedium = plt.imshow(np.transpose(mu), animated=True, aspect=1, cmap=plt.get_cmap("copper"))
+im = plt.imshow(np.transpose(overlay), cmap=customCMAP, vmax=max1, vmin=-max1)
+plt.colorbar()
+mu[200:300,100:200] = mu[200:300,100:200] / 1.5
+plt.subplot(2,2,1+1)
+imMedium = plt.imshow(np.transpose(mu), animated=True, aspect=1, cmap=plt.get_cmap("copper"))
 im = plt.imshow(densityKernel, cmap=customCMAP, vmax=max1, vmin=-max1)
 plt.colorbar()
-plt.subplot(3,1,2)
-# imMedium = plt.imshow(np.transpose(mu), animated=True, aspect=1, cmap=plt.get_cmap("copper"))
+plt.subplot(2,2,2+1)
+imMedium = plt.imshow(np.transpose(mu), animated=True, aspect=1, cmap=plt.get_cmap("copper"))
 im = plt.imshow(lambdaKernel, cmap=customCMAP, vmax=(maxC if link else max2), vmin=-(maxC if link else max2))
 plt.colorbar()
-plt.subplot(3,1,3)
-# imMedium = plt.imshow(np.transpose(mu), animated=True, aspect=1, cmap=plt.get_cmap("copper"))
+plt.subplot(2,2,3+1)
+imMedium = plt.imshow(np.transpose(mu), animated=True, aspect=1, cmap=plt.get_cmap("copper"))
 im = plt.imshow(muKernel, cmap=customCMAP, vmax=(maxC if link else max3), vmin=-(maxC if link else max3))
 plt.colorbar()
 
