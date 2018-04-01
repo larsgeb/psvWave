@@ -19,51 +19,43 @@ int main() {
     arma::imat sources;
     arma::vec sourceFunction;
 
-    receivers.load("experimentResult/receivers.txt");
-    sources.load("experimentResult/sources.txt");
-    sourceFunction.load("experimentResult/source.txt");
+    receivers.load("experiment1/receivers.txt");
+    sources.load("experiment1/sources.txt");
+    sourceFunction.load("experiment1/source.txt");
 
     experiment experiment_1(receivers, sources, sourceFunction);
 
     arma::vec lambda = 4e9 * arma::ones(8, 1);
     arma::vec mu = 1e9 * arma::ones(8, 1);
-    arma::vec density = 1500.0 * arma::ones(8, 1);
-
-    // Exact observed data
-    mu(2) *= 1.5;
-    mu(5) *= 1.5;
-
+    arma::vec density = 1510 * arma::ones(8, 1); // Original was modeled on 1500
     experiment_1.currentModel.updateFields(lambda, mu, density);
-    double deltam = 100;
-    experiment_1.currentModel.b_vx(70 + 50, 70) = 1.0 / (1500.0 + deltam);
-    experiment_1.currentModel.b_vz(70 + 50, 70) = 1.0 / (1500.0 + deltam);
 
-    // Calculate misfit and gradient
+    experiment_1.loadShots(const_cast<char *>("experiment1"));
+    experiment_1.currentModel.updateFields(lambda, mu, density);
     experiment_1.forwardData();
     experiment_1.calculateMisfit();
     double misfit1 = experiment_1.misfit;
     experiment_1.calculateAdjointSources();
     experiment_1.computeKernel();
+    double dirGradient = experiment_1.densityKernel(250, 60);
 
-    experiment_1.densityKernel.save("densityKernel.txt", arma::raw_ascii);
-    experiment_1.muKernel.save("muKernel.txt", arma::raw_ascii);
-    experiment_1.lambdaKernel.save("lambdaKernel.txt", arma::raw_ascii);
+    double epsilon = 0.1;
 
-    experiment_1.currentModel.b_vx(70 + 50, 70) = 1.0 / 1500.0;
-    experiment_1.currentModel.b_vz(70 + 50, 70) = 1.0 / 1500.0;
+    experiment_1.currentModel.b_vx(300, 60) = 1.0 / (density(4) + epsilon * 1);
+    experiment_1.currentModel.b_vz(300, 60) = 1.0 / (density(4) + epsilon * 1);
+
     // Calculate misfit and gradient
     experiment_1.forwardData();
     experiment_1.calculateMisfit();
     double misfit2 = experiment_1.misfit;
 
-    // Now we choose one direction (a specific parameter to change);
     std::cout << std::endl << "Misfit 1: " << misfit1 << std::endl;
-    std::cout << "Direction: " << -deltam << std::endl;
-    std::cout << "Directional derivative: " << experiment_1.densityKernel(70, 70) << std::endl;
-    std::cout << "Predicted misfit 2: " << misfit1 - deltam * (experiment_1.densityKernel(70, 70))<< std::endl;
     std::cout << "Misfit 2: " << misfit2 << std::endl;
-    std::cout << "Factor difference: " << misfit1/( - deltam * (experiment_1.densityKernel(70, 70))) << std::endl;
-
+    std::cout << "Difference: " << misfit2-misfit1 << std::endl;
+    std::cout << "Directional derivative times step (dx/dx * epsilon): " << dirGradient * epsilon<< std::endl;
+    std::cout << "Predicted misfit 2: " << misfit1 + epsilon * 1 * dirGradient<< std::endl;
+    std::cout << "Factor difference: " << (misfit2 - misfit1) / (epsilon * 1 * dirGradient) << std::endl;
 
     return 0;
+
 }
