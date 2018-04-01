@@ -61,11 +61,11 @@ void experiment::forwardData() {
               << std::endl;
 }
 
-void experiment::writeShots(arma::file_type type) {
+void experiment::writeShots(arma::file_type type, char folder[]) {
     // Write forward data from shots out to text files
     for (auto &&shot : shots) {
         std::cout << " -- Exporting shot: " << shot.ishot << std::endl;
-        shot.writeShot(type);
+        shot.writeShot(type, folder);
         std::cout << "    Done! " << std::endl;
     }
 }
@@ -82,10 +82,9 @@ void experiment::calculateMisfit() {
     std::cout << "Calculating misfit... ";
     misfit = 0;
     for (auto &&shot : shots) {
-        misfit += arma::accu(arma::square(shot.seismogramObs_ux - shot.seismogramSyn_ux));
-        misfit += arma::accu(arma::square(shot.seismogramObs_uz - shot.seismogramSyn_uz));
+        misfit += 0.5 * shot.dt * arma::accu(arma::square(shot.seismogramObs_ux - shot.seismogramSyn_ux));
+        misfit += 0.5 * shot.dt * arma::accu(arma::square(shot.seismogramObs_uz - shot.seismogramSyn_uz));
     }
-    misfit = sqrt(misfit);
     std::cout << "done!" << std::endl;
 }
 
@@ -115,4 +114,13 @@ void experiment::backwardAdjoint() {
 
     std::cout << "    Finished backward adjoint modeling of shots, elapsed time: " << secsElapsed << " seconds (wall)."
               << std::endl;
+}
+
+void experiment::loadShots(char *folder) {
+    // Write forward data from shots out to text files
+    for (auto &&shot : shots) {
+        std::cout << " -- Loading shot: " << shot.ishot << std::endl;
+        shot.loadShot(folder);
+        std::cout << "    Done! " << std::endl;
+    }
 }

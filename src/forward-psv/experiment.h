@@ -31,7 +31,7 @@ public:
     experiment(arma::imat _receivers, arma::imat _sources, arma::vec _sourceFunction);
 
     // Methods
-    void writeShots(arma::file_type type);
+    void writeShots(arma::file_type type, char *string);
 
     void forwardData();
 
@@ -42,6 +42,8 @@ public:
     void computeKernel();
 
     void backwardAdjoint();
+
+    void loadShots(char *string);
 };
 
 
