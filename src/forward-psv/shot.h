@@ -19,7 +19,7 @@ public:
     arma::mat seismogramSyn_uz;
     double dt;
     int nt;
-    int ishot;
+    arma::uword ishot;
     int snapshotInterval;
 
     arma::cube txxSnapshots;
@@ -36,10 +36,11 @@ public:
 
     // Constructor
     shot(arma::irowvec _source, arma::imat &_receivers, arma::vec &_sourceFunction, int _nt, double _dt,
-         model &_model, int ishot, int _snapshotInterval);
+         model &_model, arma::uword ishot, int _snapshotInterval);
 
     // Methods
-    void writeShot(arma::file_type type);
+    void writeShot(arma::file_type type, char folder[]);
+    void loadShot(char folder[]);
 
     void calculateAdjointSources();
 };
