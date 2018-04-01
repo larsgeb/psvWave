@@ -9,10 +9,10 @@
 void propagator::propagateForward(model &_currentModel, shot &_shot) {
 
     // Some standard output
-    std::cout << "    Stability number: " <<
-              sqrt(_currentModel.lm.max() * _currentModel.b_vx.max()) * _shot.dt *
-              sqrt(1.0 / (_currentModel.dx * _currentModel.dx) + 1.0 / (_currentModel.dz * _currentModel.dz))
-              << std::endl;
+    if (1 < sqrt(_currentModel.lm.max() * _currentModel.b_vx.max()) * _shot.dt *
+            sqrt(1.0 / (_currentModel.dx * _currentModel.dx) + 1.0 / (_currentModel.dz * _currentModel.dz))) {
+        throw std::invalid_argument("Warning! Numerical solution does not adhere to CFL-criterion");
+    }
 
     // Loading simulation parameters
     double dx = _currentModel.dx;
@@ -137,8 +137,8 @@ void propagator::propagateForward(model &_currentModel, shot &_shot) {
         for (arma::uword source = 0; source < _shot.source.n_rows; ++source) {
             int ix = _shot.source.row(source)[0] + _currentModel.np_boundary;
             int iz = _shot.source.row(source)[1];
-            vx(ix, iz) += 0.5 * _shot.sourceFunction[it] / (dx * dz);
-            vz(ix, iz) += 0.5 * _shot.sourceFunction[it] / (dx * dz);
+            vx(ix, iz) += 0.5 * _shot.dt * _shot.sourceFunction[it] * _currentModel.b_vx(ix, iz) / (dx * dz);
+            vz(ix, iz) += 0.5 * _shot.dt * _shot.sourceFunction[it] * _currentModel.b_vz(ix, iz) / (dx * dz);
         }
 
         // Print status bar
@@ -154,6 +154,13 @@ void propagator::propagateForward(model &_currentModel, shot &_shot) {
 
 void propagator::propagateAdjoint(model &_currentModel, shot &_shot, arma::mat &_denistyKernel,
                                   arma::mat &_muKernel, arma::mat &_lambdaKernel) {
+
+    // Some standard output
+    if (1 < sqrt(_currentModel.lm.max() * _currentModel.b_vx.max()) * _shot.dt *
+            sqrt(1.0 / (_currentModel.dx * _currentModel.dx) + 1.0 / (_currentModel.dz * _currentModel.dz))) {
+        throw std::invalid_argument("Warning! Numerical solution does not adhere to CFL-criterion");
+    }
+
     // Loading simulation parameters
     double dx = _currentModel.dx;
     const arma::sword nx = _currentModel.nx;
@@ -180,11 +187,28 @@ void propagator::propagateAdjoint(model &_currentModel, shot &_shot, arma::mat &
 
         // Compute correlation integral for the kernel at snapshots
         if (it % _shot.snapshotInterval == 0) {
+
+            arma::mat f1 = _shot.vxSnapshots.slice(it / _shot.snapshotInterval) %
+                           vx(_currentModel.interiorX, _currentModel.interiorZ);
+
+            arma::mat f2 = _shot.vzSnapshots.slice(it / _shot.snapshotInterval) %
+                           vz(_currentModel.interiorX, _currentModel.interiorZ);
+
+            // Linear interpolation
+            f1(arma::span(1, nx - 100 - 2), arma::span(1, nz - 50 - 2)) =
+                    0.5 *
+                    (f1(arma::span(0, nx - 100 - 3), arma::span(1, nz - 50 - 2))
+                    +
+                    f1(arma::span(2, nx - 100 - 1), arma::span(1, nz - 50 - 2)));
+
+            f2(arma::span(1, nx - 100 - 2), arma::span(1, nz - 50 - 2)) =
+                    0.5 *
+                    (f2(arma::span(1, nx - 100 - 2), arma::span(0, nz - 50 - 3))
+                     +
+                     f2(arma::span(1, nx - 100 - 2), arma::span(2, nz - 50 - 1)));
+
             _denistyKernel -=
-                    _shot.snapshotInterval * _shot.dt * (_shot.vxSnapshots.slice(it / _shot.snapshotInterval) %
-                                                         vx(_currentModel.interiorX, _currentModel.interiorZ) +
-                                                         _shot.vzSnapshots.slice(it / _shot.snapshotInterval) %
-                                                         vz(_currentModel.interiorX, _currentModel.interiorZ));
+                    _shot.snapshotInterval * _shot.dt * (f1 + f2);
 
             // Compute strain
             arma::mat exxAdj = (txx(_currentModel.interiorX, _currentModel.interiorZ) -
@@ -232,7 +256,7 @@ void propagator::propagateAdjoint(model &_currentModel, shot &_shot, arma::mat &
             for (int iz = 0; iz < nz; ++iz) {
                 if (ix > 1 and ix < nx - 2 and iz < nz - 2) {
                     txx(ix, iz) = taper(ix, iz) *
-                                  (txx(ix, iz) -
+                                  (txx(ix, iz) +
                                    _shot.dt *
                                    (_currentModel.lm(ix, iz) * (
                                            coeff1 * (vx(ix + 1, iz) - vx(ix, iz)) +
@@ -241,7 +265,7 @@ void propagator::propagateAdjoint(model &_currentModel, shot &_shot, arma::mat &
                                             coeff1 * (vz(ix, iz) - (iz > 0 ? vz(ix, iz - 1) : 0)) +
                                             coeff2 * ((iz > 1 ? vz(ix, iz - 2) : 0) - vz(ix, iz + 1))) / dz));
                     tzz(ix, iz) = taper(ix, iz) *
-                                  (tzz(ix, iz) -
+                                  (tzz(ix, iz) +
                                    _shot.dt *
                                    (_currentModel.la(ix, iz) * (
                                            coeff1 * (vx(ix + 1, iz) - vx(ix, iz)) +
@@ -250,7 +274,7 @@ void propagator::propagateAdjoint(model &_currentModel, shot &_shot, arma::mat &
                                             coeff1 * (vz(ix, iz) - (iz > 0 ? vz(ix, iz - 1) : 0)) +
                                             coeff2 * ((iz > 1 ? vz(ix, iz - 2) : 0) - vz(ix, iz + 1))) / dz));
                     txz(ix, iz) = taper(ix, iz) *
-                                  (txz(ix, iz) - _shot.dt * _currentModel.mu(ix, iz) * (
+                                  (txz(ix, iz) + _shot.dt * _currentModel.mu(ix, iz) * (
                                           (coeff1 * (vx(ix, iz + 1) - vx(ix, iz)) +
                                            coeff2 * ((iz > 0 ? vx(ix, iz - 1) : 0) - vx(ix, iz + 2))) / dz +
                                           (coeff1 * (vz(ix, iz) - vz(ix - 1, iz)) +
@@ -271,7 +295,7 @@ void propagator::propagateAdjoint(model &_currentModel, shot &_shot, arma::mat &
                     vx(ix, iz) =
                             taper(ix, iz) *
                             (vx(ix, iz)
-                             - _currentModel.b_vx(ix, iz) * _shot.dt * (
+                             + _currentModel.b_vx(ix, iz) * _shot.dt * (
                                     (coeff1 * (txx(ix, iz) - txx(ix - 1, iz)) +
                                      coeff2 * (txx(ix - 2, iz) - txx(ix + 1, iz))) / dx +
                                     (coeff1 * (txz(ix, iz) - (iz > 0 ? txz(ix, iz - 1) : 0)) +
@@ -280,7 +304,7 @@ void propagator::propagateAdjoint(model &_currentModel, shot &_shot, arma::mat &
                     vz(ix, iz) =
                             taper(ix, iz) *
                             (vz(ix, iz)
-                             - _currentModel.b_vz(ix, iz) * _shot.dt * (
+                             + _currentModel.b_vz(ix, iz) * _shot.dt * (
                                     (coeff1 * (txz(ix + 1, iz) - txz(ix, iz)) +
                                      coeff2 * (txz(ix - 1, iz) - txz(ix + 2, iz))) / dx +
                                     (coeff1 * (tzz(ix, iz + 1) - tzz(ix, iz)) +
@@ -295,8 +319,8 @@ void propagator::propagateAdjoint(model &_currentModel, shot &_shot, arma::mat &
         for (arma::uword receiver = 0; receiver < _shot.receivers.n_rows; ++receiver) {
             int ix = _shot.receivers.row(receiver)[0] + _currentModel.np_boundary;
             int iz = _shot.receivers.row(receiver)[1];
-            vx(ix, iz) += _shot.vxAdjointSource(receiver, it) / (dz * dx);
-            vz(ix, iz) += _shot.vzAdjointSource(receiver, it) / (dz * dx);
+            vx(ix, iz) += _shot.dt * _currentModel.b_vx(ix, iz) * _shot.vxAdjointSource(receiver, it) / (dz * dx);
+            vz(ix, iz) += _shot.dt * _currentModel.b_vz(ix, iz) * _shot.vzAdjointSource(receiver, it) / (dz * dx);
         }
         if (it % (_shot.nt / 50) == 0) {
             char message[1024];
