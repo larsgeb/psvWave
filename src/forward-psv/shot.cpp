@@ -42,12 +42,12 @@ void shot::calculateAdjointSources() {
     vzAdjointSource = seismogramSyn_uz - seismogramObs_uz;
 }
 
-void shot::loadShot(char *folder) {
+void shot::loadShot(std::string &_folder) {
     // Load observed data for shot i
     char filename[1024];
-    sprintf(filename, "%s/seismogram%i%s", folder, static_cast<int>(ishot), "_ux.bin");
+    sprintf(filename, "%s/seismogram%i%s", _folder.c_str(), static_cast<int>(ishot), "_ux.bin");
     seismogramObs_ux.load(filename);
-    sprintf(filename, "%s/seismogram%i%s", folder, static_cast<int>(ishot), "_uz.bin");
+    sprintf(filename, "%s/seismogram%i%s", _folder.c_str(), static_cast<int>(ishot), "_uz.bin");
     seismogramObs_uz.load(filename);
 }
 

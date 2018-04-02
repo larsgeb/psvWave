@@ -7,13 +7,15 @@
 #include "propagator.h"
 
 // Constructor
-experiment::experiment(arma::imat _receivers, arma::imat _sources, arma::vec _sourceFunction) {
+experiment::experiment(arma::imat _receivers, arma::imat _sources, arma::vec _sourceFunction, arma::uword hor,
+                       arma::uword ver) {
     // Create a seismic experiment
     receivers = std::move(_receivers);
     sources = std::move(_sources);
     sourceFunction = std::move(_sourceFunction);
     dt = 0.00025;
     nt = 3500;
+    currentModel = model(hor, ver);
 
     muKernel = arma::zeros(static_cast<const arma::uword>(currentModel.nx_domain),
                            static_cast<const arma::uword>(currentModel.nz_domain));
@@ -44,29 +46,29 @@ experiment::experiment(arma::imat _receivers, arma::imat _sources, arma::vec _so
 
 void experiment::forwardData() {
     // Calculate forward data from each shot
-    std::cout << "    Starting forward modeling of shots." << std::endl;
-    std::cout << "    Total of " << sources.n_rows << " shots." << std::endl;
+//    std::cout << "    Starting forward modeling of shots." << std::endl;
+//    std::cout << "    Total of " << sources.n_rows << " shots." << std::endl;
 
-    double startTime = omp_get_wtime();
+//    double startTime = omp_get_wtime();
     // Run forward simulation for all shots
     for (arma::uword iShot = 0; iShot < sources.n_rows; ++iShot) {
-        std::cout << " -- Running shot: " << iShot << std::endl;
+//        std::cout << " -- Running shot: " << iShot << std::endl;
         propagator::propagateForward(currentModel, shots[iShot]);
-        std::cout << "    Done! " << std::endl;
+//        std::cout << "    Done! " << std::endl;
     }
-    double stopTime = omp_get_wtime();
-    double secsElapsed = stopTime - startTime;
+//    double stopTime = omp_get_wtime();
+//    double secsElapsed = stopTime - startTime;
 
-    std::cout << "    Finished forward modeling of shots, elapsed time: " << secsElapsed << " seconds (wall)."
-              << std::endl;
+//    std::cout << "    Finished forward modeling of shots, elapsed time: " << secsElapsed << " seconds (wall)."
+//              << std::endl;
 }
 
 void experiment::writeShots(arma::file_type type, char folder[]) {
     // Write forward data from shots out to text files
     for (auto &&shot : shots) {
-        std::cout << " -- Exporting shot: " << shot.ishot << std::endl;
+//        std::cout << " -- Exporting shot: " << shot.ishot << std::endl;
         shot.writeShot(type, folder);
-        std::cout << "    Done! " << std::endl;
+//        std::cout << "    Done! " << std::endl;
     }
 }
 
@@ -79,48 +81,61 @@ void experiment::computeKernel() {
 }
 
 void experiment::calculateMisfit() {
-    std::cout << "Calculating misfit... ";
+//    std::cout << "Calculating misfit... ";
     misfit = 0;
     for (auto &&shot : shots) {
         misfit += 0.5 * shot.dt * arma::accu(arma::square(shot.seismogramObs_ux - shot.seismogramSyn_ux));
         misfit += 0.5 * shot.dt * arma::accu(arma::square(shot.seismogramObs_uz - shot.seismogramSyn_uz));
     }
-    std::cout << "done!" << std::endl;
+//    std::cout << "done!" << std::endl;
 }
 
 void experiment::calculateAdjointSources() {
-    std::cout << "Calculating adjoint sources... ";
+//    std::cout << "Calculating adjoint sources... ";
     for (auto &&shot : shots) {
         shot.calculateAdjointSources();
     }
-    std::cout << "done!" << std::endl;
+//    std::cout << "done!" << std::endl;
 }
 
 void experiment::backwardAdjoint() {
     // Calculate forward data from each shot
-    std::cout << "    Starting backward adjoint modeling of shots." << std::endl;
-    std::cout << "    Total of " << sources.n_rows << " shots." << std::endl;
+//    std::cout << "    Starting backward adjoint modeling of shots." << std::endl;
+//    std::cout << "    Total of " << sources.n_rows << " shots." << std::endl;
 
-    double startTime = omp_get_wtime(); // for timing multithread code
+//    double startTime = omp_get_wtime(); // for timing multithread code
     // Run forward simulation for all shots
     for (arma::uword iShot = 0; iShot < sources.n_rows; ++iShot) {
         // This directly modifies the forwardData fields
-        std::cout << " -- Running shot: " << iShot << std::endl;
+//        std::cout << " -- Running shot: " << iShot << std::endl;
         propagator::propagateAdjoint(currentModel, shots[iShot], densityKernel, muKernel, lambdaKernel);
-        std::cout << "    Done! " << std::endl;
+//        std::cout << "    Done! " << std::endl;
     }
-    double stopTime = omp_get_wtime();
-    double secsElapsed = stopTime - startTime;
+//    double stopTime = omp_get_wtime();
+//    double secsElapsed = stopTime - startTime;
 
-    std::cout << "    Finished backward adjoint modeling of shots, elapsed time: " << secsElapsed << " seconds (wall)."
-              << std::endl;
+//    std::cout << "    Finished backward adjoint modeling of shots, elapsed time: " << secsElapsed << " seconds (wall)."
+//              << std::endl;
 }
 
-void experiment::loadShots(char *folder) {
+void experiment::loadShots(std::string &_folder) {
     // Write forward data from shots out to text files
     for (auto &&shot : shots) {
-        std::cout << " -- Loading shot: " << shot.ishot << std::endl;
-        shot.loadShot(folder);
-        std::cout << "    Done! " << std::endl;
+//        std::cout << " -- Loading shot: " << shot.ishot << std::endl;
+        shot.loadShot(_folder);
+//        std::cout << "    Done! " << std::endl;
+    }
+}
+
+void experiment::consolidateKernel() {
+    dxdm = arma::zeros(currentModel.parametrizationI.n_rows * 3, 1);
+
+    for (arma::uword parameter = 0; parameter < currentModel.parametrizationI.n_rows; ++parameter) {
+        auto span1 = currentModel.parametrizationI(parameter, 0);
+        auto span2 = currentModel.parametrizationI(parameter, 1);
+
+        dxdm(parameter) = arma::accu(densityKernel(span1, span2));
+        dxdm(parameter + currentModel.parametrizationI.n_rows) = arma::accu(lambdaKernel(span1, span2));
+        dxdm(parameter + 2 * currentModel.parametrizationI.n_rows) = arma::accu(muKernel(span1, span2));
     }
 }

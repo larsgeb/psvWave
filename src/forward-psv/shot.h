@@ -40,7 +40,7 @@ public:
 
     // Methods
     void writeShot(arma::file_type type, char folder[]);
-    void loadShot(char folder[]);
+    void loadShot(std::string &_folder);
 
     void calculateAdjointSources();
 };

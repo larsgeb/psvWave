@@ -27,22 +27,19 @@ public:
     arma::mat b_vz = arma::mat(nx,nz);
 
     // Stuff about the parametrization
-    arma::field<arma::span> paramSpans = arma::field<arma::span>(8, 2);
-    arma::span topRowY = arma::span(0, nz_domain / 2 - 1);
-    arma::span bottomRowY = arma::span(nz_domain / 2, nz - 1);
-    arma::span col1X = arma::span(0, nx_domain / 4 - 1 + np_boundary);
-    arma::span col2X = arma::span((nx_domain / 4) * 1 + np_boundary, (nx_domain / 4) * 2 + np_boundary - 1);
-    arma::span col3X = arma::span((nx_domain / 4) * 2 + np_boundary, (nx_domain / 4) * 3 + np_boundary - 1);
-    arma::span col4X = arma::span((nx_domain / 4) * 3 + np_boundary, (nx_domain / 4) * 4 + np_boundary * 2 - 1);
+    arma::field<arma::span> parametrizationB = arma::field<arma::span>(8, 2);
+    arma::field<arma::span> parametrizationI = arma::field<arma::span>(8, 2);
 
     // Interior of domain (excluding boundary layer)
     arma::span interiorX = arma::span(np_boundary, np_boundary + nx_domain - 1);
     arma::span interiorZ = arma::span(0, nz_domain - 1);
 
     // Constructors
+    model(arma::uword hor, arma::uword ver);
+
     model();
 
-    void updateFields(arma::vec lambda, arma::vec mu, arma::vec lightness);
+    void updateFields(arma::vec &_density, arma::vec &_lambda, arma::vec &_mu);
 };
 
 

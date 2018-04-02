@@ -26,9 +26,11 @@ public:
     arma::mat muKernel;
     arma::mat densityKernel;
     arma::mat lambdaKernel;
+    arma::vec dxdm;
 
     // Constructors
-    experiment(arma::imat _receivers, arma::imat _sources, arma::vec _sourceFunction);
+    experiment(arma::imat _receivers, arma::imat _sources, arma::vec _sourceFunction, arma::uword hor,
+               arma::uword ver);
 
     // Methods
     void writeShots(arma::file_type type, char *string);
@@ -43,7 +45,9 @@ public:
 
     void backwardAdjoint();
 
-    void loadShots(char *string);
+    void loadShots(std::string &_string);
+
+    void consolidateKernel();
 };
 
 
