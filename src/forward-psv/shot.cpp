@@ -29,11 +29,11 @@ shot::shot(arma::irowvec _source, arma::imat &_receivers, arma::vec &_sourceFunc
     seismogramSyn_uz = arma::zeros(receivers.n_rows, static_cast<const arma::uword>(nt));
 }
 
-void shot::writeShot(arma::file_type type, char folder[]) {
+void shot::writeShot(arma::file_type type, std::string folder) {
     char filename[1024];
-    sprintf(filename, "%s/seismogram%i%s", folder, static_cast<int>(ishot), (type == arma::arma_binary ? "_ux.bin": "_ux.txt"));
+    sprintf(filename, "%s/seismogram%i%s", folder.c_str(), static_cast<int>(ishot), (type == arma::arma_binary ? "_ux.bin": "_ux.txt"));
     seismogramSyn_ux.save(filename, type);
-    sprintf(filename, "%s/seismogram%i%s", folder, static_cast<int>(ishot), (type == arma::arma_binary ? "_uz.bin": "_uz.txt"));
+    sprintf(filename, "%s/seismogram%i%s", folder.c_str(), static_cast<int>(ishot), (type == arma::arma_binary ? "_uz.bin": "_uz.txt"));
     seismogramSyn_uz.save(filename, type);
 }
 

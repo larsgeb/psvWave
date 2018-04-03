@@ -1,3 +1,7 @@
+//
+// Created by lars on 30/03/18.
+//
+
 #include <iostream>
 #include <armadillo>
 
@@ -6,10 +10,10 @@
 #include <cmath>
 
 // Own includes
-#include "forward-psv/experiment.h"
-#include "forward-psv/propagator.h"
-#include "forward-psv/shot.h"
-#include "misc/functions.h"
+#include "../forward-psv/experiment.h"
+#include "../forward-psv/propagator.h"
+#include "../forward-psv/shot.h"
+#include "../misc/functions.h"
 
 using namespace arma;
 using namespace std;
@@ -77,4 +81,50 @@ int main() {
     experiment_1.densityKernel.save("kernelTest/densityKernel.txt", raw_ascii);
     experiment_1.muKernel.save("kernelTest/muKernel.txt", raw_ascii);
     experiment_1.lambdaKernel.save("kernelTest/lambdaKernel.txt", raw_ascii);
+
+    // Create accumulators for finite difference test
+    stdvec misfits;
+    stdvec factors;
+    stdvec epsilons;
+
+    // Generate direction
+    mat dm = -Gaussian;
+
+    // Calculate predicted change
+    double dirGrad = dot(experiment_1.densityKernel, dm(span(50, nx - 1 - 50), span(0, nz - 50 - 1)));
+
+    // Check the kernel in multiple magnitudes
+    for (int exp = -16; exp <= 1; exp++) {
+
+        double epsilon = pow(10, exp);
+
+        mat rhoNew = rho;
+        mat lambdaNew = lambda;
+        mat muNew = mu;
+
+        rhoNew = rho + epsilon * dm;
+
+        experiment_1.currentModel.updateFields(rhoNew, lambdaNew, muNew);
+
+        try {
+            // Calculate misfit and gradient
+            experiment_1.forwardData();
+            experiment_1.calculateMisfit();
+            double misfit2 = experiment_1.misfit;
+
+            factors.emplace_back((misfit2 - misfit1) / (epsilon * dirGrad));
+            misfits.emplace_back(misfit2);
+            epsilons.emplace_back(epsilon);
+        } catch (const invalid_argument &e) {
+            cout << endl << "Terminating iterative increase.";
+            break;
+        }
+    }
+    cout << endl;
+    // Output using armadillo functions
+    (conv_to<colvec>::from(misfits)).save("kernelTest/misfits.txt", raw_ascii);
+    (conv_to<colvec>::from(epsilons)).save("kernelTest/epsilons.txt", raw_ascii);
+    (conv_to<colvec>::from(factors)).save("kernelTest/factors.txt", raw_ascii);
+
+    return 0;
 }

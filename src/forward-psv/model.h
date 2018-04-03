@@ -35,11 +35,9 @@ public:
     arma::span interiorZ = arma::span(0, nz_domain - 1);
 
     // Constructors
-    model(arma::uword hor, arma::uword ver);
-
     model();
 
-    void updateFields(arma::vec &_density, arma::vec &_lambda, arma::vec &_mu);
+    void updateFields(arma::mat &_density, arma::mat &_lambda, arma::mat &_mu);
 };
 
 

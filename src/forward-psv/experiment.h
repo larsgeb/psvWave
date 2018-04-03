@@ -29,11 +29,10 @@ public:
     arma::vec dxdm;
 
     // Constructors
-    experiment(arma::imat _receivers, arma::imat _sources, arma::vec _sourceFunction, arma::uword hor,
-               arma::uword ver);
+    experiment(arma::imat _receivers, arma::imat _sources, arma::vec _sourceFunction);
 
     // Methods
-    void writeShots(arma::file_type type, char *string);
+    void writeShots(arma::file_type type, std::string &_folder);
 
     void forwardData();
 
@@ -47,7 +46,6 @@ public:
 
     void loadShots(std::string &_string);
 
-    void consolidateKernel();
 };
 
 

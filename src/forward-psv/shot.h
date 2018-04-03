@@ -39,7 +39,7 @@ public:
          model &_model, arma::uword ishot, int _snapshotInterval);
 
     // Methods
-    void writeShot(arma::file_type type, char folder[]);
+    void writeShot(arma::file_type type, std::string folder);
     void loadShot(std::string &_folder);
 
     void calculateAdjointSources();

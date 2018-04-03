@@ -7,15 +7,13 @@
 #include "propagator.h"
 
 // Constructor
-experiment::experiment(arma::imat _receivers, arma::imat _sources, arma::vec _sourceFunction, arma::uword hor,
-                       arma::uword ver) {
+experiment::experiment(arma::imat _receivers, arma::imat _sources, arma::vec _sourceFunction) {
     // Create a seismic experiment
     receivers = std::move(_receivers);
     sources = std::move(_sources);
     sourceFunction = std::move(_sourceFunction);
     dt = 0.00025;
     nt = 3500;
-    currentModel = model(hor, ver);
 
     muKernel = arma::zeros(static_cast<const arma::uword>(currentModel.nx_domain),
                            static_cast<const arma::uword>(currentModel.nz_domain));
@@ -63,11 +61,11 @@ void experiment::forwardData() {
 //              << std::endl;
 }
 
-void experiment::writeShots(arma::file_type type, char folder[]) {
+void experiment::writeShots(arma::file_type type, std::string &_folder) {
     // Write forward data from shots out to text files
     for (auto &&shot : shots) {
 //        std::cout << " -- Exporting shot: " << shot.ishot << std::endl;
-        shot.writeShot(type, folder);
+        shot.writeShot(type, _folder);
 //        std::cout << "    Done! " << std::endl;
     }
 }
@@ -127,15 +125,3 @@ void experiment::loadShots(std::string &_folder) {
     }
 }
 
-void experiment::consolidateKernel() {
-    dxdm = arma::zeros(currentModel.parametrizationI.n_rows * 3, 1);
-
-    for (arma::uword parameter = 0; parameter < currentModel.parametrizationI.n_rows; ++parameter) {
-        auto span1 = currentModel.parametrizationI(parameter, 0);
-        auto span2 = currentModel.parametrizationI(parameter, 1);
-
-        dxdm(parameter) = arma::accu(densityKernel(span1, span2));
-        dxdm(parameter + currentModel.parametrizationI.n_rows) = arma::accu(lambdaKernel(span1, span2));
-        dxdm(parameter + 2 * currentModel.parametrizationI.n_rows) = arma::accu(muKernel(span1, span2));
-    }
-}

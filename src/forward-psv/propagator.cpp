@@ -12,7 +12,7 @@ void propagator::propagateForward(model &_currentModel, shot &_shot) {
     if (1 < sqrt(_currentModel.lm.max() * _currentModel.b_vx.max()) * _shot.dt *
             sqrt(1.0 / (_currentModel.dx * _currentModel.dx) + 1.0 / (_currentModel.dz * _currentModel.dz))) {
         std::cout << "Max speed: " << sqrt(_currentModel.lm.max() * _currentModel.b_vx.max()) << std::endl
-                << "Max La+2mu: " << _currentModel.lm.max();
+                  << "Max La+2mu: " << _currentModel.lm.max();
         throw std::invalid_argument("Warning! Numerical solution does not adhere to CFL-criterion");
     }
 
@@ -59,11 +59,13 @@ void propagator::propagateForward(model &_currentModel, shot &_shot) {
             int iz = _shot.receivers.row(receiver)[1];
 
             if (it == 0) {
-                _shot.seismogramSyn_ux(receiver, it) = _shot.dt * vx(ix, iz);
-                _shot.seismogramSyn_uz(receiver, it) = _shot.dt * vz(ix, iz);
+                _shot.seismogramSyn_ux(receiver, it) = _shot.dt * vx(ix, iz) / (dx * dz);
+                _shot.seismogramSyn_uz(receiver, it) = _shot.dt * vz(ix, iz) / (dx * dz);
             } else {
-                _shot.seismogramSyn_ux(receiver, it) = _shot.seismogramSyn_ux(receiver, it - 1) + _shot.dt * vx(ix, iz);
-                _shot.seismogramSyn_uz(receiver, it) = _shot.seismogramSyn_uz(receiver, it - 1) + _shot.dt * vz(ix, iz);
+                _shot.seismogramSyn_ux(receiver, it) =
+                        _shot.seismogramSyn_ux(receiver, it - 1) + _shot.dt * vx(ix, iz) / (dx * dz);
+                _shot.seismogramSyn_uz(receiver, it) =
+                        _shot.seismogramSyn_uz(receiver, it - 1) + _shot.dt * vz(ix, iz) / (dx * dz);
             }
 
         }
@@ -308,8 +310,8 @@ void propagator::propagateAdjoint(model &_currentModel, shot &_shot, arma::mat &
         for (arma::uword receiver = 0; receiver < _shot.receivers.n_rows; ++receiver) {
             int ix = _shot.receivers.row(receiver)[0] + _currentModel.np_boundary;
             int iz = _shot.receivers.row(receiver)[1];
-            vx(ix, iz) += _shot.dt * _currentModel.b_vx(ix, iz) * _shot.vxAdjointSource(receiver, it) / (dz * dx);
-            vz(ix, iz) += _shot.dt * _currentModel.b_vz(ix, iz) * _shot.vzAdjointSource(receiver, it) / (dz * dx);
+            vx(ix, iz) += _shot.dt * _currentModel.b_vx(ix, iz) * _shot.vxAdjointSource(receiver, it) / (dx * dz);
+            vz(ix, iz) += _shot.dt * _currentModel.b_vz(ix, iz) * _shot.vzAdjointSource(receiver, it) / (dx * dz);
         }
         if (it % (_shot.nt / 50) == 0) {
             char message[1024];
