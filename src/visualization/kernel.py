@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 
 # fig = plt.figure(figsize=(6, 3), dpi=400)
 
-densityKernel = np.transpose(np.loadtxt("densityKernel.txt"))
-lambdaKernel = np.transpose(np.loadtxt("lambdaKernel.txt"))
-muKernel = np.transpose(np.loadtxt("muKernel.txt"))
+densityKernel = np.transpose(np.loadtxt("experiment1/densityKernel.txt"))
+lambdaKernel = np.transpose(np.loadtxt("experiment1/lambdaKernel.txt"))
+muKernel = np.transpose(np.loadtxt("experiment1/muKernel.txt"))
 
 max1 = np.max(np.abs(densityKernel))/1
 max2 = np.max(np.abs(lambdaKernel))/1
