@@ -153,6 +153,8 @@ void propagator::propagateForward(model &_currentModel, shot &_shot) {
             std::cout << message << std::flush;
         }
     }
+
+    std::cout << std::endl;
 }
 
 
@@ -320,5 +322,6 @@ void propagator::propagateAdjoint(model &_currentModel, shot &_shot, arma::mat &
             std::cout << message << std::flush;
         }
     }
+    std::cout << std::endl;
 }
 

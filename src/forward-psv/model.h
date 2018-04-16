@@ -37,7 +37,14 @@ public:
     // Constructors
     model();
 
+    void updateInnerFields(arma::mat &_density, arma::mat &_lambda, arma::mat &_mu);
+
+private:
     void updateFields(arma::mat &_density, arma::mat &_lambda, arma::mat &_mu);
+
+    void extendFields(arma::mat &_outer, arma::mat &_inner);
+
+    void extendFields(arma::mat &_outer);
 };
 
 
