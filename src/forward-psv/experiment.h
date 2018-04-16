@@ -26,25 +26,28 @@ public:
     arma::mat muKernel;
     arma::mat densityKernel;
     arma::mat lambdaKernel;
-    arma::vec dxdm;
 
     // Constructors
     experiment(arma::imat _receivers, arma::imat _sources, arma::vec _sourceFunction);
+
+    experiment();
 
     // Methods
     void writeShots(arma::file_type type, std::string &_folder);
 
     void forwardData();
 
-    void calculateAdjointSources();
-
     void calculateMisfit();
 
     void computeKernel();
 
-    void backwardAdjoint();
-
     void loadShots(std::string &_string);
+
+private:
+
+    void calculateAdjointSources();
+
+    void backwardAdjoint();
 
 };
 

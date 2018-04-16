@@ -71,6 +71,9 @@ void experiment::writeShots(arma::file_type type, std::string &_folder) {
 }
 
 void experiment::computeKernel() {
+
+    calculateAdjointSources();
+
     muKernel = arma::zeros(currentModel.nx_domain, currentModel.nz_domain);
     densityKernel = arma::zeros(currentModel.nx_domain, currentModel.nz_domain);
     lambdaKernel = arma::zeros(currentModel.nx_domain, currentModel.nz_domain);
@@ -123,5 +126,23 @@ void experiment::loadShots(std::string &_folder) {
         shot.loadShot(_folder);
 //        std::cout << "    Done! " << std::endl;
     }
+}
+
+experiment::experiment() {
+    // Create a seismic experiment
+    receivers = arma::imat();
+    sources = arma::imat();
+    sourceFunction = arma::vec();
+    dt = 0.00025;
+    nt = 3500;
+
+    muKernel = arma::zeros(static_cast<const arma::uword>(currentModel.nx_domain),
+                           static_cast<const arma::uword>(currentModel.nz_domain));
+    densityKernel = arma::zeros(static_cast<const arma::uword>(currentModel.nx_domain),
+                                static_cast<const arma::uword>(currentModel.nz_domain));
+    lambdaKernel = arma::zeros(static_cast<const arma::uword>(currentModel.nx_domain),
+                               static_cast<const arma::uword>(currentModel.nz_domain));
+
+    shots = std::vector<shot>();
 }
 
