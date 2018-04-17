@@ -6,7 +6,7 @@
 #include <cmath>
 
 // Own includes
-#include "forward-psv/experiment.h"
+#include "forward-psv/fwiExperiment.h"
 #include "forward-psv/propagator.h"
 #include "forward-psv/shot.h"
 #include "misc/functions.h"

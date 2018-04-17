@@ -9,7 +9,7 @@
 #include "shot.h"
 #include "model.h"
 
-class experiment {
+class fwiExperiment {
 public:
     // Fields
     arma::imat receivers;
@@ -17,8 +17,9 @@ public:
     arma::vec sourceFunction;
     model currentModel;
     std::vector<shot> shots;
-    double dt;
-    int nt;
+    double samplingTime;
+    double samplingTimestep;
+    int samplingAmount;
 
     // FWI parameters
     int snapshotInterval = 10;
@@ -28,9 +29,10 @@ public:
     arma::mat lambdaKernel;
 
     // Constructors
-    experiment(arma::imat _receivers, arma::imat _sources, arma::vec _sourceFunction);
+    fwiExperiment(arma::imat _receivers, arma::imat _sources, arma::vec _sourceFunction, double samplingTime,
+                  double samplingTimestep, int samplingAmount);
 
-    experiment();
+    fwiExperiment();
 
     // Methods
     void writeShots(arma::file_type type, std::string &_folder);

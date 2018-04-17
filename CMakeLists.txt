@@ -16,10 +16,10 @@ set(CMAKE_CXX_FLAGS_DEBUG  "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Wshadow -Wno
 include_directories(../armadillo-code/include)
 
 add_executable(calculateKernel src/calculateKernel.cpp src/forward-psv/propagator.cpp src/forward-psv/propagator.h src/forward-psv/model.h
-        src/forward-psv/model.cpp src/forward-psv/experiment.h src/forward-psv/experiment.cpp src/forward-psv/shot.cpp
+        src/forward-psv/model.cpp src/forward-psv/fwiExperiment.h src/forward-psv/fwiExperiment.cpp src/forward-psv/shot.cpp
         src/forward-psv/shot.h src/misc/functions.cpp src/misc/functions.h)
 add_executable(fdTest src/tests/fdTest.cpp src/forward-psv/propagator.cpp src/forward-psv/propagator.h src/forward-psv/model.h
-        src/forward-psv/model.cpp src/forward-psv/experiment.h src/forward-psv/experiment.cpp src/forward-psv/shot.cpp
+        src/forward-psv/model.cpp src/forward-psv/fwiExperiment.h src/forward-psv/fwiExperiment.cpp src/forward-psv/shot.cpp
         src/forward-psv/shot.h src/misc/functions.cpp src/misc/functions.h)
 
 target_link_libraries(calculateKernel openblas)

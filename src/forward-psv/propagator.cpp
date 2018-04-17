@@ -4,41 +4,61 @@
 #include <armadillo>
 #include "model.h"
 #include "propagator.h"
-#include "experiment.h"
+#include "fwiExperiment.h"
+
+using namespace arma;
 
 void propagator::propagateForward(model &_currentModel, shot &_shot) {
-
-    // Some standard output
-    if (1 < sqrt(_currentModel.lm.max() * _currentModel.b_vx.max()) * _shot.dt *
-            sqrt(1.0 / (_currentModel.dx * _currentModel.dx) + 1.0 / (_currentModel.dz * _currentModel.dz))) {
-        std::cout << "Max speed: " << sqrt(_currentModel.lm.max() * _currentModel.b_vx.max()) << std::endl
-                  << "Max La+2mu: " << _currentModel.lm.max();
-        throw std::invalid_argument("Warning! Numerical solution does not adhere to CFL-criterion");
-    }
+    // Interpolate stf
+    vec stf;
+    vec t = linspace(0, _shot.samplingAmount * _shot.samplingTimestep, static_cast<const uword>(_shot.samplingAmount));
+    vec t_interp = linspace(0, _currentModel.nt * _currentModel.dt, static_cast<const uword>(_currentModel.nt));
+    interp1(t, _shot.sourceFunction, t_interp, stf, "*linear", 0);  // faster than "linear", monotonically increasing
 
     // Loading simulation parameters
     double dx = _currentModel.dx;
-    const arma::uword nx = _currentModel.nx;
+    const uword nx = _currentModel.nx;
     double dz = _currentModel.dz;
-    const arma::uword nz = _currentModel.nz;
+    const uword nz = _currentModel.nz;
 
     // Create dynamic fields
-    arma::mat vx = arma::zeros(_currentModel.nx, _currentModel.nz);
-    arma::mat vz = arma::zeros(_currentModel.nx, _currentModel.nz);
-    arma::mat txx = arma::zeros(_currentModel.nx, _currentModel.nz);
-    arma::mat tzz = arma::zeros(_currentModel.nx, _currentModel.nz);
-    arma::mat txz = arma::zeros(_currentModel.nx, _currentModel.nz);
+    mat vx = zeros(_currentModel.nx, _currentModel.nz);
+    mat vz = zeros(_currentModel.nx, _currentModel.nz);
+    mat txx = zeros(_currentModel.nx, _currentModel.nz);
+    mat tzz = zeros(_currentModel.nx, _currentModel.nz);
+    mat txz = zeros(_currentModel.nx, _currentModel.nz);
 
     // Create taper matrix
-    arma::mat taper = _currentModel.np_boundary * arma::ones(nx, nz);
-    for (arma::uword iTaper = 0; iTaper < _currentModel.np_boundary; ++iTaper) {
+    mat taper = _currentModel.np_boundary * ones(nx, nz);
+    for (uword iTaper = 0; iTaper < _currentModel.np_boundary; ++iTaper) {
         taper.submat(iTaper, 0, nx - iTaper - 1, nz - iTaper - 1) =
-                1 + iTaper * arma::ones(nx - 2 * iTaper, nz - iTaper);
+                1 + iTaper * ones(nx - 2 * iTaper, nz - iTaper);
     }
-    taper = arma::exp(-arma::square(_currentModel.np_factor * (_currentModel.np_boundary - taper)));
+    taper = exp(-square(_currentModel.np_factor * (_currentModel.np_boundary - taper)));
+
+    // Create cubes for snapshots (size changes with nt)
+    _shot.txxSnapshots = cube(_currentModel.nx_domain, _currentModel.nz_domain,
+                              static_cast<const uword>(_currentModel.nt / _shot.snapshotInterval));
+    _shot.tzzSnapshots = cube(_currentModel.nx_domain, _currentModel.nz_domain,
+                              static_cast<const uword>(_currentModel.nt / _shot.snapshotInterval));
+    _shot.txzSnapshots = cube(_currentModel.nx_domain, _currentModel.nz_domain,
+                              static_cast<const uword>(_currentModel.nt / _shot.snapshotInterval));
+    _shot.vxSnapshots = cube(_currentModel.nx_domain, _currentModel.nz_domain,
+                             static_cast<const uword>(_currentModel.nt / _shot.snapshotInterval));
+    _shot.vzSnapshots = cube(_currentModel.nx_domain, _currentModel.nz_domain,
+                             static_cast<const uword>(_currentModel.nt / _shot.snapshotInterval));
+
+    // Create synthetic seismogram matrices (size changes with nt)
+    _shot.seismogramSyn_ux = zeros(_shot.receivers.n_rows, static_cast<const uword>(_currentModel.nt));
+    _shot.seismogramSyn_uz = zeros(_shot.receivers.n_rows, static_cast<const uword>(_currentModel.nt));
+
+    // Rewrite synthetic parameters in shot for interpolation in misfit calculation
+    _shot.samplingTimestepSyn = _currentModel.dt;
+    _shot.samplingAmountSyn = _currentModel.nt;
 
     // Time marching through all time levels
-    for (int it = 0; it < _shot.nt; ++it) {
+    for (int it = 0; it < _currentModel.nt; ++it) {
+
         // Take snapshot of fields
         if (it % _shot.snapshotInterval == 0) {
             auto a = vx(_currentModel.interiorX, _currentModel.interiorZ);
@@ -54,31 +74,31 @@ void propagator::propagateForward(model &_currentModel, shot &_shot) {
 
         // Record wavefield at receivers
 #pragma omp parallel for collapse(1)
-        for (arma::uword receiver = 0; receiver < _shot.receivers.n_rows; ++receiver) {
+        for (uword receiver = 0; receiver < _shot.receivers.n_rows; ++receiver) {
             int ix = _shot.receivers.row(receiver)[0] + _currentModel.np_boundary;
             int iz = _shot.receivers.row(receiver)[1];
 
             if (it == 0) {
-                _shot.seismogramSyn_ux(receiver, it) = _shot.dt * vx(ix, iz) / (dx * dz);
-                _shot.seismogramSyn_uz(receiver, it) = _shot.dt * vz(ix, iz) / (dx * dz);
+                _shot.seismogramSyn_ux(receiver, it) = _currentModel.dt * vx(ix, iz) / (dx * dz);
+                _shot.seismogramSyn_uz(receiver, it) = _currentModel.dt * vz(ix, iz) / (dx * dz);
             } else {
                 _shot.seismogramSyn_ux(receiver, it) =
-                        _shot.seismogramSyn_ux(receiver, it - 1) + _shot.dt * vx(ix, iz) / (dx * dz);
+                        _shot.seismogramSyn_ux(receiver, it - 1) + _currentModel.dt * vx(ix, iz) / (dx * dz);
                 _shot.seismogramSyn_uz(receiver, it) =
-                        _shot.seismogramSyn_uz(receiver, it - 1) + _shot.dt * vz(ix, iz) / (dx * dz);
+                        _shot.seismogramSyn_uz(receiver, it - 1) + _currentModel.dt * vz(ix, iz) / (dx * dz);
             }
-
         }
 
-        // After this point is only integration, which doesn't have to be done at the last time level
+        // After this point is only integration, which doesn't have to be done at the last time level // TODO BREAK
+
         // Time integrate stress
 #pragma omp parallel for collapse(1)
-        for (arma::uword ix = 0; ix < nx; ++ix) {
-            for (arma::uword iz = 0; iz < nz; ++iz) {
+        for (uword ix = 0; ix < nx; ++ix) {
+            for (uword iz = 0; iz < nz; ++iz) {
                 if (ix > 1 and ix < nx - 2 and iz < nz - 2) {
                     txx(ix, iz) = taper(ix, iz) *
                                   (txx(ix, iz) +
-                                   _shot.dt *
+                                   _currentModel.dt *
                                    (_currentModel.lm(ix, iz) * (
                                            coeff1 * (vx(ix + 1, iz) - vx(ix, iz)) +
                                            coeff2 * (vx(ix - 1, iz) - vx(ix + 2, iz))) / dx +
@@ -87,7 +107,7 @@ void propagator::propagateForward(model &_currentModel, shot &_shot) {
                                             coeff2 * ((iz > 1 ? vz(ix, iz - 2) : 0) - vz(ix, iz + 1))) / dz));
                     tzz(ix, iz) = taper(ix, iz) *
                                   (tzz(ix, iz) +
-                                   _shot.dt *
+                                   _currentModel.dt *
                                    (_currentModel.la(ix, iz) * (
                                            coeff1 * (vx(ix + 1, iz) - vx(ix, iz)) +
                                            coeff2 * (vx(ix - 1, iz) - vx(ix + 2, iz))) / dx +
@@ -95,7 +115,7 @@ void propagator::propagateForward(model &_currentModel, shot &_shot) {
                                             coeff1 * (vz(ix, iz) - (iz > 0 ? vz(ix, iz - 1) : 0)) +
                                             coeff2 * ((iz > 1 ? vz(ix, iz - 2) : 0) - vz(ix, iz + 1))) / dz));
                     txz(ix, iz) = taper(ix, iz) *
-                                  (txz(ix, iz) + _shot.dt * _currentModel.mu(ix, iz) * (
+                                  (txz(ix, iz) + _currentModel.dt * _currentModel.mu(ix, iz) * (
                                           (coeff1 * (vx(ix, iz + 1) - vx(ix, iz)) +
                                            coeff2 * ((iz > 0 ? vx(ix, iz - 1) : 0) - vx(ix, iz + 2))) / dz +
                                           (coeff1 * (vz(ix, iz) - vz(ix - 1, iz)) +
@@ -110,13 +130,13 @@ void propagator::propagateForward(model &_currentModel, shot &_shot) {
 
         // Time integrate velocity
 #pragma omp parallel for collapse(1)
-        for (arma::uword ix = 0; ix < nx; ++ix) {
-            for (arma::uword iz = 0; iz < nz; ++iz) {
+        for (uword ix = 0; ix < nx; ++ix) {
+            for (uword iz = 0; iz < nz; ++iz) {
                 if (iz < nz - 2 and ix < nx - 2 and ix > 1) {
                     vx(ix, iz) =
                             taper(ix, iz) *
                             (vx(ix, iz)
-                             + _currentModel.b_vx(ix, iz) * _shot.dt * (
+                             + _currentModel.b_vx(ix, iz) * _currentModel.dt * (
                                     (coeff1 * (txx(ix, iz) - txx(ix - 1, iz)) +
                                      coeff2 * (txx(ix - 2, iz) - txx(ix + 1, iz))) / dx +
                                     (coeff1 * (txz(ix, iz) - (iz > 0 ? txz(ix, iz - 1) : 0)) +
@@ -125,7 +145,7 @@ void propagator::propagateForward(model &_currentModel, shot &_shot) {
                     vz(ix, iz) =
                             taper(ix, iz) *
                             (vz(ix, iz)
-                             + _currentModel.b_vz(ix, iz) * _shot.dt * (
+                             + _currentModel.b_vz(ix, iz) * _currentModel.dt * (
                                     (coeff1 * (txz(ix + 1, iz) - txz(ix, iz)) +
                                      coeff2 * (txz(ix - 1, iz) - txz(ix + 2, iz))) / dx +
                                     (coeff1 * (tzz(ix, iz + 1) - tzz(ix, iz)) +
@@ -138,108 +158,108 @@ void propagator::propagateForward(model &_currentModel, shot &_shot) {
         }
 
         // Inject explosive source
-        for (arma::uword source = 0; source < _shot.source.n_rows; ++source) {
+        for (uword source = 0; source < _shot.source.n_rows; ++source) {
             int ix = _shot.source.row(source)[0] + _currentModel.np_boundary;
             int iz = _shot.source.row(source)[1];
-            vx(ix, iz) += 0.5 * _shot.dt * _shot.sourceFunction[it] * _currentModel.b_vx(ix, iz) / (dx * dz);
-            vz(ix, iz) += 0.5 * _shot.dt * _shot.sourceFunction[it] * _currentModel.b_vz(ix, iz) / (dx * dz);
+            vx(ix, iz) +=
+                    0.5 * _currentModel.dt * stf[it] * _currentModel.b_vx(ix, iz) / (dx * dz);
+            vz(ix, iz) +=
+                    0.5 * _currentModel.dt * stf[it] * _currentModel.b_vz(ix, iz) / (dx * dz);
         }
 
         // Print status bar
-        if (it % (_shot.nt / 50) == 0) {
+        if (it % (_currentModel.nt / 50) == 0) {
             char message[1024];
-            sprintf(message, "\r \r    %i%%",
-                    static_cast<int>(static_cast<double>(it) * 100.0 / static_cast<double>(_shot.nt)));
+            sprintf(message, "\r \r    %i%%", static_cast<int>(static_cast<double>(it) * 100.0 / static_cast<double>(_currentModel.nt)));
             std::cout << message << std::flush;
         }
     }
-
+    char message[1024];
+    sprintf(message, "\r \r    %i%%", 100);
+    std::cout << message << std::flush;
     std::cout << std::endl;
+
+    _shot.interpolateSynthetics();
 }
 
 
-void propagator::propagateAdjoint(model &_currentModel, shot &_shot, arma::mat &_denistyKernel,
-                                  arma::mat &_muKernel, arma::mat &_lambdaKernel) {
-
-    // Some standard output
-    if (1 < sqrt(_currentModel.lm.max() * _currentModel.b_vx.max()) * _shot.dt *
-            sqrt(1.0 / (_currentModel.dx * _currentModel.dx) + 1.0 / (_currentModel.dz * _currentModel.dz))) {
-        throw std::invalid_argument("Warning! Numerical solution does not adhere to CFL-criterion");
-    }
+void propagator::propagateAdjoint(model &_currentModel, shot &_shot, mat &_denistyKernel, mat &_muKernel,
+                                  mat &_lambdaKernel) {
 
     // Loading simulation parameters
     double dx = _currentModel.dx;
-    const arma::sword nx = _currentModel.nx;
+    const sword nx = _currentModel.nx;
     double dz = _currentModel.dz;
-    const arma::sword nz = _currentModel.nz;
+    const sword nz = _currentModel.nz;
 
     // Create dynamic fields
-    arma::mat vx = arma::zeros(_currentModel.nx, _currentModel.nz);
-    arma::mat vz = arma::zeros(_currentModel.nx, _currentModel.nz);
-    arma::mat txx = arma::zeros(_currentModel.nx, _currentModel.nz);
-    arma::mat tzz = arma::zeros(_currentModel.nx, _currentModel.nz);
-    arma::mat txz = arma::zeros(_currentModel.nx, _currentModel.nz);
+    mat vx = zeros(_currentModel.nx, _currentModel.nz);
+    mat vz = zeros(_currentModel.nx, _currentModel.nz);
+    mat txx = zeros(_currentModel.nx, _currentModel.nz);
+    mat tzz = zeros(_currentModel.nx, _currentModel.nz);
+    mat txz = zeros(_currentModel.nx, _currentModel.nz);
 
     // Create taper matrix
-    arma::mat taper = _currentModel.np_boundary * arma::ones(nx, nz);
-    for (arma::uword iTaper = 0; iTaper < _currentModel.np_boundary; ++iTaper) {
+    mat taper = _currentModel.np_boundary * ones(nx, nz);
+    for (uword iTaper = 0; iTaper < _currentModel.np_boundary; ++iTaper) {
         taper.submat(iTaper, 0, nx - iTaper - 1, nz - iTaper - 1) =
-                1 + iTaper * arma::ones(nx - 2 * iTaper, nz - iTaper);
+                1 + iTaper * ones(nx - 2 * iTaper, nz - iTaper);
     }
-    taper = arma::exp(-arma::square(_currentModel.np_factor * (_currentModel.np_boundary - taper)));
+    taper = exp(-square(_currentModel.np_factor * (_currentModel.np_boundary - taper)));
 
     // Time marching through all time levels
-    for (int it = _shot.nt - 1; it >= 0; --it) {
+    for (int it = _currentModel.nt - 1; it >= 0; --it) {
 
         // Compute correlation integral for the kernel at snapshots
         if (it % _shot.snapshotInterval == 0) {
 
-            arma::mat f1 = _shot.vxSnapshots.slice(it / _shot.snapshotInterval) %
-                           vx(_currentModel.interiorX, _currentModel.interiorZ);
+            mat f1 = _shot.vxSnapshots.slice(it / _shot.snapshotInterval) %
+                     vx(_currentModel.interiorX, _currentModel.interiorZ);
 
-            arma::mat f2 = _shot.vzSnapshots.slice(it / _shot.snapshotInterval) %
-                           vz(_currentModel.interiorX, _currentModel.interiorZ);
+            mat f2 = _shot.vzSnapshots.slice(it / _shot.snapshotInterval) %
+                     vz(_currentModel.interiorX, _currentModel.interiorZ);
 
             _denistyKernel -=
-                    _shot.snapshotInterval * _shot.dt * (f1 + f2);
+                    _shot.snapshotInterval * _currentModel.dt * (f1 + f2);
 
             // Compute strain
-            arma::mat exxAdj = (txx(_currentModel.interiorX, _currentModel.interiorZ) -
-                                (tzz(_currentModel.interiorX, _currentModel.interiorZ) %
-                                 _currentModel.la(_currentModel.interiorX, _currentModel.interiorZ)) /
-                                _currentModel.lm(_currentModel.interiorX, _currentModel.interiorZ)) /
-                               (_currentModel.lm(_currentModel.interiorX, _currentModel.interiorZ) -
-                                (arma::square(_currentModel.la(_currentModel.interiorX, _currentModel.interiorZ)) /
-                                 (_currentModel.lm(_currentModel.interiorX, _currentModel.interiorZ))));
-            arma::mat ezzAdj = (tzz(_currentModel.interiorX, _currentModel.interiorZ) -
-                                (txx(_currentModel.interiorX, _currentModel.interiorZ) %
-                                 _currentModel.la(_currentModel.interiorX, _currentModel.interiorZ)) /
-                                _currentModel.lm(_currentModel.interiorX, _currentModel.interiorZ)) /
-                               (_currentModel.lm(_currentModel.interiorX, _currentModel.interiorZ) -
-                                (arma::square(_currentModel.la(_currentModel.interiorX, _currentModel.interiorZ)) /
-                                 (_currentModel.lm(_currentModel.interiorX, _currentModel.interiorZ))));
-            arma::mat exzAdj = txz(_currentModel.interiorX, _currentModel.interiorZ) /
-                               (2 * _currentModel.mu(_currentModel.interiorX, _currentModel.interiorZ));
+            mat exxAdj = (txx(_currentModel.interiorX, _currentModel.interiorZ) -
+                          (tzz(_currentModel.interiorX, _currentModel.interiorZ) %
+                           _currentModel.la(_currentModel.interiorX, _currentModel.interiorZ)) /
+                          _currentModel.lm(_currentModel.interiorX, _currentModel.interiorZ)) /
+                         (_currentModel.lm(_currentModel.interiorX, _currentModel.interiorZ) -
+                          (square(_currentModel.la(_currentModel.interiorX, _currentModel.interiorZ)) /
+                           (_currentModel.lm(_currentModel.interiorX, _currentModel.interiorZ))));
+            mat ezzAdj = (tzz(_currentModel.interiorX, _currentModel.interiorZ) -
+                          (txx(_currentModel.interiorX, _currentModel.interiorZ) %
+                           _currentModel.la(_currentModel.interiorX, _currentModel.interiorZ)) /
+                          _currentModel.lm(_currentModel.interiorX, _currentModel.interiorZ)) /
+                         (_currentModel.lm(_currentModel.interiorX, _currentModel.interiorZ) -
+                          (square(_currentModel.la(_currentModel.interiorX, _currentModel.interiorZ)) /
+                           (_currentModel.lm(_currentModel.interiorX, _currentModel.interiorZ))));
+            mat exzAdj = txz(_currentModel.interiorX, _currentModel.interiorZ) /
+                         (2 * _currentModel.mu(_currentModel.interiorX, _currentModel.interiorZ));
 
-            arma::mat exx = (_shot.txxSnapshots.slice(it / _shot.snapshotInterval) -
-                             (_shot.tzzSnapshots.slice(it / _shot.snapshotInterval) %
-                              _currentModel.la(_currentModel.interiorX, _currentModel.interiorZ)) /
-                             _currentModel.lm(_currentModel.interiorX, _currentModel.interiorZ)) /
-                            (_currentModel.lm(_currentModel.interiorX, _currentModel.interiorZ) -
-                             (arma::square(_currentModel.la(_currentModel.interiorX, _currentModel.interiorZ)) /
-                              (_currentModel.lm(_currentModel.interiorX, _currentModel.interiorZ))));
-            arma::mat ezz = (_shot.tzzSnapshots.slice(it / _shot.snapshotInterval) -
-                             (_shot.txxSnapshots.slice(it / _shot.snapshotInterval) %
-                              _currentModel.la(_currentModel.interiorX, _currentModel.interiorZ)) /
-                             _currentModel.lm(_currentModel.interiorX, _currentModel.interiorZ)) /
-                            (_currentModel.lm(_currentModel.interiorX, _currentModel.interiorZ) -
-                             (arma::square(_currentModel.la(_currentModel.interiorX, _currentModel.interiorZ)) /
-                              (_currentModel.lm(_currentModel.interiorX, _currentModel.interiorZ))));
-            arma::mat exz = _shot.txzSnapshots.slice(it / _shot.snapshotInterval) /
-                            (2 * _currentModel.mu(_currentModel.interiorX, _currentModel.interiorZ));
+            mat exx = (_shot.txxSnapshots.slice(it / _shot.snapshotInterval) -
+                       (_shot.tzzSnapshots.slice(it / _shot.snapshotInterval) %
+                        _currentModel.la(_currentModel.interiorX, _currentModel.interiorZ)) /
+                       _currentModel.lm(_currentModel.interiorX, _currentModel.interiorZ)) /
+                      (_currentModel.lm(_currentModel.interiorX, _currentModel.interiorZ) -
+                       (square(_currentModel.la(_currentModel.interiorX, _currentModel.interiorZ)) /
+                        (_currentModel.lm(_currentModel.interiorX, _currentModel.interiorZ))));
+            mat ezz = (_shot.tzzSnapshots.slice(it / _shot.snapshotInterval) -
+                       (_shot.txxSnapshots.slice(it / _shot.snapshotInterval) %
+                        _currentModel.la(_currentModel.interiorX, _currentModel.interiorZ)) /
+                       _currentModel.lm(_currentModel.interiorX, _currentModel.interiorZ)) /
+                      (_currentModel.lm(_currentModel.interiorX, _currentModel.interiorZ) -
+                       (square(_currentModel.la(_currentModel.interiorX, _currentModel.interiorZ)) /
+                        (_currentModel.lm(_currentModel.interiorX, _currentModel.interiorZ))));
+            mat exz = _shot.txzSnapshots.slice(it / _shot.snapshotInterval) /
+                      (2 * _currentModel.mu(_currentModel.interiorX, _currentModel.interiorZ));
 
-            _lambdaKernel += _shot.snapshotInterval * _shot.dt * ((exx + ezz) % (exxAdj + ezzAdj));
-            _muKernel += _shot.snapshotInterval * _shot.dt * 2 * ((exxAdj % exx) + (ezzAdj % ezz) + 2 * (exzAdj % exz));
+            _lambdaKernel += _shot.snapshotInterval * _currentModel.dt * ((exx + ezz) % (exxAdj + ezzAdj));
+            _muKernel += _shot.snapshotInterval * _currentModel.dt * 2 *
+                         ((exxAdj % exx) + (ezzAdj % ezz) + 2 * (exzAdj % exz));
         }
 
         // After this point is only integration, which doesn't have to be done at the last time level
@@ -250,7 +270,7 @@ void propagator::propagateAdjoint(model &_currentModel, shot &_shot, arma::mat &
                 if (ix > 1 and ix < nx - 2 and iz < nz - 2) {
                     txx(ix, iz) = taper(ix, iz) *
                                   (txx(ix, iz) -
-                                   _shot.dt *
+                                   _currentModel.dt *
                                    (_currentModel.lm(ix, iz) * (
                                            coeff1 * (vx(ix + 1, iz) - vx(ix, iz)) +
                                            coeff2 * (vx(ix - 1, iz) - vx(ix + 2, iz))) / dx +
@@ -259,7 +279,7 @@ void propagator::propagateAdjoint(model &_currentModel, shot &_shot, arma::mat &
                                             coeff2 * ((iz > 1 ? vz(ix, iz - 2) : 0) - vz(ix, iz + 1))) / dz));
                     tzz(ix, iz) = taper(ix, iz) *
                                   (tzz(ix, iz) -
-                                   _shot.dt *
+                                   _currentModel.dt *
                                    (_currentModel.la(ix, iz) * (
                                            coeff1 * (vx(ix + 1, iz) - vx(ix, iz)) +
                                            coeff2 * (vx(ix - 1, iz) - vx(ix + 2, iz))) / dx +
@@ -267,7 +287,7 @@ void propagator::propagateAdjoint(model &_currentModel, shot &_shot, arma::mat &
                                             coeff1 * (vz(ix, iz) - (iz > 0 ? vz(ix, iz - 1) : 0)) +
                                             coeff2 * ((iz > 1 ? vz(ix, iz - 2) : 0) - vz(ix, iz + 1))) / dz));
                     txz(ix, iz) = taper(ix, iz) *
-                                  (txz(ix, iz) - _shot.dt * _currentModel.mu(ix, iz) * (
+                                  (txz(ix, iz) - _currentModel.dt * _currentModel.mu(ix, iz) * (
                                           (coeff1 * (vx(ix, iz + 1) - vx(ix, iz)) +
                                            coeff2 * ((iz > 0 ? vx(ix, iz - 1) : 0) - vx(ix, iz + 2))) / dz +
                                           (coeff1 * (vz(ix, iz) - vz(ix - 1, iz)) +
@@ -288,7 +308,7 @@ void propagator::propagateAdjoint(model &_currentModel, shot &_shot, arma::mat &
                     vx(ix, iz) =
                             taper(ix, iz) *
                             (vx(ix, iz)
-                             - _currentModel.b_vx(ix, iz) * _shot.dt * (
+                             - _currentModel.b_vx(ix, iz) * _currentModel.dt * (
                                     (coeff1 * (txx(ix, iz) - txx(ix - 1, iz)) +
                                      coeff2 * (txx(ix - 2, iz) - txx(ix + 1, iz))) / dx +
                                     (coeff1 * (txz(ix, iz) - (iz > 0 ? txz(ix, iz - 1) : 0)) +
@@ -297,7 +317,7 @@ void propagator::propagateAdjoint(model &_currentModel, shot &_shot, arma::mat &
                     vz(ix, iz) =
                             taper(ix, iz) *
                             (vz(ix, iz)
-                             - _currentModel.b_vz(ix, iz) * _shot.dt * (
+                             - _currentModel.b_vz(ix, iz) * _currentModel.dt * (
                                     (coeff1 * (txz(ix + 1, iz) - txz(ix, iz)) +
                                      coeff2 * (txz(ix - 1, iz) - txz(ix + 2, iz))) / dx +
                                     (coeff1 * (tzz(ix, iz + 1) - tzz(ix, iz)) +
@@ -309,16 +329,18 @@ void propagator::propagateAdjoint(model &_currentModel, shot &_shot, arma::mat &
             }
         }
         // Inject adjoint sources
-        for (arma::uword receiver = 0; receiver < _shot.receivers.n_rows; ++receiver) {
+        for (uword receiver = 0; receiver < _shot.receivers.n_rows; ++receiver) {
             int ix = _shot.receivers.row(receiver)[0] + _currentModel.np_boundary;
             int iz = _shot.receivers.row(receiver)[1];
-            vx(ix, iz) += _shot.dt * _currentModel.b_vx(ix, iz) * _shot.vxAdjointSource(receiver, it) / (dx * dz);
-            vz(ix, iz) += _shot.dt * _currentModel.b_vz(ix, iz) * _shot.vzAdjointSource(receiver, it) / (dx * dz);
+            vx(ix, iz) += _currentModel.dt * _currentModel.b_vx(ix, iz) * _shot.vxAdjointSource(receiver, it) /
+                          (dx * dz);
+            vz(ix, iz) += _currentModel.dt * _currentModel.b_vz(ix, iz) * _shot.vzAdjointSource(receiver, it) /
+                          (dx * dz);
         }
-        if (it % (_shot.nt / 50) == 0) {
+        if (it % (_currentModel.nt / 50) == 0) {
             char message[1024];
-            sprintf(message, "\r \r    %i%%",
-                    static_cast<int>(static_cast<double>(it) * 100.0 / static_cast<double>(_shot.nt)));
+            sprintf(message, "\r \r    %i%% ",
+                    static_cast<int>(static_cast<double>(it) * 100.0 / static_cast<double>(_currentModel.nt)));
             std::cout << message << std::flush;
         }
     }

@@ -39,6 +39,22 @@ void model::updateInnerFields(mat &_density, mat &_lambda, mat &_mu) {
     extendFields(mu);
 
     lm = la + 2 * mu;
+
+    setTimestepAuto(targetCourant);
+}
+
+void model::setTimestepAuto(double _targetCourant) {
+    dt = _targetCourant * dx / (static_cast<double>(sqrt(lm.max() * b_vx.max())) * static_cast<double>(sqrt(2.0)));
+    nt = static_cast<int>(ceil(samplingTime / dt));
+}
+
+void model::setTimestep(double _dt) {
+    dt = _dt;
+    nt = static_cast<int>(ceil(samplingTime / dt));
+
+    if((dt * (static_cast<double>(sqrt(lm.max() * b_vx.max())) * static_cast<double>(sqrt(2.0))) / dx) >= 1){
+        std::cout << "Courant criterion is NOT met!" << std::endl;
+    }
 }
 
 void model::extendFields(mat &_outer, mat &_inner) {

@@ -18,18 +18,17 @@ public:
     const double np_factor = 0.0075;
     const arma::uword nx = nx_domain + 2 * np_boundary;
     const arma::uword nz = nz_domain + np_boundary;
+    double dt;
+    int nt;
+    double samplingTime;
+    double targetCourant = 0.5;
 
-    // Initialize static fields
-    arma::mat la = arma::mat(nx,nz);
-    arma::mat mu = arma::mat(nx,nz);
-    arma::mat lm = arma::mat(nx,nz);
-    arma::mat b_vx = arma::mat(nx,nz);
-    arma::mat b_vz = arma::mat(nx,nz);
-
-    // Stuff about the parametrization
-    arma::field<arma::span> parametrizationB = arma::field<arma::span>(8, 2);
-    arma::field<arma::span> parametrizationI = arma::field<arma::span>(8, 2);
-
+    // Static simulation fields
+    arma::mat la = arma::mat(nx, nz);
+    arma::mat mu = arma::mat(nx, nz);
+    arma::mat lm = arma::mat(nx, nz);
+    arma::mat b_vx = arma::mat(nx, nz);
+    arma::mat b_vz = arma::mat(nx, nz);
     // Interior of domain (excluding boundary layer)
     arma::span interiorX = arma::span(np_boundary, np_boundary + nx_domain - 1);
     arma::span interiorZ = arma::span(0, nz_domain - 1);
@@ -37,9 +36,15 @@ public:
     // Constructors
     model();
 
+    // Public methods
     void updateInnerFields(arma::mat &_density, arma::mat &_lambda, arma::mat &_mu);
 
+    void setTimestepAuto(double _targetCourant);
+
+    void setTimestep(double _dt);
+
 private:
+
     void updateFields(arma::mat &_density, arma::mat &_lambda, arma::mat &_mu);
 
     void extendFields(arma::mat &_outer, arma::mat &_inner);

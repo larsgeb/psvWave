@@ -17,8 +17,11 @@ public:
     arma::vec sourceFunction;
     arma::mat seismogramSyn_ux;
     arma::mat seismogramSyn_uz;
-    double dt;
-    int nt;
+    double samplingTimestep;
+    double samplingTime;
+    int samplingAmount;
+    double samplingTimestepSyn;
+    int samplingAmountSyn;
     arma::uword ishot;
     int snapshotInterval;
 
@@ -35,14 +38,17 @@ public:
     arma::mat vzAdjointSource;
 
     // Constructor
-    shot(arma::irowvec _source, arma::imat &_receivers, arma::vec &_sourceFunction, int _nt, double _dt,
-         model &_model, arma::uword ishot, int _snapshotInterval);
+    shot(arma::irowvec _source, arma::imat &_receivers, arma::vec &_sourceFunction, int _samplingAmount,
+         double samplingTimestep, double _samplingTime, arma::uword ishot, int _snapshotInterval);
 
     // Methods
     void writeShot(arma::file_type type, std::string folder);
+
     void loadShot(std::string &_folder);
 
     void calculateAdjointSources();
+
+    void interpolateSynthetics();
 };
 
 
