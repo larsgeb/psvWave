@@ -7,18 +7,18 @@
 
 
 #include <armadillo>
-#include "model.h"
-#include "shot.h"
+#include "fwiModel.h"
+#include "fwiShot.h"
 
-class propagator {
+class fwiPropagator {
 public:
     constexpr static double coeff1 = 9.0 / 8.0;
     constexpr static double coeff2 = 1.0 / 24.0;
 
     // static propagators
-    static void propagateForward(model &_currentModel, shot &_shot);
+    static void propagateForward(fwiModel &_currentModel, fwiShot &_shot);
 
-    static void propagateAdjoint(model &_currentModel, shot &_shot, arma::mat &_denistyKernel,
+    static void propagateAdjoint(fwiModel &_currentModel, fwiShot &_shot, arma::mat &_denistyKernel,
                                  arma::mat &_muKernel, arma::mat &_lambdaKernel);
 };
 

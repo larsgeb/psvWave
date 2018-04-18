@@ -11,8 +11,8 @@
 
 // Own includes
 #include "../forward-psv/fwiExperiment.h"
-#include "../forward-psv/propagator.h"
-#include "../forward-psv/shot.h"
+#include "../forward-psv/fwiPropagator.h"
+#include "../forward-psv/fwiShot.h"
 #include "../misc/functions.h"
 
 using namespace arma;

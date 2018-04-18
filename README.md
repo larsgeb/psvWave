@@ -11,7 +11,7 @@ Most functions are self explanatory (I hope).
 
 ##### Kernels
 Three material parameter kernels for a single source (Ricker Wavelet) with three receivers. 
-The background model is perturbed by a Gaussian density blob exactly midway.
+The background fwiModel is perturbed by a Gaussian density blob exactly midway.
 From top to bottom the kernels are density, Lamé's first and second parameter.
 
 ![Kernels](examples/kernels.png?raw=true)
@@ -25,6 +25,6 @@ What's more, we can get an indication of the minimum distance we need to travers
 actual misfit change. Below this distance (very small epsilon), machine precision prohibits 
 any informative evaluation. The perturbation used in the figure below is exactly the negative 
 of the original perturbation to compute the above kernels. Epsilon = 1 corresponds to retrieving 
-the exact model.
+the exact fwiModel.
 
 ![FD error](examples/fdTest.png?raw=true)

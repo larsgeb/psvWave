@@ -2,18 +2,32 @@
 // Created by lars on 17.03.18.
 //
 #include <armadillo>
-#include "model.h"
-#include "propagator.h"
+#include "fwiModel.h"
+#include "fwiPropagator.h"
 #include "fwiExperiment.h"
 
 using namespace arma;
 
-void propagator::propagateForward(model &_currentModel, shot &_shot) {
-    // Interpolate stf
+void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot) {
+    // Rewrite synthetic parameters in shot for interpolation in misfit calculation
+    _shot.samplingTimestepSyn = _currentModel.dt;
+    _shot.samplingAmountSyn = _currentModel.nt;
+
     vec stf;
-    vec t = linspace(0, _shot.samplingAmount * _shot.samplingTimestep, static_cast<const uword>(_shot.samplingAmount));
-    vec t_interp = linspace(0, _currentModel.nt * _currentModel.dt, static_cast<const uword>(_currentModel.nt));
-    interp1(t, _shot.sourceFunction, t_interp, stf, "*linear", 0);  // faster than "linear", monotonically increasing
+    if (_shot.samplingTimestepSyn != _shot.samplingTimestep) {
+        if (_shot.errorOnInterpolate) {
+            std::cout << _shot.samplingTimestepSyn << " "<< _shot.samplingTimestep<< std::endl;
+            throw std::invalid_argument("You're trying to interpolate numerical results! This leads to very error prone kernels.");
+        } else {
+            std::cout << "WARNING: interpolation of stf! Leads to kernels which are very error prone!" << std::endl;
+        }
+        // Interpolate stf
+        vec t = linspace(0, _shot.samplingAmount * _shot.samplingTimestep, static_cast<const uword>(_shot.samplingAmount));
+        vec t_interp = linspace(0, _currentModel.nt * _currentModel.dt, static_cast<const uword>(_currentModel.nt));
+        interp1(t, _shot.sourceFunction, t_interp, stf, "*linear", 0);  // faster than "linear", monotonically increasing
+    } else {
+        stf = _shot.sourceFunction;
+    }
 
     // Loading simulation parameters
     double dx = _currentModel.dx;
@@ -38,23 +52,19 @@ void propagator::propagateForward(model &_currentModel, shot &_shot) {
 
     // Create cubes for snapshots (size changes with nt)
     _shot.txxSnapshots = cube(_currentModel.nx_domain, _currentModel.nz_domain,
-                              static_cast<const uword>(_currentModel.nt / _shot.snapshotInterval));
+                              1 + static_cast<const uword>(_currentModel.nt / _shot.snapshotInterval));
     _shot.tzzSnapshots = cube(_currentModel.nx_domain, _currentModel.nz_domain,
-                              static_cast<const uword>(_currentModel.nt / _shot.snapshotInterval));
+                              1 + static_cast<const uword>(_currentModel.nt / _shot.snapshotInterval));
     _shot.txzSnapshots = cube(_currentModel.nx_domain, _currentModel.nz_domain,
-                              static_cast<const uword>(_currentModel.nt / _shot.snapshotInterval));
+                              1 + static_cast<const uword>(_currentModel.nt / _shot.snapshotInterval));
     _shot.vxSnapshots = cube(_currentModel.nx_domain, _currentModel.nz_domain,
-                             static_cast<const uword>(_currentModel.nt / _shot.snapshotInterval));
+                             1 + static_cast<const uword>(_currentModel.nt / _shot.snapshotInterval));
     _shot.vzSnapshots = cube(_currentModel.nx_domain, _currentModel.nz_domain,
-                             static_cast<const uword>(_currentModel.nt / _shot.snapshotInterval));
+                             1 + static_cast<const uword>(_currentModel.nt / _shot.snapshotInterval));
 
     // Create synthetic seismogram matrices (size changes with nt)
     _shot.seismogramSyn_ux = zeros(_shot.receivers.n_rows, static_cast<const uword>(_currentModel.nt));
     _shot.seismogramSyn_uz = zeros(_shot.receivers.n_rows, static_cast<const uword>(_currentModel.nt));
-
-    // Rewrite synthetic parameters in shot for interpolation in misfit calculation
-    _shot.samplingTimestepSyn = _currentModel.dt;
-    _shot.samplingAmountSyn = _currentModel.nt;
 
     // Time marching through all time levels
     for (int it = 0; it < _currentModel.nt; ++it) {
@@ -179,11 +189,13 @@ void propagator::propagateForward(model &_currentModel, shot &_shot) {
     std::cout << message << std::flush;
     std::cout << std::endl;
 
-    _shot.interpolateSynthetics();
+    if (_shot.samplingTimestepSyn != _shot.samplingTimestep) {
+        _shot.interpolateSynthetics();
+    }
 }
 
 
-void propagator::propagateAdjoint(model &_currentModel, shot &_shot, mat &_denistyKernel, mat &_muKernel,
+void fwiPropagator::propagateAdjoint(fwiModel &_currentModel, fwiShot &_shot, mat &_denistyKernel, mat &_muKernel,
                                   mat &_lambdaKernel) {
 
     // Loading simulation parameters
@@ -207,11 +219,16 @@ void propagator::propagateAdjoint(model &_currentModel, shot &_shot, mat &_denis
     }
     taper = exp(-square(_currentModel.np_factor * (_currentModel.np_boundary - taper)));
 
+//    cube vxSnapshotsAdjoint = cube(_currentModel.nx_domain, _currentModel.nz_domain,
+//                              1 + static_cast<const uword>(_currentModel.nt / _shot.snapshotInterval));
+
     // Time marching through all time levels
     for (int it = _currentModel.nt - 1; it >= 0; --it) {
 
         // Compute correlation integral for the kernel at snapshots
         if (it % _shot.snapshotInterval == 0) {
+
+//            vxSnapshotsAdjoint.slice(it / _shot.snapshotInterval) = vx(_currentModel.interiorX, _currentModel.interiorZ);
 
             mat f1 = _shot.vxSnapshots.slice(it / _shot.snapshotInterval) %
                      vx(_currentModel.interiorX, _currentModel.interiorZ);

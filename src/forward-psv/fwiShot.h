@@ -7,9 +7,9 @@
 
 
 #include <armadillo>
-#include "model.h"
+#include "fwiModel.h"
 
-class shot {
+class fwiShot {
 public:
     // Fields
     arma::irowvec source;
@@ -38,7 +38,7 @@ public:
     arma::mat vzAdjointSource;
 
     // Constructor
-    shot(arma::irowvec _source, arma::imat &_receivers, arma::vec &_sourceFunction, int _samplingAmount,
+    fwiShot(arma::irowvec _source, arma::imat &_receivers, arma::vec &_sourceFunction, int _samplingAmount,
          double samplingTimestep, double _samplingTime, arma::uword ishot, int _snapshotInterval);
 
     // Methods
@@ -49,6 +49,8 @@ public:
     void calculateAdjointSources();
 
     void interpolateSynthetics();
+
+    bool errorOnInterpolate = true;
 };
 
 

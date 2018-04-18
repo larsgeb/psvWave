@@ -2,12 +2,12 @@
 // Created by lars on 17.03.18.
 //
 
-#include "model.h"
+#include "fwiModel.h"
 #include <armadillo>
 
 using namespace arma;
 
-void model::updateFields(mat &_density, mat &_lambda, mat &_mu) {
+void fwiModel::updateFields(mat &_density, mat &_lambda, mat &_mu) {
 
     if (_density.n_rows != nx or _density.n_cols != nz or _lambda.n_rows != nx or _lambda.n_cols != nz
         or _mu.n_rows != nx or _mu.n_cols != nz) {
@@ -21,7 +21,7 @@ void model::updateFields(mat &_density, mat &_lambda, mat &_mu) {
     lm = _lambda + 2 * _mu;
 }
 
-void model::updateInnerFields(mat &_density, mat &_lambda, mat &_mu) {
+void fwiModel::updateInnerFields(mat &_density, mat &_lambda, mat &_mu) {
 
     if (_density.n_rows != nx_domain or _density.n_cols != nz_domain or _lambda.n_rows != nx_domain or
         _lambda.n_cols != nz_domain
@@ -43,12 +43,12 @@ void model::updateInnerFields(mat &_density, mat &_lambda, mat &_mu) {
     setTimestepAuto(targetCourant);
 }
 
-void model::setTimestepAuto(double _targetCourant) {
+void fwiModel::setTimestepAuto(double _targetCourant) {
     dt = _targetCourant * dx / (static_cast<double>(sqrt(lm.max() * b_vx.max())) * static_cast<double>(sqrt(2.0)));
     nt = static_cast<int>(ceil(samplingTime / dt));
 }
 
-void model::setTimestep(double _dt) {
+void fwiModel::setTimestep(double _dt) {
     dt = _dt;
     nt = static_cast<int>(ceil(samplingTime / dt));
 
@@ -57,7 +57,7 @@ void model::setTimestep(double _dt) {
     }
 }
 
-void model::extendFields(mat &_outer, mat &_inner) {
+void fwiModel::extendFields(mat &_outer, mat &_inner) {
     // lower
     _outer(span(np_boundary, nx_domain + np_boundary - 1), span(nz_domain, nz - 1)) =
             repmat(_inner(span::all, nz_domain - 1), 1, np_boundary);
@@ -72,7 +72,7 @@ void model::extendFields(mat &_outer, mat &_inner) {
     _outer(span(np_boundary + nx_domain), span(nz_domain, nz - 1)) = _outer(np_boundary + nx_domain - 1, nz_domain - 1);
 }
 
-void model::extendFields(mat &_outer) {
+void fwiModel::extendFields(mat &_outer) {
     // lower
     _outer(span(np_boundary, nx_domain + np_boundary - 1), span(nz_domain, nz - 1)) =
             repmat(_outer(span(np_boundary, nx_domain + np_boundary - 1), nz_domain - 1), 1, np_boundary);
@@ -84,7 +84,7 @@ void model::extendFields(mat &_outer) {
             repmat(_outer(np_boundary + nx_domain - 1, span::all), np_boundary, 1);
 }
 
-model::model() {
+fwiModel::fwiModel() {
     b_vx = arma::ones(nx, nz);
     b_vz = arma::ones(nx, nz);
     la = arma::ones(nx, nz);

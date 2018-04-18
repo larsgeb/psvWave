@@ -7,7 +7,7 @@
 
 #include <armadillo>
 
-class model {
+class fwiModel {
 public:
     // Fields
     const double dx = 1.249;
@@ -34,7 +34,7 @@ public:
     arma::span interiorZ = arma::span(0, nz_domain - 1);
 
     // Constructors
-    model();
+    fwiModel();
 
     // Public methods
     void updateInnerFields(arma::mat &_density, arma::mat &_lambda, arma::mat &_mu);
