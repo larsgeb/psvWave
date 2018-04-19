@@ -18,10 +18,11 @@ fwiExperiment::fwiExperiment(imat _receivers, imat _sources, vec _sourceFunction
     samplingTime = _samplingTime;
     samplingTimestep = _samplingTimestep;
     samplingAmount = _samplingAmount;
-    currentModel.samplingTime = samplingTime;
-    muKernel = zeros(currentModel.nx_domain, currentModel.nz_domain);
-    densityKernel = zeros(currentModel.nx_domain, currentModel.nz_domain);
-    lambdaKernel = zeros(currentModel.nx_domain, currentModel.nz_domain);
+    currentModel.setTime(samplingTimestep, samplingAmount, samplingTime);
+
+    muKernel_par1 = zeros(currentModel.nx_domain, currentModel.nz_domain);
+    densityKernel_par1 = zeros(currentModel.nx_domain, currentModel.nz_domain);
+    lambdaKernel_par1 = zeros(currentModel.nx_domain, currentModel.nz_domain);
 
     // Check for positions
     for (auto &&yPosReceiver : receivers.col(1)) {
@@ -58,9 +59,9 @@ void fwiExperiment::writeShots(file_type type, std::string &_folder) {
 
 void fwiExperiment::computeKernel() {
     calculateAdjointSourcesL2();
-    muKernel = zeros(currentModel.nx_domain, currentModel.nz_domain);
-    densityKernel = zeros(currentModel.nx_domain, currentModel.nz_domain);
-    lambdaKernel = zeros(currentModel.nx_domain, currentModel.nz_domain);
+    muKernel_par1 = zeros(currentModel.nx_domain, currentModel.nz_domain);
+    densityKernel_par1 = zeros(currentModel.nx_domain, currentModel.nz_domain);
+    lambdaKernel_par1 = zeros(currentModel.nx_domain, currentModel.nz_domain);
     backwardAdjoint();
 }
 
@@ -80,7 +81,7 @@ void fwiExperiment::calculateAdjointSourcesL2() {
 
 void fwiExperiment::backwardAdjoint() {
     for (uword iShot = 0; iShot < sources.n_rows; ++iShot) {
-        fwiPropagator::propagateAdjoint(currentModel, shots[iShot], densityKernel, muKernel, lambdaKernel);
+        fwiPropagator::propagateAdjoint(currentModel, shots[iShot], densityKernel_par1, muKernel_par1, lambdaKernel_par1);
     }
 }
 
@@ -94,9 +95,18 @@ fwiExperiment::fwiExperiment() {
     receivers = imat();
     sources = imat();
     sourceFunction = vec();
-    muKernel = zeros(currentModel.nx_domain, currentModel.nz_domain);
-    densityKernel = zeros(currentModel.nx_domain, currentModel.nz_domain);
-    lambdaKernel = zeros(currentModel.nx_domain, currentModel.nz_domain);
+    muKernel_par1 = zeros(currentModel.nx_domain, currentModel.nz_domain);
+    densityKernel_par1 = zeros(currentModel.nx_domain, currentModel.nz_domain);
+    lambdaKernel_par1 = zeros(currentModel.nx_domain, currentModel.nz_domain);
     shots = std::vector<fwiShot>();
 }
 
+void fwiExperiment::mapKernels() {
+    densityKernel_par2 = densityKernel_par1 + (square(currentModel.vp) - 2 * square(currentModel.vs)) % lambdaKernel_par1
+            + square(currentModel.vs) % muKernel_par1;
+
+    vpKernel_par2 = 2 * currentModel.vp % lambdaKernel_par1 / currentModel.b_vx;
+
+    // TODO validate next line, the vs * Klambda is a bit weird
+    vsKernel_par2 = 2 * currentModel.vs % muKernel_par1 / currentModel.b_vx; - 4 * currentModel.vs % lambdaKernel_par1 / currentModel.b_vx;
+}

@@ -19,16 +19,18 @@ public:
     arma::vec sourceFunction; // Single source-time function for all shots
     fwiModel currentModel; // Model object at current sample
     std::vector<fwiShot> shots; // All shots accumulated in vector
-    double samplingTime; // Length duration of the actual experiment (not the numerical simulation)
-    double samplingTimestep; // Time step of the actual experiment (not the numerical simulation)
-    int samplingAmount; // Amount of samples of the actual experiment (not the numerical simulation)
+
 
     // FWI parameters
     int snapshotInterval = 10; // Interval used to store wavefields and compute kernels
     double misfit; // Misfit at current model. Needs to be explicitly computed first
-    arma::mat muKernel; // Mu kernel for free parameters mu, lambda, rho
-    arma::mat densityKernel; // Density kernel for free parameters mu, lambda, rho
-    arma::mat lambdaKernel; // Lambda kernel for free parameters mu, lambda, rho
+    arma::mat muKernel_par1; // Mu kernel for free parameters mu, lambda, rho
+    arma::mat densityKernel_par1; // Density kernel for free parameters mu, lambda, rho
+    arma::mat lambdaKernel_par1; // Lambda kernel for free parameters mu, lambda, rho
+
+    arma::mat densityKernel_par2; // Density kernel for free parameters rho, vp, vs
+    arma::mat vpKernel_par2; // P-wave velocity kernel for free parameters rho, vp, vs
+    arma::mat vsKernel_par2; // S-wave velocity uhhhhkernel for free parameters rho, vp, vs
 
     // Constructors
     fwiExperiment(arma::imat _receivers, arma::imat _sources, arma::vec _sourceFunction, double samplingTime, double samplingTimestep,
@@ -49,10 +51,15 @@ public:
 
 private:
 
+    double samplingTime; // Length duration of the actual experiment (not the numerical simulation)
+    double samplingTimestep; // Time step of the actual experiment (not the numerical simulation)
+    int samplingAmount; // Amount of samples of the actual experiment (not the numerical simulation)
+
     void calculateAdjointSourcesL2(); // Calculate adjoint sources using L2 norm
 
     void backwardAdjoint(); // Back propagate the adjoint sources to compute kernels
 
+    void mapKernels();
 };
 
 

@@ -21,7 +21,7 @@ void fwiModel::updateFields(mat &_density, mat &_lambda, mat &_mu) {
     lm = _lambda + 2 * _mu;
 }
 
-void fwiModel::updateInnerFields(mat &_density, mat &_lambda, mat &_mu) {
+void fwiModel::updateInnerFieldsElastic(mat &_density, mat &_lambda, mat &_mu) {
 
     if (_density.n_rows != nx_domain or _density.n_cols != nz_domain or _lambda.n_rows != nx_domain or
         _lambda.n_cols != nz_domain
@@ -40,7 +40,27 @@ void fwiModel::updateInnerFields(mat &_density, mat &_lambda, mat &_mu) {
 
     lm = la + 2 * mu;
 
-    setTimestepAuto(targetCourant);
+    calculateVelocityFields();
+
+}
+
+void fwiModel::updateInnerFieldsVelocity(mat &_density, mat &_vp, mat &_vs) {
+
+    if (_density.n_rows != nx_domain or _density.n_cols != nz_domain or _vp.n_rows != nx_domain or
+        _vp.n_cols != nz_domain or _vs.n_rows != nx_domain or _vs.n_cols != nz_domain) {
+        throw std::invalid_argument("Dimension of updated fields is not equal to domain.");
+    }
+
+    b_vx(interiorX, interiorZ) = 1.0 / _density;
+    extendFields(b_vx);
+    b_vz = b_vx;
+
+    vp(interiorX, interiorZ) = _vp;
+    vs(interiorX, interiorZ) = _vs;
+    extendFields(vp);
+    extendFields(vs);
+
+    calculateElasticFields();
 }
 
 void fwiModel::setTimestepAuto(double _targetCourant) {
@@ -52,7 +72,17 @@ void fwiModel::setTimestep(double _dt) {
     dt = _dt;
     nt = static_cast<int>(ceil(samplingTime / dt));
 
-    if((dt * (static_cast<double>(sqrt(lm.max() * b_vx.max())) * static_cast<double>(sqrt(2.0))) / dx) >= 1){
+    if ((dt * (static_cast<double>(sqrt(lm.max() * b_vx.max())) * static_cast<double>(sqrt(2.0))) / dx) >= 1) {
+        std::cout << "Courant criterion is NOT met!" << std::endl;
+    }
+}
+
+void fwiModel::setTime(double _dt, int _nt, double _t) {
+    dt = _dt;
+    nt = _nt;
+    samplingTime = _t;
+
+    if ((dt * (static_cast<double>(sqrt(lm.max() * b_vx.max())) * static_cast<double>(sqrt(2.0))) / dx) >= 1) {
         std::cout << "Courant criterion is NOT met!" << std::endl;
     }
 }
@@ -90,4 +120,33 @@ fwiModel::fwiModel() {
     la = arma::ones(nx, nz);
     mu = arma::ones(nx, nz);
     lm = arma::ones(nx, nz);
+}
+
+void fwiModel::calculateVelocityFields() {
+    // TODO eveluate validity in staggered grid
+    vp = sqrt((la + 2 * mu) % b_vx);
+    vs = sqrt(mu % b_vx);
+}
+
+void fwiModel::calculateElasticFields() {
+    // TODO eveluate validity in staggered grid
+    mu = square(vs) / b_vx;
+    lm = square(vp) / b_vx;
+    la = lm - 2 * mu;
+}
+
+double fwiModel::get_dt() {
+    return this->dt;
+}
+
+int fwiModel::get_nt() {
+    return this->nt;
+}
+
+double fwiModel::get_samplingTime() {
+    return this->samplingTime;
+}
+
+double fwiModel::get_targetCourant() {
+    return targetCourant;
 }

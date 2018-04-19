@@ -10,8 +10,8 @@ using namespace arma;
 
 void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot) {
     // Rewrite synthetic parameters in shot for interpolation in misfit calculation
-    _shot.samplingTimestepSyn = _currentModel.dt;
-    _shot.samplingAmountSyn = _currentModel.nt;
+    _shot.samplingTimestepSyn = _currentModel.get_dt();
+    _shot.samplingAmountSyn = _currentModel.get_nt();
 
     vec stf;
     if (_shot.samplingTimestepSyn != _shot.samplingTimestep) {
@@ -23,7 +23,7 @@ void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot) {
         }
         // Interpolate stf
         vec t = linspace(0, _shot.samplingAmount * _shot.samplingTimestep, static_cast<const uword>(_shot.samplingAmount));
-        vec t_interp = linspace(0, _currentModel.nt * _currentModel.dt, static_cast<const uword>(_currentModel.nt));
+        vec t_interp = linspace(0, _currentModel.get_nt() * _currentModel.get_dt(), static_cast<const uword>(_currentModel.get_nt()));
         interp1(t, _shot.sourceFunction, t_interp, stf, "*linear", 0);  // faster than "linear", monotonically increasing
     } else {
         stf = _shot.sourceFunction;
@@ -52,22 +52,22 @@ void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot) {
 
     // Create cubes for snapshots (size changes with nt)
     _shot.txxSnapshots = cube(_currentModel.nx_domain, _currentModel.nz_domain,
-                              1 + static_cast<const uword>(_currentModel.nt / _shot.snapshotInterval));
+                              1 + static_cast<const uword>(_currentModel.get_nt() / _shot.snapshotInterval));
     _shot.tzzSnapshots = cube(_currentModel.nx_domain, _currentModel.nz_domain,
-                              1 + static_cast<const uword>(_currentModel.nt / _shot.snapshotInterval));
+                              1 + static_cast<const uword>(_currentModel.get_nt() / _shot.snapshotInterval));
     _shot.txzSnapshots = cube(_currentModel.nx_domain, _currentModel.nz_domain,
-                              1 + static_cast<const uword>(_currentModel.nt / _shot.snapshotInterval));
+                              1 + static_cast<const uword>(_currentModel.get_nt() / _shot.snapshotInterval));
     _shot.vxSnapshots = cube(_currentModel.nx_domain, _currentModel.nz_domain,
-                             1 + static_cast<const uword>(_currentModel.nt / _shot.snapshotInterval));
+                             1 + static_cast<const uword>(_currentModel.get_nt() / _shot.snapshotInterval));
     _shot.vzSnapshots = cube(_currentModel.nx_domain, _currentModel.nz_domain,
-                             1 + static_cast<const uword>(_currentModel.nt / _shot.snapshotInterval));
+                             1 + static_cast<const uword>(_currentModel.get_nt() / _shot.snapshotInterval));
 
     // Create synthetic seismogram matrices (size changes with nt)
-    _shot.seismogramSyn_ux = zeros(_shot.receivers.n_rows, static_cast<const uword>(_currentModel.nt));
-    _shot.seismogramSyn_uz = zeros(_shot.receivers.n_rows, static_cast<const uword>(_currentModel.nt));
+    _shot.seismogramSyn_ux = zeros(_shot.receivers.n_rows, static_cast<const uword>(_currentModel.get_nt()));
+    _shot.seismogramSyn_uz = zeros(_shot.receivers.n_rows, static_cast<const uword>(_currentModel.get_nt()));
 
     // Time marching through all time levels
-    for (int it = 0; it < _currentModel.nt; ++it) {
+    for (int it = 0; it < _currentModel.get_nt(); ++it) {
 
         // Take snapshot of fields
         if (it % _shot.snapshotInterval == 0) {
@@ -89,13 +89,13 @@ void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot) {
             int iz = _shot.receivers.row(receiver)[1];
 
             if (it == 0) {
-                _shot.seismogramSyn_ux(receiver, it) = _currentModel.dt * vx(ix, iz) / (dx * dz);
-                _shot.seismogramSyn_uz(receiver, it) = _currentModel.dt * vz(ix, iz) / (dx * dz);
+                _shot.seismogramSyn_ux(receiver, it) = _currentModel.get_dt() * vx(ix, iz) / (dx * dz);
+                _shot.seismogramSyn_uz(receiver, it) = _currentModel.get_dt() * vz(ix, iz) / (dx * dz);
             } else {
                 _shot.seismogramSyn_ux(receiver, it) =
-                        _shot.seismogramSyn_ux(receiver, it - 1) + _currentModel.dt * vx(ix, iz) / (dx * dz);
+                        _shot.seismogramSyn_ux(receiver, it - 1) + _currentModel.get_dt() * vx(ix, iz) / (dx * dz);
                 _shot.seismogramSyn_uz(receiver, it) =
-                        _shot.seismogramSyn_uz(receiver, it - 1) + _currentModel.dt * vz(ix, iz) / (dx * dz);
+                        _shot.seismogramSyn_uz(receiver, it - 1) + _currentModel.get_dt() * vz(ix, iz) / (dx * dz);
             }
         }
 
@@ -108,7 +108,7 @@ void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot) {
                 if (ix > 1 and ix < nx - 2 and iz < nz - 2) {
                     txx(ix, iz) = taper(ix, iz) *
                                   (txx(ix, iz) +
-                                   _currentModel.dt *
+                                   _currentModel.get_dt() *
                                    (_currentModel.lm(ix, iz) * (
                                            coeff1 * (vx(ix + 1, iz) - vx(ix, iz)) +
                                            coeff2 * (vx(ix - 1, iz) - vx(ix + 2, iz))) / dx +
@@ -117,7 +117,7 @@ void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot) {
                                             coeff2 * ((iz > 1 ? vz(ix, iz - 2) : 0) - vz(ix, iz + 1))) / dz));
                     tzz(ix, iz) = taper(ix, iz) *
                                   (tzz(ix, iz) +
-                                   _currentModel.dt *
+                                   _currentModel.get_dt() *
                                    (_currentModel.la(ix, iz) * (
                                            coeff1 * (vx(ix + 1, iz) - vx(ix, iz)) +
                                            coeff2 * (vx(ix - 1, iz) - vx(ix + 2, iz))) / dx +
@@ -125,7 +125,7 @@ void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot) {
                                             coeff1 * (vz(ix, iz) - (iz > 0 ? vz(ix, iz - 1) : 0)) +
                                             coeff2 * ((iz > 1 ? vz(ix, iz - 2) : 0) - vz(ix, iz + 1))) / dz));
                     txz(ix, iz) = taper(ix, iz) *
-                                  (txz(ix, iz) + _currentModel.dt * _currentModel.mu(ix, iz) * (
+                                  (txz(ix, iz) + _currentModel.get_dt() * _currentModel.mu(ix, iz) * (
                                           (coeff1 * (vx(ix, iz + 1) - vx(ix, iz)) +
                                            coeff2 * ((iz > 0 ? vx(ix, iz - 1) : 0) - vx(ix, iz + 2))) / dz +
                                           (coeff1 * (vz(ix, iz) - vz(ix - 1, iz)) +
@@ -146,7 +146,7 @@ void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot) {
                     vx(ix, iz) =
                             taper(ix, iz) *
                             (vx(ix, iz)
-                             + _currentModel.b_vx(ix, iz) * _currentModel.dt * (
+                             + _currentModel.b_vx(ix, iz) * _currentModel.get_dt() * (
                                     (coeff1 * (txx(ix, iz) - txx(ix - 1, iz)) +
                                      coeff2 * (txx(ix - 2, iz) - txx(ix + 1, iz))) / dx +
                                     (coeff1 * (txz(ix, iz) - (iz > 0 ? txz(ix, iz - 1) : 0)) +
@@ -155,7 +155,7 @@ void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot) {
                     vz(ix, iz) =
                             taper(ix, iz) *
                             (vz(ix, iz)
-                             + _currentModel.b_vz(ix, iz) * _currentModel.dt * (
+                             + _currentModel.b_vz(ix, iz) * _currentModel.get_dt() * (
                                     (coeff1 * (txz(ix + 1, iz) - txz(ix, iz)) +
                                      coeff2 * (txz(ix - 1, iz) - txz(ix + 2, iz))) / dx +
                                     (coeff1 * (tzz(ix, iz + 1) - tzz(ix, iz)) +
@@ -172,15 +172,15 @@ void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot) {
             int ix = _shot.source.row(source)[0] + _currentModel.np_boundary;
             int iz = _shot.source.row(source)[1];
             vx(ix, iz) +=
-                    0.5 * _currentModel.dt * stf[it] * _currentModel.b_vx(ix, iz) / (dx * dz);
+                    0.5 * _currentModel.get_dt() * stf[it] * _currentModel.b_vx(ix, iz) / (dx * dz);
             vz(ix, iz) +=
-                    0.5 * _currentModel.dt * stf[it] * _currentModel.b_vz(ix, iz) / (dx * dz);
+                    0.5 * _currentModel.get_dt() * stf[it] * _currentModel.b_vz(ix, iz) / (dx * dz);
         }
 
         // Print status bar
-        if (it % (_currentModel.nt / 50) == 0) {
+        if (it % (_currentModel.get_nt() / 50) == 0) {
             char message[1024];
-            sprintf(message, "\r \r    %i%%", static_cast<int>(static_cast<double>(it) * 100.0 / static_cast<double>(_currentModel.nt)));
+            sprintf(message, "\r \r    %i%%", static_cast<int>(static_cast<double>(it) * 100.0 / static_cast<double>(_currentModel.get_nt())));
             std::cout << message << std::flush;
         }
     }
@@ -220,10 +220,10 @@ void fwiPropagator::propagateAdjoint(fwiModel &_currentModel, fwiShot &_shot, ma
     taper = exp(-square(_currentModel.np_factor * (_currentModel.np_boundary - taper)));
 
 //    cube vxSnapshotsAdjoint = cube(_currentModel.nx_domain, _currentModel.nz_domain,
-//                              1 + static_cast<const uword>(_currentModel.nt / _shot.snapshotInterval));
+//                              1 + static_cast<const uword>(_currentModel.get_nt() / _shot.snapshotInterval));
 
     // Time marching through all time levels
-    for (int it = _currentModel.nt - 1; it >= 0; --it) {
+    for (int it = _currentModel.get_nt() - 1; it >= 0; --it) {
 
         // Compute correlation integral for the kernel at snapshots
         if (it % _shot.snapshotInterval == 0) {
@@ -237,7 +237,7 @@ void fwiPropagator::propagateAdjoint(fwiModel &_currentModel, fwiShot &_shot, ma
                      vz(_currentModel.interiorX, _currentModel.interiorZ);
 
             _denistyKernel -=
-                    _shot.snapshotInterval * _currentModel.dt * (f1 + f2);
+                    _shot.snapshotInterval * _currentModel.get_dt() * (f1 + f2);
 
             // Compute strain
             mat exxAdj = (txx(_currentModel.interiorX, _currentModel.interiorZ) -
@@ -274,8 +274,8 @@ void fwiPropagator::propagateAdjoint(fwiModel &_currentModel, fwiShot &_shot, ma
             mat exz = _shot.txzSnapshots.slice(it / _shot.snapshotInterval) /
                       (2 * _currentModel.mu(_currentModel.interiorX, _currentModel.interiorZ));
 
-            _lambdaKernel += _shot.snapshotInterval * _currentModel.dt * ((exx + ezz) % (exxAdj + ezzAdj));
-            _muKernel += _shot.snapshotInterval * _currentModel.dt * 2 *
+            _lambdaKernel += _shot.snapshotInterval * _currentModel.get_dt() * ((exx + ezz) % (exxAdj + ezzAdj));
+            _muKernel += _shot.snapshotInterval * _currentModel.get_dt() * 2 *
                          ((exxAdj % exx) + (ezzAdj % ezz) + 2 * (exzAdj % exz));
         }
 
@@ -287,7 +287,7 @@ void fwiPropagator::propagateAdjoint(fwiModel &_currentModel, fwiShot &_shot, ma
                 if (ix > 1 and ix < nx - 2 and iz < nz - 2) {
                     txx(ix, iz) = taper(ix, iz) *
                                   (txx(ix, iz) -
-                                   _currentModel.dt *
+                                   _currentModel.get_dt() *
                                    (_currentModel.lm(ix, iz) * (
                                            coeff1 * (vx(ix + 1, iz) - vx(ix, iz)) +
                                            coeff2 * (vx(ix - 1, iz) - vx(ix + 2, iz))) / dx +
@@ -296,7 +296,7 @@ void fwiPropagator::propagateAdjoint(fwiModel &_currentModel, fwiShot &_shot, ma
                                             coeff2 * ((iz > 1 ? vz(ix, iz - 2) : 0) - vz(ix, iz + 1))) / dz));
                     tzz(ix, iz) = taper(ix, iz) *
                                   (tzz(ix, iz) -
-                                   _currentModel.dt *
+                                   _currentModel.get_dt() *
                                    (_currentModel.la(ix, iz) * (
                                            coeff1 * (vx(ix + 1, iz) - vx(ix, iz)) +
                                            coeff2 * (vx(ix - 1, iz) - vx(ix + 2, iz))) / dx +
@@ -304,7 +304,7 @@ void fwiPropagator::propagateAdjoint(fwiModel &_currentModel, fwiShot &_shot, ma
                                             coeff1 * (vz(ix, iz) - (iz > 0 ? vz(ix, iz - 1) : 0)) +
                                             coeff2 * ((iz > 1 ? vz(ix, iz - 2) : 0) - vz(ix, iz + 1))) / dz));
                     txz(ix, iz) = taper(ix, iz) *
-                                  (txz(ix, iz) - _currentModel.dt * _currentModel.mu(ix, iz) * (
+                                  (txz(ix, iz) - _currentModel.get_dt() * _currentModel.mu(ix, iz) * (
                                           (coeff1 * (vx(ix, iz + 1) - vx(ix, iz)) +
                                            coeff2 * ((iz > 0 ? vx(ix, iz - 1) : 0) - vx(ix, iz + 2))) / dz +
                                           (coeff1 * (vz(ix, iz) - vz(ix - 1, iz)) +
@@ -325,7 +325,7 @@ void fwiPropagator::propagateAdjoint(fwiModel &_currentModel, fwiShot &_shot, ma
                     vx(ix, iz) =
                             taper(ix, iz) *
                             (vx(ix, iz)
-                             - _currentModel.b_vx(ix, iz) * _currentModel.dt * (
+                             - _currentModel.b_vx(ix, iz) * _currentModel.get_dt() * (
                                     (coeff1 * (txx(ix, iz) - txx(ix - 1, iz)) +
                                      coeff2 * (txx(ix - 2, iz) - txx(ix + 1, iz))) / dx +
                                     (coeff1 * (txz(ix, iz) - (iz > 0 ? txz(ix, iz - 1) : 0)) +
@@ -334,7 +334,7 @@ void fwiPropagator::propagateAdjoint(fwiModel &_currentModel, fwiShot &_shot, ma
                     vz(ix, iz) =
                             taper(ix, iz) *
                             (vz(ix, iz)
-                             - _currentModel.b_vz(ix, iz) * _currentModel.dt * (
+                             - _currentModel.b_vz(ix, iz) * _currentModel.get_dt() * (
                                     (coeff1 * (txz(ix + 1, iz) - txz(ix, iz)) +
                                      coeff2 * (txz(ix - 1, iz) - txz(ix + 2, iz))) / dx +
                                     (coeff1 * (tzz(ix, iz + 1) - tzz(ix, iz)) +
@@ -349,15 +349,15 @@ void fwiPropagator::propagateAdjoint(fwiModel &_currentModel, fwiShot &_shot, ma
         for (uword receiver = 0; receiver < _shot.receivers.n_rows; ++receiver) {
             int ix = _shot.receivers.row(receiver)[0] + _currentModel.np_boundary;
             int iz = _shot.receivers.row(receiver)[1];
-            vx(ix, iz) += _currentModel.dt * _currentModel.b_vx(ix, iz) * _shot.vxAdjointSource(receiver, it) /
+            vx(ix, iz) += _currentModel.get_dt() * _currentModel.b_vx(ix, iz) * _shot.vxAdjointSource(receiver, it) /
                           (dx * dz);
-            vz(ix, iz) += _currentModel.dt * _currentModel.b_vz(ix, iz) * _shot.vzAdjointSource(receiver, it) /
+            vz(ix, iz) += _currentModel.get_dt() * _currentModel.b_vz(ix, iz) * _shot.vzAdjointSource(receiver, it) /
                           (dx * dz);
         }
-        if (it % (_currentModel.nt / 50) == 0) {
+        if (it % (_currentModel.get_nt() / 50) == 0) {
             char message[1024];
             sprintf(message, "\r \r    %i%% ",
-                    static_cast<int>(static_cast<double>(it) * 100.0 / static_cast<double>(_currentModel.nt)));
+                    static_cast<int>(static_cast<double>(it) * 100.0 / static_cast<double>(_currentModel.get_nt())));
             std::cout << message << std::flush;
         }
     }
