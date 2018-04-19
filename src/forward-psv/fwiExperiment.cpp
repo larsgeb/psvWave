@@ -63,6 +63,7 @@ void fwiExperiment::computeKernel() {
     densityKernel_par1 = zeros(currentModel.nx_domain, currentModel.nz_domain);
     lambdaKernel_par1 = zeros(currentModel.nx_domain, currentModel.nz_domain);
     backwardAdjoint();
+    mapKernels();
 }
 
 void fwiExperiment::calculateMisfit() {
@@ -102,11 +103,20 @@ fwiExperiment::fwiExperiment() {
 }
 
 void fwiExperiment::mapKernels() {
-    densityKernel_par2 = densityKernel_par1 + (square(currentModel.vp) - 2 * square(currentModel.vs)) % lambdaKernel_par1
-            + square(currentModel.vs) % muKernel_par1;
+//    auto vpInt = currentModel.vp(currentModel.interiorX, currentModel.interiorZ);
+//    auto vsInt = currentModel.vs(currentModel.interiorX, currentModel.interiorZ);
+//    auto bInt = currentModel.b_vx(currentModel.interiorX, currentModel.interiorZ);
 
-    vpKernel_par2 = 2 * currentModel.vp % lambdaKernel_par1 / currentModel.b_vx;
+    densityKernel_par2 =
+            densityKernel_par1 + (square(currentModel.vp(currentModel.interiorX, currentModel.interiorZ)) -
+                                  2 * square(currentModel.vs(currentModel.interiorX, currentModel.interiorZ))) % lambdaKernel_par1
+            + square(currentModel.vs(currentModel.interiorX, currentModel.interiorZ)) % muKernel_par1;
+
+    vpKernel_par2 = 2 * currentModel.vp(currentModel.interiorX, currentModel.interiorZ) % lambdaKernel_par1 /
+                    currentModel.b_vx(currentModel.interiorX, currentModel.interiorZ);
 
     // TODO validate next line, the vs * Klambda is a bit weird
-    vsKernel_par2 = 2 * currentModel.vs % muKernel_par1 / currentModel.b_vx; - 4 * currentModel.vs % lambdaKernel_par1 / currentModel.b_vx;
+    vsKernel_par2 = 2 * currentModel.vs(currentModel.interiorX, currentModel.interiorZ) %
+                    muKernel_par1 / currentModel.b_vx(currentModel.interiorX, currentModel.interiorZ);
+    -4 * currentModel.vs(currentModel.interiorX, currentModel.interiorZ) % lambdaKernel_par1 / currentModel.b_vx(currentModel.interiorX, currentModel.interiorZ);
 }

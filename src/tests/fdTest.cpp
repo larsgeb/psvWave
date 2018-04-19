@@ -22,13 +22,12 @@ typedef vector<double> stdvec;
 int main() {
     // Define actual medium parameters
     double density = 1500; // original => 1500
-    double lame1 = 4e9; // original => 4e9
-    double lame2 = 1e9; // original => 1e9
+    double p = 2000;
+    double s = 800;
 
     string experimentFolder = "kernelTest";
     string receiversFile = experimentFolder + string("/receivers.txt");
     string sourcesFile = experimentFolder + string("/sources.txt");
-//    string sourceFunctionFile = experimentFolder + string("/source.txt"); // If you want to load an already defined source
 
     // Load array
     imat receivers;
@@ -37,50 +36,52 @@ int main() {
     sources.load(sourcesFile);
 
     // Create stf
-    vec sourcefunction;
     double dt = 0.00025;
-    int nt = 3500;
+    int nt = 4000;
+    double t = nt * dt;
+
     double freq = 50;
-    sourcefunction = generateRicker(dt, nt, freq);
+    vec sourcefunction = generateRicker(dt, nt, freq);
 
     // Create experiment object
-    experiment experiment_1(receivers, sources, sourcefunction);
+    fwiExperiment experiment(receivers, sources, sourcefunction, t, dt, nt);
 
     // Create material fields
-    uword nx = experiment_1.currentModel.nx;
-    uword nz = experiment_1.currentModel.nz;
+    uword nx = experiment.currentModel.nx_domain;
+    uword nz = experiment.currentModel.nz_domain;
     mat rho = density * ones(nx, nz);
-    mat lambda = lame1 * ones(nx, nz);
-    mat mu = lame2 * ones(nx, nz);
-    experiment_1.currentModel.updateFields(rho, lambda, mu);
+    mat vp = p * ones(nx, nz);
+    mat vs = s * ones(nx, nz);
+
+    vp -= 100 * generateGaussian(nx, nz, 50, 150, 100);
+    experiment.currentModel.updateInnerFieldsVelocity(rho, vp, vs);
 
     // Generate 'observed' data
-    experiment_1.forwardData();
-    experiment_1.writeShots(arma_binary, experimentFolder);
+//    experiment.forwardData();
+//    experiment.writeShots(arma_binary, experimentFolder);
+//    experiment.writeShots(raw_ascii, experimentFolder);
+
+    vp -= 400 * generateGaussian(nx, nz, 50, 150, 100);
+    experiment.currentModel.updateInnerFieldsVelocity(rho, vp, vs);
 
     // Load the observed data into the appropriate fields
-    experiment_1.loadShots(experimentFolder);
-
-    // Add gaussian blob to material
-    mat Gaussian = 10 * generateGaussian(nx, nz, 50, 150, 100);
-    rho += Gaussian;
-    experiment_1.currentModel.updateFields(rho, lambda, mu);
+    experiment.loadShots(experimentFolder);
 
     // Generate synthetics
-    experiment_1.forwardData();
+    experiment.forwardData();
+    experiment.writeShots(raw_ascii, experimentFolder);
 
     // Calculate misfit
-    experiment_1.calculateMisfit();
-    double misfit1 = experiment_1.misfit;
+    experiment.calculateMisfit();
+    double misfit1 = experiment.misfit;
 
     // Calculate kernel
-    experiment_1.calculateAdjointSources();
-    experiment_1.computeKernel();
+    experiment.computeKernel();
 
     // Save kernels
-    experiment_1.densityKernel.save("kernelTest/densityKernel.txt", raw_ascii);
-    experiment_1.muKernel.save("kernelTest/muKernel.txt", raw_ascii);
-    experiment_1.lambdaKernel.save("kernelTest/lambdaKernel.txt", raw_ascii);
+    experiment.densityKernel_par2.save("kernelTest/densityKernel_par2.txt", raw_ascii);
+    experiment.vpKernel_par2.save("kernelTest/vpKernel_par2.txt", raw_ascii);
+    experiment.vsKernel_par2.save("kernelTest/vsKernel_par2.txt", raw_ascii);
 
     // Create accumulators for finite difference test
     stdvec misfits;
@@ -88,10 +89,12 @@ int main() {
     stdvec epsilons;
 
     // Generate direction
-    mat dm = -Gaussian;
+    mat dm = 500 * generateGaussian(nx, nz, 50, 150, 100);
 
     // Calculate predicted change
-    double dirGrad = dot(experiment_1.densityKernel, dm(span(50, nx - 1 - 50), span(0, nz - 50 - 1)));
+    double dirGrad = dot(experiment.vpKernel_par2, dm);
+
+    std::cout << dirGrad << std::endl;
 
     // Check the kernel in multiple magnitudes
     for (int exp = -16; exp <= 1; exp++) {
@@ -99,18 +102,18 @@ int main() {
         double epsilon = pow(10, exp);
 
         mat rhoNew = rho;
-        mat lambdaNew = lambda;
-        mat muNew = mu;
+        mat vpNew = vp;
+        mat vsNew = vs;
 
-        rhoNew = rho + epsilon * dm;
+        vpNew = vp + epsilon * dm;
 
-        experiment_1.currentModel.updateFields(rhoNew, lambdaNew, muNew);
+        experiment.currentModel.updateInnerFieldsVelocity(rhoNew, vpNew, vsNew);
 
         try {
             // Calculate misfit and gradient
-            experiment_1.forwardData();
-            experiment_1.calculateMisfit();
-            double misfit2 = experiment_1.misfit;
+            experiment.forwardData();
+            experiment.calculateMisfit();
+            double misfit2 = experiment.misfit;
 
             factors.emplace_back((misfit2 - misfit1) / (epsilon * dirGrad));
             misfits.emplace_back(misfit2);
