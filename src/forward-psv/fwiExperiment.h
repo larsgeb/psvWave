@@ -17,7 +17,7 @@ public:
     arma::imat receivers; // Indexes on the numerical grid for receivers
     arma::imat sources; // Indexes on the numerical grid for sources
     arma::vec sourceFunction; // Single source-time function for all shots
-    fwiModel currentModel; // Model object at current sample
+    fwiModel model; // Model object at current sample
     std::vector<fwiShot> shots; // All shots accumulated in vector
 
 

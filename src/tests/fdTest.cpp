@@ -47,22 +47,26 @@ int main() {
     fwiExperiment experiment(receivers, sources, sourcefunction, t, dt, nt);
 
     // Create material fields
-    uword nx = experiment.currentModel.nx_domain;
-    uword nz = experiment.currentModel.nz_domain;
+    uword nx = experiment.model.nx_domain;
+    uword nz = experiment.model.nz_domain;
     mat rho = density * ones(nx, nz);
     mat vp = p * ones(nx, nz);
     mat vs = s * ones(nx, nz);
 
-    vp -= 100 * generateGaussian(nx, nz, 50, 150, 100);
-    experiment.currentModel.updateInnerFieldsVelocity(rho, vp, vs);
+    mat dm1 = -200 * generateGaussian(nx, nz, 100, 100, 100);
+    mat dm2 = -200 * generateGaussian(nx, nz, 200, 100, 100);
+    vp += dm1;
+    vs += dm2;
+    experiment.model.updateInnerFieldsVelocity(rho, vp, vs);
 
     // Generate 'observed' data
-//    experiment.forwardData();
-//    experiment.writeShots(arma_binary, experimentFolder);
-//    experiment.writeShots(raw_ascii, experimentFolder);
+    experiment.forwardData();
+    experiment.writeShots(arma_binary, experimentFolder);
+    experiment.writeShots(raw_ascii, experimentFolder);
 
-    vp -= 400 * generateGaussian(nx, nz, 50, 150, 100);
-    experiment.currentModel.updateInnerFieldsVelocity(rho, vp, vs);
+    vp -= dm1;
+    vs -= dm2;
+    experiment.model.updateInnerFieldsVelocity(rho, vp, vs);
 
     // Load the observed data into the appropriate fields
     experiment.loadShots(experimentFolder);
@@ -88,11 +92,8 @@ int main() {
     stdvec factors;
     stdvec epsilons;
 
-    // Generate direction
-    mat dm = 500 * generateGaussian(nx, nz, 50, 150, 100);
-
     // Calculate predicted change
-    double dirGrad = dot(experiment.vpKernel_par2, dm);
+    double dirGrad = dot(experiment.vpKernel_par2, dm1);
 
     std::cout << dirGrad << std::endl;
 
@@ -105,9 +106,9 @@ int main() {
         mat vpNew = vp;
         mat vsNew = vs;
 
-        vpNew = vp + epsilon * dm;
+        vpNew = vp + epsilon * dm1;
 
-        experiment.currentModel.updateInnerFieldsVelocity(rhoNew, vpNew, vsNew);
+        experiment.model.updateInnerFieldsVelocity(rhoNew, vpNew, vsNew);
 
         try {
             // Calculate misfit and gradient

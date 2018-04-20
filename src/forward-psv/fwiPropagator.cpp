@@ -227,9 +227,7 @@ void fwiPropagator::propagateAdjoint(fwiModel &_currentModel, fwiShot &_shot, ma
 
         // Compute correlation integral for the kernel at snapshots
         if (it % _shot.snapshotInterval == 0) {
-
-//            vxSnapshotsAdjoint.slice(it / _shot.snapshotInterval) = vx(_currentModel.interiorX, _currentModel.interiorZ);
-
+            // todo check computation of kernels with integration?
             mat f1 = _shot.vxSnapshots.slice(it / _shot.snapshotInterval) %
                      vx(_currentModel.interiorX, _currentModel.interiorZ);
 

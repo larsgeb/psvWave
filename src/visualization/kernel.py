@@ -3,14 +3,11 @@ import matplotlib
 # matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-# fig = plt.figure(figsize=(6, 3), dpi=400)
+kernel = np.transpose(np.loadtxt("kernelTest/vsKernel_par2.txt"))
 
-# densityKernel = np.transpose(np.loadtxt("kernelTest/densityKernel_par2.txt"))
-kernel = np.transpose(np.loadtxt("kernelTest/vpKernel_par2.txt"))
+max = np.max(np.abs(kernel)) / 2
 
-max = np.max(np.abs(kernel))/2
+plt.imshow(kernel, cmap=plt.get_cmap("seismic"), vmin=-max, vmax=max)
 
-plt.imshow(kernel, cmap=plt.get_cmap("seismic"),vmin=-max,vmax=max)
-
-plt.scatter([150],[100])
+plt.scatter([100, 200], [100, 100])
 plt.show()
