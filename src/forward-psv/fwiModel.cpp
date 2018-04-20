@@ -14,6 +14,7 @@ void fwiModel::updateFields(mat &_density, mat &_lambda, mat &_mu) {
         throw std::invalid_argument("Dimension of updated fields is not equal to domain + non-reflecting boundary.");
     }
 
+    density = _density;
     b_vx = 1.0 / _density;
     b_vz = b_vx;
     la = _lambda;
@@ -23,15 +24,17 @@ void fwiModel::updateFields(mat &_density, mat &_lambda, mat &_mu) {
 
 void fwiModel::updateInnerFieldsElastic(mat &_density, mat &_lambda, mat &_mu) {
 
-    if (_density.n_rows != nx_domain or _density.n_cols != nz_domain or _lambda.n_rows != nx_domain or
-        _lambda.n_cols != nz_domain
-        or _mu.n_rows != nx_domain or _mu.n_cols != nz_domain) {
+    if (_density.n_rows != nx_interior or _density.n_cols != nz_interior or _lambda.n_rows != nx_interior or
+        _lambda.n_cols != nz_interior
+        or _mu.n_rows != nx_interior or _mu.n_cols != nz_interior) {
         throw std::invalid_argument("Dimension of updated fields is not equal to domain.");
     }
 
     b_vx(interiorX, interiorZ) = 1.0 / _density;
     extendFields(b_vx);
     b_vz = b_vx;
+    density = _density;
+    extendFields(density);
 
     la(interiorX, interiorZ) = _lambda;
     mu(interiorX, interiorZ) = _mu;
@@ -46,14 +49,16 @@ void fwiModel::updateInnerFieldsElastic(mat &_density, mat &_lambda, mat &_mu) {
 
 void fwiModel::updateInnerFieldsVelocity(mat &_density, mat &_vp, mat &_vs) {
 
-    if (_density.n_rows != nx_domain or _density.n_cols != nz_domain or _vp.n_rows != nx_domain or
-        _vp.n_cols != nz_domain or _vs.n_rows != nx_domain or _vs.n_cols != nz_domain) {
+    if (_density.n_rows != nx_interior or _density.n_cols != nz_interior or _vp.n_rows != nx_interior or
+        _vp.n_cols != nz_interior or _vs.n_rows != nx_interior or _vs.n_cols != nz_interior) {
         throw std::invalid_argument("Dimension of updated fields is not equal to domain.");
     }
 
     b_vx(interiorX, interiorZ) = 1.0 / _density;
     extendFields(b_vx);
     b_vz = b_vx;
+    density = _density;
+    extendFields(density);
 
     vp(interiorX, interiorZ) = _vp;
     vs(interiorX, interiorZ) = _vs;
@@ -89,33 +94,34 @@ void fwiModel::setTime(double _dt, int _nt, double _t) {
 
 void fwiModel::extendFields(mat &_outer, mat &_inner) {
     // lower
-    _outer(span(np_boundary, nx_domain + np_boundary - 1), span(nz_domain, nz - 1)) =
-            repmat(_inner(span::all, nz_domain - 1), 1, np_boundary);
+    _outer(span(np_boundary, nx_interior + np_boundary - 1), span(nz_interior, nz - 1)) =
+            repmat(_inner(span::all, nz_interior - 1), 1, np_boundary);
     // left
-    _outer(span(0, np_boundary - 1), span(0, nz_domain - 1)) = repmat(_inner(0, span::all), np_boundary, 1);
+    _outer(span(0, np_boundary - 1), span(0, nz_interior - 1)) = repmat(_inner(0, span::all), np_boundary, 1);
     // right
-    _outer(span(np_boundary + nx_domain, nx - 1), span(0, nz_domain - 1)) =
-            repmat(_inner(nx_domain - 1, span::all), np_boundary, 1);
+    _outer(span(np_boundary + nx_interior, nx - 1), span(0, nz_interior - 1)) =
+            repmat(_inner(nx_interior - 1, span::all), np_boundary, 1);
     // lower-left
-    _outer(span(0, np_boundary - 1), span(nz_domain, nz - 1)) = _outer(np_boundary, nz_domain - 1);
+    _outer(span(0, np_boundary - 1), span(nz_interior, nz - 1)) = _outer(np_boundary, nz_interior - 1);
     // lower-right
-    _outer(span(np_boundary + nx_domain), span(nz_domain, nz - 1)) = _outer(np_boundary + nx_domain - 1, nz_domain - 1);
+    _outer(span(np_boundary + nx_interior), span(nz_interior, nz - 1)) = _outer(np_boundary + nx_interior - 1, nz_interior - 1);
 }
 
 void fwiModel::extendFields(mat &_outer) {
     // lower
-    _outer(span(np_boundary, nx_domain + np_boundary - 1), span(nz_domain, nz - 1)) =
-            repmat(_outer(span(np_boundary, nx_domain + np_boundary - 1), nz_domain - 1), 1, np_boundary);
+    _outer(span(np_boundary, nx_interior + np_boundary - 1), span(nz_interior, nz - 1)) =
+            repmat(_outer(span(np_boundary, nx_interior + np_boundary - 1), nz_interior - 1), 1, np_boundary);
     // left (complete)
     _outer(span(0, np_boundary - 1), span::all) =
             repmat(_outer(np_boundary, span::all), np_boundary, 1);
     // right (complete)
-    _outer(span(np_boundary + nx_domain, nx - 1), span::all) =
-            repmat(_outer(np_boundary + nx_domain - 1, span::all), np_boundary, 1);
+    _outer(span(np_boundary + nx_interior, nx - 1), span::all) =
+            repmat(_outer(np_boundary + nx_interior - 1, span::all), np_boundary, 1);
 }
 
 fwiModel::fwiModel() {
     b_vx = arma::ones(nx, nz);
+    density = arma::ones(nx, nz);
     b_vz = arma::ones(nx, nz);
     la = arma::ones(nx, nz);
     mu = arma::ones(nx, nz);

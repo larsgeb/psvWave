@@ -51,15 +51,15 @@ void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot) {
     taper = exp(-square(_currentModel.np_factor * (_currentModel.np_boundary - taper)));
 
     // Create cubes for snapshots (size changes with nt)
-    _shot.txxSnapshots = cube(_currentModel.nx_domain, _currentModel.nz_domain,
+    _shot.txxSnapshots = cube(_currentModel.nx_interior, _currentModel.nz_interior,
                               1 + static_cast<const uword>(_currentModel.get_nt() / _shot.snapshotInterval));
-    _shot.tzzSnapshots = cube(_currentModel.nx_domain, _currentModel.nz_domain,
+    _shot.tzzSnapshots = cube(_currentModel.nx_interior, _currentModel.nz_interior,
                               1 + static_cast<const uword>(_currentModel.get_nt() / _shot.snapshotInterval));
-    _shot.txzSnapshots = cube(_currentModel.nx_domain, _currentModel.nz_domain,
+    _shot.txzSnapshots = cube(_currentModel.nx_interior, _currentModel.nz_interior,
                               1 + static_cast<const uword>(_currentModel.get_nt() / _shot.snapshotInterval));
-    _shot.vxSnapshots = cube(_currentModel.nx_domain, _currentModel.nz_domain,
+    _shot.vxSnapshots = cube(_currentModel.nx_interior, _currentModel.nz_interior,
                              1 + static_cast<const uword>(_currentModel.get_nt() / _shot.snapshotInterval));
-    _shot.vzSnapshots = cube(_currentModel.nx_domain, _currentModel.nz_domain,
+    _shot.vzSnapshots = cube(_currentModel.nx_interior, _currentModel.nz_interior,
                              1 + static_cast<const uword>(_currentModel.get_nt() / _shot.snapshotInterval));
 
     // Create synthetic seismogram matrices (size changes with nt)
@@ -219,7 +219,7 @@ void fwiPropagator::propagateAdjoint(fwiModel &_currentModel, fwiShot &_shot, ma
     }
     taper = exp(-square(_currentModel.np_factor * (_currentModel.np_boundary - taper)));
 
-//    cube vxSnapshotsAdjoint = cube(_currentModel.nx_domain, _currentModel.nz_domain,
+//    cube vxSnapshotsAdjoint = cube(_currentModel.nx_interior, _currentModel.nz_interior,
 //                              1 + static_cast<const uword>(_currentModel.get_nt() / _shot.snapshotInterval));
 
     // Time marching through all time levels

@@ -9,8 +9,8 @@
 using namespace arma;
 
 // Constructor
-fwiExperiment::fwiExperiment(imat _receivers, imat _sources, vec _sourceFunction,
-                             double _samplingTime, double _samplingTimestep, int _samplingAmount) {
+fwiExperiment::fwiExperiment(imat _receivers, imat _sources, vec _sourceFunction, double _samplingTime, double _samplingTimestep,
+                             int _samplingAmount) {
     // Create a fwiExperiment
     receivers = std::move(_receivers);
     sources = std::move(_sources);
@@ -20,18 +20,18 @@ fwiExperiment::fwiExperiment(imat _receivers, imat _sources, vec _sourceFunction
     samplingAmount = _samplingAmount;
     model.setTime(samplingTimestep, samplingAmount, samplingTime);
 
-    muKernel_par1 = zeros(model.nx_domain, model.nz_domain);
-    densityKernel_par1 = zeros(model.nx_domain, model.nz_domain);
-    lambdaKernel_par1 = zeros(model.nx_domain, model.nz_domain);
+    muKernel_par1 = zeros(model.nx_interior, model.nz_interior);
+    densityKernel_par1 = zeros(model.nx_interior, model.nz_interior);
+    lambdaKernel_par1 = zeros(model.nx_interior, model.nz_interior);
 
     // Check for positions
     for (auto &&yPosReceiver : receivers.col(1)) {
-        if (yPosReceiver >= static_cast<int>(model.nz_domain)) {
+        if (yPosReceiver >= static_cast<int>(model.nz_interior)) {
             throw std::invalid_argument("Invalid y position for receiver (in or beyond the Gaussian taper).");
         }
     }
     for (auto &&yPosSource : sources.col(1)) {
-        if (yPosSource >= static_cast<int>(model.nz_domain)) {
+        if (yPosSource >= static_cast<int>(model.nz_interior)) {
             throw std::invalid_argument("Invalid y position for receiver (in or beyond the Gaussian taper).");
         }
     }
@@ -59,9 +59,9 @@ void fwiExperiment::writeShots(file_type type, std::string &_folder) {
 
 void fwiExperiment::computeKernel() {
     calculateAdjointSourcesL2();
-    muKernel_par1 = zeros(model.nx_domain, model.nz_domain);
-    densityKernel_par1 = zeros(model.nx_domain, model.nz_domain);
-    lambdaKernel_par1 = zeros(model.nx_domain, model.nz_domain);
+    muKernel_par1 = zeros(model.nx_interior, model.nz_interior);
+    densityKernel_par1 = zeros(model.nx_interior, model.nz_interior);
+    lambdaKernel_par1 = zeros(model.nx_interior, model.nz_interior);
     backwardAdjoint();
     mapKernels();
 }
@@ -96,9 +96,9 @@ fwiExperiment::fwiExperiment() {
     receivers = imat();
     sources = imat();
     sourceFunction = vec();
-    muKernel_par1 = zeros(model.nx_domain, model.nz_domain);
-    densityKernel_par1 = zeros(model.nx_domain, model.nz_domain);
-    lambdaKernel_par1 = zeros(model.nx_domain, model.nz_domain);
+    muKernel_par1 = zeros(model.nx_interior, model.nz_interior);
+    densityKernel_par1 = zeros(model.nx_interior, model.nz_interior);
+    lambdaKernel_par1 = zeros(model.nx_interior, model.nz_interior);
     shots = std::vector<fwiShot>();
 }
 
