@@ -45,7 +45,9 @@ public:
 
     void calculateMisfit(); // Calculate misfits of observed and synthetic data
 
-    void computeKernel(); // compute all three medium parametr kernels
+    void computeKernel(); // compute all three medium parameter kernels
+
+    void update(arma::mat _de, arma::mat _vp, arma::mat _vs);
 
     void loadShots(std::string &_string); // Load shots (from binary format) into observed data
 

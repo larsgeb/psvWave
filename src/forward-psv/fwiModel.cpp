@@ -14,7 +14,7 @@ void fwiModel::updateFields(mat &_density, mat &_lambda, mat &_mu) {
         throw std::invalid_argument("Dimension of updated fields is not equal to domain + non-reflecting boundary.");
     }
 
-    density = _density;
+    de = _density;
     b_vx = 1.0 / _density;
     b_vz = b_vx;
     la = _lambda;
@@ -33,8 +33,8 @@ void fwiModel::updateInnerFieldsElastic(mat &_density, mat &_lambda, mat &_mu) {
     b_vx(interiorX, interiorZ) = 1.0 / _density;
     extendFields(b_vx);
     b_vz = b_vx;
-    density = _density;
-    extendFields(density);
+    de = _density;
+    extendFields(de);
 
     la(interiorX, interiorZ) = _lambda;
     mu(interiorX, interiorZ) = _mu;
@@ -57,8 +57,8 @@ void fwiModel::updateInnerFieldsVelocity(mat &_density, mat &_vp, mat &_vs) {
     b_vx(interiorX, interiorZ) = 1.0 / _density;
     extendFields(b_vx);
     b_vz = b_vx;
-    density = _density;
-    extendFields(density);
+    de(interiorX, interiorZ) = _density;
+    extendFields(de);
 
     vp(interiorX, interiorZ) = _vp;
     vs(interiorX, interiorZ) = _vs;
@@ -121,7 +121,7 @@ void fwiModel::extendFields(mat &_outer) {
 
 fwiModel::fwiModel() {
     b_vx = arma::ones(nx, nz);
-    density = arma::ones(nx, nz);
+    de = arma::ones(nx, nz);
     b_vz = arma::ones(nx, nz);
     la = arma::ones(nx, nz);
     mu = arma::ones(nx, nz);

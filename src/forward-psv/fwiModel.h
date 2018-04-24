@@ -24,7 +24,7 @@ public:
     arma::mat mu = arma::mat(nx, nz);
     arma::mat lm = arma::mat(nx, nz);
     arma::mat b_vx = arma::mat(nx, nz);
-    arma::mat density = arma::mat(nx, nz);
+    arma::mat de = arma::mat(nx, nz);
     arma::mat b_vz = arma::mat(nx, nz); // TODO consolidate this into single gridpoint?
 
     arma::mat vp = arma::mat(nx, nz);

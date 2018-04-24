@@ -120,3 +120,7 @@ void fwiExperiment::mapKernels() {
                     muKernel_par1 / model.b_vx(model.interiorX, model.interiorZ);
     -4 * model.vs(model.interiorX, model.interiorZ) % lambdaKernel_par1 / model.b_vx(model.interiorX, model.interiorZ);
 }
+
+void fwiExperiment::update(mat _de, mat _vp, mat _vs) {
+    model.updateInnerFieldsVelocity(_de, _vp, _vs);
+}
