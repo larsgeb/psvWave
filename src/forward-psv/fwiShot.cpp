@@ -16,6 +16,13 @@ fwiShot::fwiShot(irowvec _source, imat &_receivers, vec &_sourceFunction, int _s
     samplingTimestep = _samplingTimestep;
     ishot = _ishot;
     snapshotInterval = _snapshotInterval;
+
+    sourceType = explosiveSource;
+    moment = mat(2,2);
+    moment(0,0) = 1;
+    moment(1,1) = 1;
+    moment[0,1] = 1;
+    moment[1,0] = 1;
 }
 
 void fwiShot::writeShot(file_type type, std::string folder) {

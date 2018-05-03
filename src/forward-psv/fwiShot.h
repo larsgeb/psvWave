@@ -12,6 +12,7 @@
 class fwiShot {
 public:
     // Fields
+    arma::mat moment;
     arma::irowvec source;
     arma::imat receivers;
     arma::vec sourceFunction;
@@ -39,7 +40,7 @@ public:
 
     // Constructor
     fwiShot(arma::irowvec _source, arma::imat &_receivers, arma::vec &_sourceFunction, int _samplingAmount,
-         double samplingTimestep, double _samplingTime, arma::uword ishot, int _snapshotInterval);
+            double samplingTimestep, double _samplingTime, arma::uword ishot, int _snapshotInterval);
 
     // Methods
     void writeShot(arma::file_type type, std::string folder);
@@ -51,6 +52,10 @@ public:
     void interpolateSynthetics();
 
     bool errorOnInterpolate = true;
+    int sourceType;
+    enum SourceTypes {
+        explosiveSource = 0, rotationalSource, momentSource
+    };
 };
 
 

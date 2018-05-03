@@ -6,7 +6,6 @@
 #include "fwiPropagator.h"
 #include "fwiExperiment.h"
 
-bool explosive = false;
 using namespace arma;
 
 void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot) {
@@ -72,6 +71,7 @@ void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot) {
 
         // Take snapshot of fields
         if (it % _shot.snapshotInterval == 0) {
+
             auto a = vx(_currentModel.interiorX, _currentModel.interiorZ);
             _shot.vxSnapshots.slice(it / _shot.snapshotInterval) = vx(_currentModel.interiorX, _currentModel.interiorZ);
             _shot.vzSnapshots.slice(it / _shot.snapshotInterval) = vz(_currentModel.interiorX, _currentModel.interiorZ);
@@ -173,13 +173,46 @@ void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot) {
             int ix = _shot.source.row(source)[0] + _currentModel.np_boundary;
             int iz = _shot.source.row(source)[1];
 
-            if (explosive) {
-                txx(ix, iz) +=
-                        0.5 * _currentModel.get_dt() * stf[it] * _currentModel.b_vx(ix, iz) / (dx * dz);
-                tzz(ix, iz) +=
-                        0.5 * _currentModel.get_dt() * stf[it] * _currentModel.b_vz(ix, iz) / (dx * dz);
-            } else {
-                txz += _currentModel.get_dt() * stf[it] * _currentModel.b_vz(ix, iz) / (dx * dz);
+            switch (_shot.sourceType) {
+                case fwiShot::explosiveSource: // explosive
+                    txx(ix, iz) +=
+                            0.5 * _currentModel.get_dt() * stf[it] * _currentModel.b_vx(ix, iz) / (dx * dz);
+                    tzz(ix, iz) +=
+                            0.5 * _currentModel.get_dt() * stf[it] * _currentModel.b_vz(ix, iz) / (dx * dz);
+                case fwiShot::rotationalSource: // rotational
+                    txz += _currentModel.get_dt() * stf[it] * _currentModel.b_vz(ix, iz) / (dx * dz);
+                case fwiShot::momentSource: // Moment tensor * stf
+                    // (x,x)-couple
+                    vx(ix - 1, iz) -=
+                            _shot.moment[0, 0] * stf[it] * _currentModel.get_dt() * _currentModel.b_vz(ix - 1, iz) / (dx * dx * dx * dx);
+                    vx(ix, iz) +=
+                            _shot.moment[0, 0] * stf[it] * _currentModel.get_dt() * _currentModel.b_vz(ix, iz) / (dx * dx * dx * dx);
+
+                    // (z,z)-couple
+                    vz(ix, iz - 1) -=
+                            _shot.moment[1, 1] * stf[it] * _currentModel.get_dt() * _currentModel.b_vz(ix, iz - 1) / (dz * dz * dz * dz);
+                    vz(ix, iz) +=
+                            _shot.moment[1, 1] * stf[it] * _currentModel.get_dt() * _currentModel.b_vz(ix, iz) / (dz * dz * dz * dz);
+
+                    // (x,z)-couple
+                    vx(ix - 1, iz + 1) +=
+                            0.25 * _shot.moment[0, 1] * stf[it] * _currentModel.get_dt() * _currentModel.b_vz(ix - 1, iz + 1) / (dx * dx * dx * dx);
+                    vx(ix, iz + 1) +=
+                            0.25 * _shot.moment[0, 1] * stf[it] * _currentModel.get_dt() * _currentModel.b_vz(ix, iz + 1) / (dx * dx * dx * dx);
+                    vx(ix - 1, iz - 1) -=
+                            0.25 * _shot.moment[0, 1] * stf[it] * _currentModel.get_dt() * _currentModel.b_vz(ix - 1, iz - 1) / (dx * dx * dx * dx);
+                    vx(ix, iz - 1) -=
+                            0.25 * _shot.moment[0, 1] * stf[it] * _currentModel.get_dt() * _currentModel.b_vz(ix, iz - 1) / (dx * dx * dx * dx);
+
+                    // (z,x)-couple
+                    vz(ix + 1, iz - 1) +=
+                            _shot.moment[1, 0] * stf[it] * _currentModel.get_dt() * _currentModel.b_vz(ix + 1, iz - 1) / (dz * dz * dz * dz);
+                    vz(ix + 1, iz) +=
+                            _shot.moment[1, 0] * stf[it] * _currentModel.get_dt() * _currentModel.b_vz(ix + 1, iz) / (dz * dz * dz * dz);
+                    vz(ix - 1, iz - 1) -=
+                            _shot.moment[1, 0] * stf[it] * _currentModel.get_dt() * _currentModel.b_vz(ix - 1, iz - 1) / (dz * dz * dz * dz);
+                    vz(ix - 1, iz) -=
+                            _shot.moment[1, 0] * stf[it] * _currentModel.get_dt() * _currentModel.b_vz(ix - 1, iz) / (dz * dz * dz * dz);
             }
 
         }
@@ -226,14 +259,18 @@ void fwiPropagator::propagateAdjoint(fwiModel &_currentModel, fwiShot &_shot, ma
     }
     taper = exp(-square(_currentModel.np_factor * (_currentModel.np_boundary - taper)));
 
-//    cube vxSnapshotsAdjoint = cube(_currentModel.nx_interior, _currentModel.nz_interior,
-//                              1 + static_cast<const uword>(_currentModel.get_nt() / _shot.snapshotInterval));
-
     // Time marching through all time levels
     for (int it = _currentModel.get_nt() - 1; it >= 0; --it) {
 
         // Compute correlation integral for the kernel at snapshots
         if (it % _shot.snapshotInterval == 0) {
+//            _shot.vxSnapshots.slice(it / _shot.snapshotInterval).save("inversion1/fields/vx_f_" + std::to_string(it) + ".txt", raw_ascii);
+//            _shot.vzSnapshots.slice(it / _shot.snapshotInterval).save("inversion1/fields/vz_f_" + std::to_string(it) + ".txt", raw_ascii);
+//            mat curvx = vx(_currentModel.interiorX, _currentModel.interiorZ);
+//            curvx.save("inversion1/fields/vx_a_" + std::to_string(it) + ".txt", raw_ascii);
+//            mat curvz = vz(_currentModel.interiorX, _currentModel.interiorZ);
+//            curvz.save("inversion1/fields/vz_a_" + std::to_string(it) + ".txt", raw_ascii);
+
             // todo check computation of kernels with integration?
             mat f1 = _shot.vxSnapshots.slice(it / _shot.snapshotInterval) %
                      vx(_currentModel.interiorX, _currentModel.interiorZ);
@@ -243,7 +280,6 @@ void fwiPropagator::propagateAdjoint(fwiModel &_currentModel, fwiShot &_shot, ma
 
             _denistyKernel -=
                     _shot.snapshotInterval * _currentModel.get_dt() * (f1 + f2);
-
             // Compute strain
             mat exxAdj = (txx(_currentModel.interiorX, _currentModel.interiorZ) -
                           (tzz(_currentModel.interiorX, _currentModel.interiorZ) %
