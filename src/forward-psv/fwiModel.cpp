@@ -129,13 +129,13 @@ fwiModel::fwiModel() {
 }
 
 void fwiModel::calculateVelocityFields() {
-    // TODO eveluate validity in staggered grid
+    // TODO evaluate validity in staggered grid
     vp = sqrt((la + 2 * mu) % b_vx);
     vs = sqrt(mu % b_vx);
 }
 
 void fwiModel::calculateElasticFields() {
-    // TODO eveluate validity in staggered grid
+    // TODO evaluate validity in staggered grid
     mu = square(vs) / b_vx;
     lm = square(vp) / b_vx;
     la = lm - 2 * mu;
