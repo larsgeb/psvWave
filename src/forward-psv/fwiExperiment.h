@@ -39,9 +39,9 @@ public:
     fwiExperiment(); // Default constructor
 
     // Methods
-    void writeShots(arma::file_type type, std::string &_folder); // Write shots from synthetic simulation to specified file type
+    void writeShots(arma::file_type type, std::string _folder); // Write shots from synthetic simulation to specified file type
 
-    void forwardData(); // Forward propagate the stf over the supplied parameters
+    void forwardData(); // Forward propagateLeapFrog the stf over the supplied parameters
 
     void calculateMisfit(); // Calculate misfits of observed and synthetic data
 
@@ -49,7 +49,7 @@ public:
 
     void update(arma::mat _de, arma::mat _vp, arma::mat _vs);
 
-    void loadShots(std::string &_string); // Load shots (from binary format) into observed data
+    void loadShots(std::string _string); // Load shots (from binary format) into observed data
 
 private:
 
@@ -59,7 +59,7 @@ private:
 
     void calculateAdjointSourcesL2(); // Calculate adjoint sources using L2 norm
 
-    void backwardAdjoint(); // Back propagate the adjoint sources to compute kernels
+    void backwardAdjoint(); // Back propagateLeapFrog the adjoint sources to compute kernels
 
     void mapKernels();
 };

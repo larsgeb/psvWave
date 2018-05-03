@@ -51,7 +51,7 @@ void fwiExperiment::forwardData() {
     }
 }
 
-void fwiExperiment::writeShots(file_type type, std::string &_folder) {
+void fwiExperiment::writeShots(file_type type, std::string _folder) {
     for (auto &&shot : shots) {
         shot.writeShot(type, _folder);
     }
@@ -59,6 +59,7 @@ void fwiExperiment::writeShots(file_type type, std::string &_folder) {
 
 void fwiExperiment::computeKernel() {
     calculateAdjointSourcesL2();
+
     muKernel_par1 = zeros(model.nx_interior, model.nz_interior);
     densityKernel_par1 = zeros(model.nx_interior, model.nz_interior);
     lambdaKernel_par1 = zeros(model.nx_interior, model.nz_interior);
@@ -86,7 +87,7 @@ void fwiExperiment::backwardAdjoint() {
     }
 }
 
-void fwiExperiment::loadShots(std::string &_folder) {
+void fwiExperiment::loadShots(std::string _folder) {
     for (auto &&shot : shots) {
         shot.loadShot(_folder);
     }
@@ -103,22 +104,18 @@ fwiExperiment::fwiExperiment() {
 }
 
 void fwiExperiment::mapKernels() {
-//    auto vpInt = model.vp(model.interiorX, model.interiorZ);
-//    auto vsInt = model.vs(model.interiorX, model.interiorZ);
-//    auto bInt = model.b_vx(model.interiorX, model.interiorZ);
-
-    densityKernel_par2 =
-            densityKernel_par1 + (square(model.vp(model.interiorX, model.interiorZ)) -
-                                  2 * square(model.vs(model.interiorX, model.interiorZ))) % lambdaKernel_par1
-            + square(model.vs(model.interiorX, model.interiorZ)) % muKernel_par1;
+    densityKernel_par2 = densityKernel_par1
+                         + (square(model.vp(model.interiorX, model.interiorZ)) - 2 * square(model.vs(model.interiorX, model.interiorZ))) %
+                           lambdaKernel_par1
+                         + square(model.vs(model.interiorX, model.interiorZ)) % muKernel_par1;
 
     vpKernel_par2 = 2 * model.vp(model.interiorX, model.interiorZ) % lambdaKernel_par1 /
                     model.b_vx(model.interiorX, model.interiorZ);
 
     // TODO validate next line, the vs * Klambda is a bit weird
-    vsKernel_par2 = 2 * model.vs(model.interiorX, model.interiorZ) %
-                    muKernel_par1 / model.b_vx(model.interiorX, model.interiorZ);
-    -4 * model.vs(model.interiorX, model.interiorZ) % lambdaKernel_par1 / model.b_vx(model.interiorX, model.interiorZ);
+    vsKernel_par2 =
+            (2 * model.vs(model.interiorX, model.interiorZ) % muKernel_par1 - 4 * model.vs(model.interiorX, model.interiorZ) % lambdaKernel_par1) /
+            model.b_vx(model.interiorX, model.interiorZ);
 }
 
 void fwiExperiment::update(mat _de, mat _vp, mat _vs) {

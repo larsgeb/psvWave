@@ -102,7 +102,7 @@ void fwiShot::interpolateSynthetics() {
     seismogramSyn_uz = new_uz;
 }
 
-void fwiShot::loadShot(std::string &_folder) {
+void fwiShot::loadShot(std::string _folder) {
     // Load observed data for shot i
     char filename[1024];
     sprintf(filename, "%s/seismogram%i%s", _folder.c_str(), static_cast<int>(ishot), "_ux.bin");

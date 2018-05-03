@@ -6,6 +6,7 @@
 #include "fwiPropagator.h"
 #include "fwiExperiment.h"
 
+bool explosive = false;
 using namespace arma;
 
 void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot) {
@@ -16,7 +17,7 @@ void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot) {
     vec stf;
     if (_shot.samplingTimestepSyn != _shot.samplingTimestep) {
         if (_shot.errorOnInterpolate) {
-            std::cout << _shot.samplingTimestepSyn << " "<< _shot.samplingTimestep<< std::endl;
+            std::cout << _shot.samplingTimestepSyn << " " << _shot.samplingTimestep << std::endl;
             throw std::invalid_argument("You're trying to interpolate numerical results! This leads to very error prone kernels.");
         } else {
             std::cout << "WARNING: interpolation of stf! Leads to kernels which are very error prone!" << std::endl;
@@ -171,10 +172,16 @@ void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot) {
         for (uword source = 0; source < _shot.source.n_rows; ++source) {
             int ix = _shot.source.row(source)[0] + _currentModel.np_boundary;
             int iz = _shot.source.row(source)[1];
-            vx(ix, iz) +=
-                    0.5 * _currentModel.get_dt() * stf[it] * _currentModel.b_vx(ix, iz) / (dx * dz);
-            vz(ix, iz) +=
-                    0.5 * _currentModel.get_dt() * stf[it] * _currentModel.b_vz(ix, iz) / (dx * dz);
+
+            if (explosive) {
+                txx(ix, iz) +=
+                        0.5 * _currentModel.get_dt() * stf[it] * _currentModel.b_vx(ix, iz) / (dx * dz);
+                tzz(ix, iz) +=
+                        0.5 * _currentModel.get_dt() * stf[it] * _currentModel.b_vz(ix, iz) / (dx * dz);
+            } else {
+                txz += _currentModel.get_dt() * stf[it] * _currentModel.b_vz(ix, iz) / (dx * dz);
+            }
+
         }
 
         // Print status bar
@@ -196,7 +203,7 @@ void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot) {
 
 
 void fwiPropagator::propagateAdjoint(fwiModel &_currentModel, fwiShot &_shot, mat &_denistyKernel, mat &_muKernel,
-                                  mat &_lambdaKernel) {
+                                     mat &_lambdaKernel) {
 
     // Loading simulation parameters
     double dx = _currentModel.dx;

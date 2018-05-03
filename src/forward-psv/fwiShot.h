@@ -44,7 +44,7 @@ public:
     // Methods
     void writeShot(arma::file_type type, std::string folder);
 
-    void loadShot(std::string &_folder);
+    void loadShot(std::string _folder);
 
     void calculateAdjointSources();
 
