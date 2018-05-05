@@ -7,7 +7,7 @@
 
 #include <armadillo>
 
-arma::mat generateGaussian(arma::uword nx, arma::uword nz, double std_dist, arma::uword ix, arma::uword iz);
+arma::mat generateGaussian(arma::uword nx, arma::uword nz, double std_dist, double ix, double iz);
 
 arma::vec generateRicker(double dt, int nt, double freq);
 

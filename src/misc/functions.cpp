@@ -4,7 +4,7 @@
 
 #include "functions.h"
 
-arma::mat generateGaussian(arma::uword nx, arma::uword nz, double std_dist, arma::uword ix, arma::uword iz) {
+arma::mat generateGaussian(arma::uword nx, arma::uword nz, double std_dist, double ix, double iz) {
     arma::mat xcoor(nx, nz);
     xcoor.each_col() = arma::linspace<arma::dcolvec>(0, nx - 1, nx);
     arma::mat zcoor(nx, nz);
