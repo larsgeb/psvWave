@@ -168,7 +168,7 @@ void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot) {
             }
         }
 
-        // Inject explosive source
+        // Inject source
         for (uword source = 0; source < _shot.source.n_rows; ++source) {
             int ix = _shot.source.row(source)[0] + _currentModel.np_boundary;
             int iz = _shot.source.row(source)[1];
@@ -179,8 +179,10 @@ void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot) {
                             0.5 * _currentModel.get_dt() * stf[it] * _currentModel.b_vx(ix, iz) / (dx * dz);
                     tzz(ix, iz) +=
                             0.5 * _currentModel.get_dt() * stf[it] * _currentModel.b_vz(ix, iz) / (dx * dz);
+                    break;
                 case fwiShot::rotationalSource: // rotational
                     txz += _currentModel.get_dt() * stf[it] * _currentModel.b_vz(ix, iz) / (dx * dz);
+                    break;
                 case fwiShot::momentSource: // Moment tensor * stf
                     // (x,x)-couple
                     vx(ix - 1, iz) -=
@@ -213,6 +215,7 @@ void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot) {
                             _shot.moment[1, 0] * stf[it] * _currentModel.get_dt() * _currentModel.b_vz(ix - 1, iz - 1) / (dz * dz * dz * dz);
                     vz(ix - 1, iz) -=
                             _shot.moment[1, 0] * stf[it] * _currentModel.get_dt() * _currentModel.b_vz(ix - 1, iz) / (dz * dz * dz * dz);
+                    break;
             }
 
         }
