@@ -7,7 +7,7 @@
 using namespace arma;
 
 fwiShot::fwiShot(irowvec _source, imat &_receivers, vec &_sourceFunction, int _samplingAmount, double _samplingTimestep,
-           double _samplingTime, uword _ishot, int _snapshotInterval) {
+                 double _samplingTime, uword _ishot, int _snapshotInterval) {
     source = std::move(_source);
     receivers = _receivers;
     sourceFunction = _sourceFunction;
@@ -18,62 +18,23 @@ fwiShot::fwiShot(irowvec _source, imat &_receivers, vec &_sourceFunction, int _s
     snapshotInterval = _snapshotInterval;
 
     sourceType = momentSource;
-    moment = mat(2,2);
-    moment(0,0) = 0;
-    moment(1,1) = 0;
-    moment(0,1) = 1;
-    moment(1,0) = 1;
+    moment = mat(2, 2);
+    moment(0, 0) = 0;
+    moment(1, 1) = 0;
+    moment(0, 1) = 1;
+    moment(1, 0) = 1;
 }
 
 void fwiShot::writeShot(file_type type, std::string folder) {
-    // TODO rewrite this hacked together piece of ...
-    char filename[1024];
-    sprintf(filename, "%s/seismogram%i%s", folder.c_str(), static_cast<int>(ishot),
-            (type == arma_binary ? "_ux.bin" : "_ux.txt"));
-    seismogramSyn_ux.save(filename, type);
-    sprintf(filename, "%s/seismogram%i%s", folder.c_str(), static_cast<int>(ishot),
-            (type == arma_binary ? "_uz.bin" : "_uz.txt"));
-    seismogramSyn_uz.save(filename, type);
+    std::string filename = folder + "/seismogram" + std::to_string(static_cast<int>(ishot)) ;
+    seismogramSyn_ux.save(filename + (type == arma_binary ? "_ux.bin" : "_ux.txt"), type);
+    seismogramSyn_uz.save(filename + (type == arma_binary ? "_uz.bin" : "_uz.txt"), type);
 }
 
 void fwiShot::calculateAdjointSources() {
     // only interpolate when timesteps don't match
     if (this->samplingTimestepSyn != this->samplingTimestep) {
-        if (errorOnInterpolate) {
-            throw std::invalid_argument("You're trying to interpolate numerical results! This leads to very error prone kernels.");
-        } else {
-            std::cout << "WARNING: interpolation of adjoint sources! Leads to kernels which are very error prone!" << std::endl;
-        }
-        rowvec t_obs = linspace<rowvec>(0, samplingAmount * samplingTimestep, static_cast<const uword>(samplingAmount));
-        rowvec t_syn = linspace<rowvec>(0, samplingTimestepSyn * samplingAmountSyn, static_cast<const uword>(samplingAmountSyn));
-
-        vxAdjointSource = seismogramSyn_ux - seismogramObs_ux;
-        vzAdjointSource = seismogramSyn_uz - seismogramObs_uz;
-
-        // Output for analysis
-        char filename[1024];
-        sprintf(filename, "adjoint_source%f.txt", (this->samplingTimestepSyn));
-        vxAdjointSource.save(filename, raw_ascii);
-
-        mat new_vx = mat(seismogramSyn_ux.n_rows, t_syn.n_cols);
-        mat new_vz = mat(seismogramSyn_ux.n_rows, t_syn.n_cols);
-
-        for (uword iReceiver = 0; iReceiver < seismogramSyn_ux.n_rows; ++iReceiver) {
-            rowvec old_vx = vxAdjointSource.row(iReceiver);
-            rowvec old_vz = vzAdjointSource.row(iReceiver);
-
-            rowvec temp_vx;
-            rowvec temp_vz;
-
-            interp1(t_obs, old_vx, t_syn, temp_vx, "*linear", 0);  // faster than "linear", monotonically increasing
-            interp1(t_obs, old_vz, t_syn, temp_vz, "*linear", 0);  // faster than "linear", monotonically increasing
-
-            new_vx.row(iReceiver) = temp_vx;
-            new_vz.row(iReceiver) = temp_vz;
-
-        }
-        vxAdjointSource = new_vx;
-        vzAdjointSource = new_vz;
+        throw std::invalid_argument("You're trying to interpolate numerical results! This leads to very error prone kernels.");
     } else {
         vxAdjointSource = seismogramSyn_ux - seismogramObs_ux;
         vzAdjointSource = seismogramSyn_uz - seismogramObs_uz;
