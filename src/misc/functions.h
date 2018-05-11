@@ -9,6 +9,6 @@
 
 arma::mat generateGaussian(arma::uword nx, arma::uword nz, double std_dist, double ix, double iz);
 
-arma::vec generateRicker(double dt, int nt, double freq);
+arma::vec generateRicker(double dt, arma::uword nt, double freq);
 
 #endif //HMC_FORWARD_FD_FUNCTIONS_H

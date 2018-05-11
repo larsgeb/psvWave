@@ -15,7 +15,7 @@ arma::mat generateGaussian(arma::uword nx, arma::uword nz, double std_dist, doub
 
 }
 
-arma::vec generateRicker(double dt, int nt, double freq) {
+arma::vec generateRicker(double dt, arma::uword nt, double freq) {
     double centralFrequency = freq;
     double tsource = 1.0 / centralFrequency;
     arma::vec time = arma::linspace(0, dt * (nt - 1), static_cast<const arma::uword>(nt));
