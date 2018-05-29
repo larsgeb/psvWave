@@ -1,5 +1,5 @@
 //
-// Created by lars on 17.03.18.
+// Created by Lars Gebraad on 17.03.18.
 //
 #include <armadillo>
 #include "fwiModel.h"
@@ -221,16 +221,16 @@ void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot) {
         }
 
         // Print status bar
-        if (it % (_currentModel.get_nt() / 50) == 0) {
+        /*if (it % (_currentModel.get_nt() / 50) == 0) {
             char message[1024];
             sprintf(message, "\r \r    %i%%", static_cast<int>(static_cast<double>(it) * 100.0 / static_cast<double>(_currentModel.get_nt())));
             std::cout << message << std::flush;
-        }
+        }*/
     }
-    char message[1024];
+    /*char message[1024];
     sprintf(message, "\r \r    %i%%", 100);
     std::cout << message << std::flush;
-    std::cout << std::endl;
+    std::cout << std::endl;*/
 
     if (_shot.samplingTimestepSyn != _shot.samplingTimestep) {
         _shot.interpolateSynthetics();
@@ -398,13 +398,13 @@ void fwiPropagator::propagateAdjoint(fwiModel &_currentModel, fwiShot &_shot, ma
             vz(ix, iz) += _currentModel.get_dt() * _currentModel.b_vz(ix, iz) * _shot.vzAdjointSource(receiver, it) /
                           (dx * dz);
         }
-        if (it % (_currentModel.get_nt() / 50) == 0) {
+        /*if (it % (_currentModel.get_nt() / 50) == 0) {
             char message[1024];
             sprintf(message, "\r \r    %i%% ",
                     static_cast<int>(static_cast<double>(it) * 100.0 / static_cast<double>(_currentModel.get_nt())));
             std::cout << message << std::flush;
-        }
+        }*/
     }
-    std::cout << std::endl;
+//    std::cout << std::endl;
 }
 
