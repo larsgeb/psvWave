@@ -16,7 +16,7 @@ public:
     constexpr static double coeff2 = 1.0 / 24.0;
 
     // static propagators
-    static void propagateForward(fwiModel &_currentModel, fwiShot &_shot);
+    static void propagateForward(fwiModel &_currentModel, fwiShot &_shot, bool exportSnapshots, bool performFWI, std::vector<int> snapshotLocations);
 
     static void propagateAdjoint(fwiModel &_currentModel, fwiShot &_shot, arma::mat &_denistyKernel,
                                  arma::mat &_muKernel, arma::mat &_lambdaKernel);

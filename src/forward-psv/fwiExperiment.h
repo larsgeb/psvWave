@@ -20,8 +20,12 @@ public:
     fwiModel model; // Model object at current sample
     std::vector<fwiShot> shots; // All shots accumulated in vector
 
+    // Wave analysis parameters
+    bool exportSnapshots = false;
+    std::vector<int> snapshots;
 
     // FWI parameters
+    bool performFWI = true;
     int snapshotInterval = 10; // Interval used to store wavefields and compute kernels
     double misfit; // Misfit at current model. Needs to be explicitly computed first
     arma::mat muKernel_par1; // Mu kernel for free parameters mu, lambda, rho

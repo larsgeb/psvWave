@@ -40,7 +40,7 @@ int main() {
     sourcefunction = generateRicker(dt, nt, freq);
 
     // Create experiment object
-    experiment experiment_1(receivers, sources, sourcefunction);
+    fwiExperiment experiment_1(receivers, sources, sourcefunction);
 
     // Create material fields
     uword nx = experiment_1.currentModel.nx;

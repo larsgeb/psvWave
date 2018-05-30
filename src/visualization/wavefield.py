@@ -1,20 +1,24 @@
 import numpy as np
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 ims = []
-fig = plt.figure(figsize=(10,5), dpi=400)
+fig = plt.figure(figsize=(10, 5), dpi=400)
 
 Writer = animation.writers['ffmpeg']
-writer = Writer(fps=30, metadata=dict(artist='Lars Gebraad'), bitrate=5000)
+writer = Writer(fps=1, metadata=dict(artist='Lars Gebraad'), bitrate=5000)
 
-for frame in np.arange(0,3500,10):
-    im = plt.imshow(np.transpose(np.loadtxt("output/shot0/vx%i.txt" % frame)), animated=True,vmin=-5e-13, vmax=5e-13, aspect=1, cmap=plt.get_cmap('seismic'))
+for frame in range(0, 3500, 50):
+    vx = np.transpose(np.loadtxt("snapshot%i_vx.txt" % frame))
+
+    if frame == 0:
+        max = np.max(np.abs(vx))
+
+    im = plt.imshow(vx, animated=True, aspect=1, cmap=plt.get_cmap('seismic'), vmin=-max*1e6, vmax=max*1e6)
     ims.append([im])
 
-
-ani = animation.ArtistAnimation(fig, ims, interval=10, blit=True, repeat_delay=0)
+ani = animation.ArtistAnimation(fig, ims, interval=1, blit=True, repeat_delay=0)
 ani.save('shot0.mp4', writer=writer)
-

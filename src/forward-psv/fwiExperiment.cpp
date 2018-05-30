@@ -47,7 +47,7 @@ fwiExperiment::fwiExperiment(imat _receivers, imat _sources, vec _sourceFunction
 
 void fwiExperiment::forwardData() {
     for (uword iShot = 0; iShot < sources.n_rows; ++iShot) {
-        fwiPropagator::propagateForward(model, shots[iShot]);
+        fwiPropagator::propagateForward(model, shots[iShot], exportSnapshots, performFWI, snapshots);
     }
 }
 

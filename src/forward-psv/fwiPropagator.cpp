@@ -8,7 +8,8 @@
 
 using namespace arma;
 
-void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot) {
+void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot, bool exportSnapshots, bool performFWI,
+                                     std::vector<int> snapshotLocations) {
     // Rewrite synthetic parameters in shot for interpolation in misfit calculation
     _shot.samplingTimestepSyn = _currentModel.get_dt();
     _shot.samplingAmountSyn = _currentModel.get_nt();
@@ -50,17 +51,19 @@ void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot) {
     }
     taper = exp(-square(_currentModel.np_factor * (_currentModel.np_boundary - taper)));
 
-    // Create cubes for snapshots (size changes with nt)
-    _shot.txxSnapshots = cube(_currentModel.nx_interior, _currentModel.nz_interior,
-                              1 + static_cast<const uword>(_currentModel.get_nt() / _shot.snapshotInterval));
-    _shot.tzzSnapshots = cube(_currentModel.nx_interior, _currentModel.nz_interior,
-                              1 + static_cast<const uword>(_currentModel.get_nt() / _shot.snapshotInterval));
-    _shot.txzSnapshots = cube(_currentModel.nx_interior, _currentModel.nz_interior,
-                              1 + static_cast<const uword>(_currentModel.get_nt() / _shot.snapshotInterval));
-    _shot.vxSnapshots = cube(_currentModel.nx_interior, _currentModel.nz_interior,
-                             1 + static_cast<const uword>(_currentModel.get_nt() / _shot.snapshotInterval));
-    _shot.vzSnapshots = cube(_currentModel.nx_interior, _currentModel.nz_interior,
-                             1 + static_cast<const uword>(_currentModel.get_nt() / _shot.snapshotInterval));
+    if (performFWI) {
+        // Create cubes for snapshots (size changes with nt)
+        _shot.txxSnapshots = cube(_currentModel.nx_interior, _currentModel.nz_interior,
+                                  1 + static_cast<const uword>(_currentModel.get_nt() / _shot.snapshotInterval));
+        _shot.tzzSnapshots = cube(_currentModel.nx_interior, _currentModel.nz_interior,
+                                  1 + static_cast<const uword>(_currentModel.get_nt() / _shot.snapshotInterval));
+        _shot.txzSnapshots = cube(_currentModel.nx_interior, _currentModel.nz_interior,
+                                  1 + static_cast<const uword>(_currentModel.get_nt() / _shot.snapshotInterval));
+        _shot.vxSnapshots = cube(_currentModel.nx_interior, _currentModel.nz_interior,
+                                 1 + static_cast<const uword>(_currentModel.get_nt() / _shot.snapshotInterval));
+        _shot.vzSnapshots = cube(_currentModel.nx_interior, _currentModel.nz_interior,
+                                 1 + static_cast<const uword>(_currentModel.get_nt() / _shot.snapshotInterval));
+    }
 
     // Create synthetic seismogram matrices (size changes with nt)
     _shot.seismogramSyn_ux = zeros(_shot.receivers.n_rows, static_cast<const uword>(_currentModel.get_nt()));
@@ -69,8 +72,9 @@ void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot) {
     // Time marching through all time levels
     for (int it = 0; it < _currentModel.get_nt(); ++it) {
 
+
         // Take snapshot of fields
-        if (it % _shot.snapshotInterval == 0) {
+        if (performFWI and it % _shot.snapshotInterval == 0) {
 
             auto a = vx(_currentModel.interiorX, _currentModel.interiorZ);
             _shot.vxSnapshots.slice(it / _shot.snapshotInterval) = vx(_currentModel.interiorX, _currentModel.interiorZ);
@@ -82,6 +86,7 @@ void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot) {
             _shot.txzSnapshots.slice(it / _shot.snapshotInterval) = txz(_currentModel.interiorX,
                                                                         _currentModel.interiorZ);
         }
+
 
         // Record wavefield at receivers
 #pragma omp parallel for collapse(1)
@@ -220,17 +225,26 @@ void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot) {
 
         }
 
+        if (exportSnapshots and std::find(snapshotLocations.begin(), snapshotLocations.end(), it) != snapshotLocations.end()) {
+            std::cout << "Saving snapshot: " << it << std::endl;
+            std::string filename = "snapshot" + std::to_string(it) ;
+            vx.save(filename + "_vx.txt", raw_ascii);
+            vz.save(filename + "_vz.txt", raw_ascii);
+        }
+
         // Print status bar
-        /*if (it % (_currentModel.get_nt() / 50) == 0) {
+        if (exportSnapshots and (it % (_currentModel.get_nt() / 50) == 0)) {
             char message[1024];
             sprintf(message, "\r \r    %i%%", static_cast<int>(static_cast<double>(it) * 100.0 / static_cast<double>(_currentModel.get_nt())));
             std::cout << message << std::flush;
-        }*/
+        }
     }
-    /*char message[1024];
-    sprintf(message, "\r \r    %i%%", 100);
-    std::cout << message << std::flush;
-    std::cout << std::endl;*/
+    if (exportSnapshots) {
+        char message[1024];
+        sprintf(message, "\r \r    %i%%", 100);
+        std::cout << message << std::flush;
+        std::cout << std::endl;
+    }
 
     if (_shot.samplingTimestepSyn != _shot.samplingTimestep) {
         _shot.interpolateSynthetics();
