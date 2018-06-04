@@ -54,7 +54,7 @@ public:
     bool errorOnInterpolate = true;
     int sourceType;
     enum SourceTypes {
-        explosiveSource = 0, rotationalSource, momentSource
+        explosiveSource = 0, rotationalSource, momentSource, momentSourceHeaviside
     };
 };
 
