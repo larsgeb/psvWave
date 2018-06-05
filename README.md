@@ -14,6 +14,9 @@ Three material parameter kernels for a single source (Ricker Wavelet) with three
 The background fwiModel is perturbed by a Gaussian density blob exactly midway.
 From top to bottom the kernels are density, Lamé's first and second parameter.
 
+<video src="examples/shot0_no_scatter.mp4" controls preload></video>
+
+
 ![Kernels](examples/kernels.png?raw=true)
 
 ##### Error in kernels
