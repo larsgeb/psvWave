@@ -20,10 +20,10 @@ fwiShot::fwiShot(irowvec _source, imat &_receivers, vec &_sourceFunction, int _s
     sourceType = _sourceType;
 
     moment = mat(2, 2);
-    moment(0, 0) = 0;
-    moment(1, 1) = 0;
-    moment(0, 1) = 1;
-    moment(1, 0) = 1;
+    moment(0, 0) = 1;
+    moment(0, 1) = 0;
+    moment(1, 0) = 0;
+    moment(1, 1) = -1;
 }
 
 void fwiShot::writeShot(file_type type, std::string folder) {

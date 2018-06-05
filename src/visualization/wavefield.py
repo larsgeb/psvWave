@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 # fig = plt.figure(figsize=(6, 3), dpi=400)
 from scipy import signal
 
-maxi = 500
+maxi = 300
 dt = 1
 
 # vx = np.ndarray((maxi, 300, 550))
@@ -41,14 +41,14 @@ uzdx = signal.convolve2d(field2, dx, boundary='symm', mode='same')
 uxdx = signal.convolve2d(field1, dz, boundary='symm', mode='same')
 uzdz = signal.convolve2d(field2, dx, boundary='symm', mode='same')
 
-plt.subplot(3, 1, 1)
+plt.subplot(1, 2, 1)
 im = plt.imshow(field1[:-50, 50:-50], cmap=plt.get_cmap('seismic'), vmin=-maxAmp, vmax=maxAmp)
 # im = plt.imshow(uxdz[:-50, 50:-50] - uzdx[:-50, 50:-50], cmap=plt.get_cmap('seismic'), vmin=-maxAmp, vmax=maxAmp)
-plt.subplot(3, 1, 2)
+plt.subplot(1, 2, 2)
 plt.imshow(field2[:-50, 50:-50], cmap=plt.get_cmap('seismic'), vmin=-maxAmp, vmax=maxAmp)
 # plt.imshow(uxdx[:-50, 50:-50] + uzdz[:-50, 50:-50], cmap=plt.get_cmap('seismic'), vmin=-maxAmp, vmax=maxAmp)
-plt.subplot(3, 1, 3)
-field3 = np.sqrt(np.square(field1[:-50, 50:-50]) + np.square(field2[:-50, 50:-50]))
-plt.imshow(field3, cmap=plt.get_cmap('seismic'), vmin=-maxAmp, vmax=maxAmp)
-
+# plt.subplot(3, 1, 3)
+# field3 = np.sqrt(np.square(field1[:-50, 50:-50]) + np.square(field2[:-50, 50:-50]))
+# plt.imshow(field3, cmap=plt.get_cmap('seismic'), vmin=-maxAmp, vmax=maxAmp)
 plt.show()
+

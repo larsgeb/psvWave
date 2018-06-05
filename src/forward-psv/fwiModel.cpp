@@ -145,7 +145,7 @@ double fwiModel::get_dt() {
     return this->dt;
 }
 
-int fwiModel::get_nt() {
+unsigned int fwiModel::get_nt() {
     return this->nt;
 }
 

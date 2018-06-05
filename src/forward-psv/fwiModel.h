@@ -12,8 +12,8 @@ public:
     // Fields
     double dx = 1.249;
     double dz = 1.249;
-    arma::uword nx_interior = 100;
-    arma::uword nz_interior = 100;
+    arma::uword nx_interior = 450;
+    arma::uword nz_interior = 250;
     arma::uword np_boundary = 50;
     double np_factor = 0.0075;
     arma::uword nx = nx_interior + 2 * np_boundary;

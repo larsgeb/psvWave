@@ -15,16 +15,8 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Wshadow -Wnon
 
 include_directories(../armadillo-code/include)
 
-add_executable(calculateKernel src/calculateKernel.cpp src/forward-psv/fwiPropagator.cpp src/forward-psv/fwiPropagator.h src/forward-psv/fwiModel.h
-        src/forward-psv/fwiModel.cpp src/forward-psv/fwiExperiment.h src/forward-psv/fwiExperiment.cpp src/forward-psv/fwiShot.cpp
-        src/forward-psv/fwiShot.h src/misc/functions.cpp src/misc/functions.h)
-add_executable(fdTest src/tests/fdTest.cpp src/forward-psv/fwiPropagator.cpp src/forward-psv/fwiPropagator.h src/forward-psv/fwiModel.h
-        src/forward-psv/fwiModel.cpp src/forward-psv/fwiExperiment.h src/forward-psv/fwiExperiment.cpp src/forward-psv/fwiShot.cpp
-        src/forward-psv/fwiShot.h src/misc/functions.cpp src/misc/functions.h)
-
 add_executable(waveSimulation src/waveSimulation.cpp src/forward-psv/fwiPropagator.cpp src/forward-psv/fwiPropagator.h src/forward-psv/fwiModel.h
         src/forward-psv/fwiModel.cpp src/forward-psv/fwiExperiment.h src/forward-psv/fwiExperiment.cpp src/forward-psv/fwiShot.cpp
         src/forward-psv/fwiShot.h src/misc/functions.cpp src/misc/functions.h)
 
-target_link_libraries(calculateKernel openblas)
-target_link_libraries(fdTest openblas)
+target_link_libraries(waveSimulation openblas)

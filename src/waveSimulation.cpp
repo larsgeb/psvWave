@@ -33,24 +33,29 @@ int main() {
     // Create stf
     vec sourcefunction;
     double dt = 0.00025;
-    unsigned int nt = 3500;
+    unsigned int nt = 4500;
     double freq = 50;
     sourcefunction = generateRicker(dt, nt, freq);
 
     // Loading set up
 
-    fwiExperiment experiment(receivers, sources, sourcefunction, dt * nt, dt, nt);
+    fwiExperiment experiment(receivers, sources, sourcefunction, dt * nt, dt, nt, fwiShot::momentSource);
+//    fwiExperiment experiment(receivers, sources, sourcefunction, dt * nt, dt, nt, fwiShot::momentSourceHeaviside);
 
     // Loading material parameters
     mat rho = 1500 * ones(experiment.model.nx_interior, experiment.model.nz_interior);
     mat vp = 2000 * ones(experiment.model.nx_interior, experiment.model.nz_interior);
     mat vs = 800 * ones(experiment.model.nx_interior, experiment.model.nz_interior);
+
+    vp(span::all, span(150, experiment.model.nz_interior - 1)) *= 1.2;
+    vs(span::all, span(150, experiment.model.nz_interior - 1)) *= 0.8;
+
     experiment.update(rho, vp, vs);
 
     experiment.exportSnapshots = true;
     experiment.performFWI = false;
 
-    for (int i = 0; i < 3500; i+=50) {
+    for (int i = 0; i < nt; i += 100) {
         experiment.snapshots.emplace_back(i);
     }
 

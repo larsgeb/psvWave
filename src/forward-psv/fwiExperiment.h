@@ -13,6 +13,7 @@ class fwiExperiment {
     // Class which contains the basic elements of a full waveform experiment. Contains all the basic functions for FWI, which are delegated to shots
     // and receiver. Also contains the model object and other simulation parameters. Can be used for synthetics as well as inversion.
 public:
+
     // Fields
     arma::imat receivers; // Indexes on the numerical grid for receivers
     arma::imat sources; // Indexes on the numerical grid for sources
@@ -38,7 +39,7 @@ public:
 
     // Constructors
     fwiExperiment(arma::imat _receivers, arma::imat _sources, arma::vec _sourceFunction, double samplingTime, double samplingTimestep,
-                  int samplingAmount); // Standard constructor supplying all necessary info
+                  int samplingAmount, fwiShot::SourceTypes sourceType); // Standard constructor supplying all necessary info
 
     fwiExperiment(); // Default constructor
 

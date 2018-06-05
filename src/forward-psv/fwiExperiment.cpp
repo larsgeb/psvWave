@@ -10,7 +10,7 @@ using namespace arma;
 
 // Constructor
 fwiExperiment::fwiExperiment(imat _receivers, imat _sources, vec _sourceFunction, double _samplingTime, double _samplingTimestep,
-                             int _samplingAmount) {
+                             int _samplingAmount, fwiShot::SourceTypes sourceType = fwiShot::momentSource) {
     // Create a fwiExperiment
     receivers = std::move(_receivers);
     sources = std::move(_sources);
@@ -39,8 +39,8 @@ fwiExperiment::fwiExperiment(imat _receivers, imat _sources, vec _sourceFunction
     // This way all shots have the same receivers and sources
     for (uword ishot = 0; ishot < sources.n_rows; ++ishot) {
         shots.emplace_back(
-                fwiShot(sources.row(ishot), receivers, sourceFunction, samplingAmount, samplingTimestep, samplingTime,
-                        ishot, snapshotInterval));
+                fwiShot(sources.row(ishot), receivers, sourceFunction, samplingAmount, samplingTimestep, samplingTime, ishot, snapshotInterval,
+                        sourceType));
     }
 
 }
@@ -112,7 +112,6 @@ void fwiExperiment::mapKernels() {
     vpKernel_par2 = 2 * model.vp(model.interiorX, model.interiorZ) % lambdaKernel_par1 /
                     model.b_vx(model.interiorX, model.interiorZ);
 
-    // TODO validate next line, the vs * Klambda is a bit weird
     vsKernel_par2 =
             (2 * model.vs(model.interiorX, model.interiorZ) % muKernel_par1 - 4 * model.vs(model.interiorX, model.interiorZ) % lambdaKernel_par1) /
             model.b_vx(model.interiorX, model.interiorZ);
