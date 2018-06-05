@@ -50,7 +50,7 @@ public:
 
     double get_dt();
 
-    int get_nt();
+    unsigned int get_nt();
 
     double get_samplingTime();
 
