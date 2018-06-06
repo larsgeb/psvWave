@@ -9,10 +9,22 @@ Most functions are self explanatory (I hope).
 
 #### Examples
 
+##### Wave simulations
+These simulations show logarithmic absolute particle velocity. High quality mp4's of the following videos can be found in **examples/**.
+
+Layered earth model (vp increase, vs decrease)
+![Layered](examples/shot0_no_scatter.gif?raw=true)
+
+Layered earth model (vp increase, vs decrease) with scatterers
+
+![Scatterer](examples/shot0_scatter.gif?raw=true)
+
+
 ##### Kernels
 Three material parameter kernels for a single source (Ricker Wavelet) with three receivers. 
 The background fwiModel is perturbed by a Gaussian density blob exactly midway.
 From top to bottom the kernels are density, Lamé's first and second parameter.
+
 
 ![Kernels](examples/kernels.png?raw=true)
 

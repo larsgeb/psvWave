@@ -6,8 +6,8 @@
 
 using namespace arma;
 
-fwiShot::fwiShot(irowvec _source, imat &_receivers, vec &_sourceFunction, int _samplingAmount, double _samplingTimestep,
-                 double _samplingTime, uword _ishot, int _snapshotInterval) {
+fwiShot::fwiShot(irowvec _source, imat &_receivers, vec &_sourceFunction, int _samplingAmount, double _samplingTimestep, double _samplingTime,
+                 uword _ishot, int _snapshotInterval, SourceTypes _sourceType) {
     source = std::move(_source);
     receivers = _receivers;
     sourceFunction = _sourceFunction;
@@ -17,16 +17,17 @@ fwiShot::fwiShot(irowvec _source, imat &_receivers, vec &_sourceFunction, int _s
     ishot = _ishot;
     snapshotInterval = _snapshotInterval;
 
-    sourceType = momentSource;
+    sourceType = _sourceType;
+
     moment = mat(2, 2);
-    moment(0, 0) = 0;
-    moment(1, 1) = 0;
-    moment(0, 1) = 1;
-    moment(1, 0) = 1;
+    moment(0, 0) = 1;
+    moment(0, 1) = 0;
+    moment(1, 0) = 0;
+    moment(1, 1) = -1;
 }
 
 void fwiShot::writeShot(file_type type, std::string folder) {
-    std::string filename = folder + "/seismogram" + std::to_string(static_cast<int>(ishot)) ;
+    std::string filename = folder + "/seismogram" + std::to_string(static_cast<int>(ishot));
     seismogramSyn_ux.save(filename + (type == arma_binary ? "_ux.bin" : "_ux.txt"), type);
     seismogramSyn_uz.save(filename + (type == arma_binary ? "_uz.bin" : "_uz.txt"), type);
 }

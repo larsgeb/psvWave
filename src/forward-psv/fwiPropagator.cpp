@@ -223,7 +223,7 @@ void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot, bo
                             _shot.moment(1, 0) * stf[it] * _currentModel.get_dt() * _currentModel.b_vz(ix - 1, iz) / (dz * dz * dz * dz);
                     break;
                 case fwiShot::momentSourceHeaviside:
-                    if (it > 5) {
+                    if (it * _currentModel.get_dt() >= 0.001) {
                         // (x,x)-couple
                         vx(ix - 1, iz) -=
                                 _shot.moment(0, 0) * _currentModel.get_dt() * _currentModel.b_vz(ix - 1, iz) / (dx * dx * dx * dx);
@@ -263,7 +263,7 @@ void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot, bo
 
         if (exportSnapshots and std::find(snapshotLocations.begin(), snapshotLocations.end(), it) != snapshotLocations.end()) {
             std::cout << "Saving snapshot: " << it << std::endl;
-            std::string filename = "snapshot" + std::to_string(it);
+            std::string filename = "snapshots/snapshot" + std::to_string(it);
             vx.save(filename + "_vx.txt", raw_ascii);
             vz.save(filename + "_vz.txt", raw_ascii);
         }
@@ -293,9 +293,9 @@ void fwiPropagator::propagateAdjoint(fwiModel &_currentModel, fwiShot &_shot, ma
 
     // Loading simulation parameters
     double dx = _currentModel.dx;
-    const sword nx = _currentModel.nx;
+    const uword nx = _currentModel.nx;
     double dz = _currentModel.dz;
-    const sword nz = _currentModel.nz;
+    const uword nz = _currentModel.nz;
 
     // Create dynamic fields
     mat vx = zeros(_currentModel.nx, _currentModel.nz);

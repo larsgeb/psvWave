@@ -38,9 +38,13 @@ public:
     arma::mat vxAdjointSource;
     arma::mat vzAdjointSource;
 
+    enum SourceTypes {
+        explosiveSource = 0, rotationalSource, momentSource, momentSourceHeaviside
+    };
+
     // Constructor
-    fwiShot(arma::irowvec _source, arma::imat &_receivers, arma::vec &_sourceFunction, int _samplingAmount,
-            double samplingTimestep, double _samplingTime, arma::uword ishot, int _snapshotInterval);
+    fwiShot(arma::irowvec _source, arma::imat &_receivers, arma::vec &_sourceFunction, int _samplingAmount, double samplingTimestep,
+            double _samplingTime, arma::uword ishot, int _snapshotInterval, SourceTypes sourceType);
 
     // Methods
     void writeShot(arma::file_type type, std::string folder);
@@ -53,9 +57,6 @@ public:
 
     bool errorOnInterpolate = true;
     int sourceType;
-    enum SourceTypes {
-        explosiveSource = 0, rotationalSource, momentSource, momentSourceHeaviside
-    };
 };
 
 
