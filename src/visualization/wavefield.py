@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 # fig = plt.figure(figsize=(6, 3), dpi=400)
 from scipy import signal
 
-maxi = 300
+maxi = 1900
 dt = 1
 
 # vx = np.ndarray((maxi, 300, 550))
@@ -23,7 +23,7 @@ dt = 1
 vx = np.transpose(np.loadtxt("snapshots/snapshot%i_vx.txt" % maxi))
 vz = np.transpose(np.loadtxt("snapshots/snapshot%i_vz.txt" % maxi))
 
-maxAmp = 1e-9
+maxAmp = 1e-10
 
 dz = np.array([[0, -1, 0],
                [0, 0, 0],
@@ -41,14 +41,14 @@ uzdx = signal.convolve2d(field2, dx, boundary='symm', mode='same')
 uxdx = signal.convolve2d(field1, dz, boundary='symm', mode='same')
 uzdz = signal.convolve2d(field2, dx, boundary='symm', mode='same')
 
-plt.subplot(1, 2, 1)
-im = plt.imshow(field1[:-50, 50:-50], cmap=plt.get_cmap('seismic'), vmin=-maxAmp, vmax=maxAmp)
-# im = plt.imshow(uxdz[:-50, 50:-50] - uzdx[:-50, 50:-50], cmap=plt.get_cmap('seismic'), vmin=-maxAmp, vmax=maxAmp)
-plt.subplot(1, 2, 2)
-plt.imshow(field2[:-50, 50:-50], cmap=plt.get_cmap('seismic'), vmin=-maxAmp, vmax=maxAmp)
-# plt.imshow(uxdx[:-50, 50:-50] + uzdz[:-50, 50:-50], cmap=plt.get_cmap('seismic'), vmin=-maxAmp, vmax=maxAmp)
+# plt.subplot(3, 1, 1)
+# im = plt.imshow(field1[:-50, 50:-50], cmap=plt.get_cmap('seismic'), vmin=-maxAmp, vmax=maxAmp)
+# # im = plt.imshow(uxdz[:-50, 50:-50] - uzdx[:-50, 50:-50], cmap=plt.get_cmap('seismic'), vmin=-maxAmp, vmax=maxAmp)
+# plt.subplot(3, 1, 2)
+# plt.imshow(field2[:-50, 50:-50], cmap=plt.get_cmap('seismic'), vmin=-maxAmp, vmax=maxAmp)
+# # plt.imshow(uxdx[:-50, 50:-50] + uzdz[:-50, 50:-50], cmap=plt.get_cmap('seismic'), vmin=-maxAmp, vmax=maxAmp)
 # plt.subplot(3, 1, 3)
-# field3 = np.sqrt(np.square(field1[:-50, 50:-50]) + np.square(field2[:-50, 50:-50]))
-# plt.imshow(field3, cmap=plt.get_cmap('seismic'), vmin=-maxAmp, vmax=maxAmp)
+field3 = (np.sqrt(np.square(field1[:-50, 50:-50]) + np.square(field2[:-50, 50:-50])))
+plt.imshow(np.log10(field3), cmap=plt.get_cmap('Reds'), vmin=-12, vmax=-5)
 plt.show()
 

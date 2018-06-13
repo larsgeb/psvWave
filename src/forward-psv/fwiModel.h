@@ -12,7 +12,7 @@ public:
     // Fields
     double dx = 1.249;
     double dz = 1.249;
-    arma::uword nx_interior = 450;
+    arma::uword nx_interior = 900;
     arma::uword nz_interior = 250;
     arma::uword np_boundary = 50;
     double np_factor = 0.0075;
@@ -25,7 +25,7 @@ public:
     arma::mat lm = arma::mat(nx, nz);
     arma::mat b_vx = arma::mat(nx, nz);
     arma::mat de = arma::mat(nx, nz);
-    arma::mat b_vz = arma::mat(nx, nz); // TODO consolidate this into single gridpoint?
+    arma::mat b_vz = arma::mat(nx, nz);
 
     arma::mat vp = arma::mat(nx, nz);
     arma::mat vs = arma::mat(nx, nz);
@@ -36,6 +36,13 @@ public:
 
     // Constructors
     fwiModel();
+
+    fwiModel(double dx,
+             double dz,
+             arma::uword nx_interior,
+             arma::uword nz_interior,
+             arma::uword np_boundary,
+             double np_factor);
 
     // Public methods
     void updateInnerFieldsElastic(arma::mat &_density, arma::mat &_lambda, arma::mat &_mu);

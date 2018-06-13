@@ -262,7 +262,6 @@ void fwiPropagator::propagateForward(fwiModel &_currentModel, fwiShot &_shot, bo
         }
 
         if (exportSnapshots and std::find(snapshotLocations.begin(), snapshotLocations.end(), it) != snapshotLocations.end()) {
-            std::cout << "Saving snapshot: " << it << std::endl;
             std::string filename = "snapshots/snapshot" + std::to_string(it);
             vx.save(filename + "_vx.txt", raw_ascii);
             vz.save(filename + "_vz.txt", raw_ascii);
