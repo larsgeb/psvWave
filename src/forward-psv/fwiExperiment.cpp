@@ -120,3 +120,7 @@ void fwiExperiment::mapKernels() {
 void fwiExperiment::update(mat _de, mat _vp, mat _vs) {
     model.updateInnerFieldsVelocity(_de, _vp, _vs);
 }
+
+void fwiExperiment::updateElastic(mat _de, mat _lambda, mat _mu) {
+    model.updateInnerFieldsElastic(_de, _lambda, _mu);
+}

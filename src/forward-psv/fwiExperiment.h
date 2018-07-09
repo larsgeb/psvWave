@@ -54,6 +54,8 @@ public:
 
     void update(arma::mat _de, arma::mat _vp, arma::mat _vs);
 
+    void updateElastic(arma::mat _de, arma::mat _lambda, arma::mat _mu);
+
     void loadShots(std::string _string); // Load shots (from binary format) into observed data
 
 private:

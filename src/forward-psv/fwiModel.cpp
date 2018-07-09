@@ -33,7 +33,7 @@ void fwiModel::updateInnerFieldsElastic(mat &_density, mat &_lambda, mat &_mu) {
     b_vx(interiorX, interiorZ) = 1.0 / _density;
     extendFields(b_vx);
     b_vz = b_vx;
-    de = _density;
+    de(interiorX, interiorZ) = _density;
     extendFields(de);
 
     la(interiorX, interiorZ) = _lambda;

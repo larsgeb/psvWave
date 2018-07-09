@@ -15,7 +15,7 @@ arma::vec generateRicker(double dt, arma::uword nt, double freq);
 template<typename T>
 std::ostream &operator<<(std::ostream &out, const std::vector<T> &v) {
     if (!v.empty()) {
-        out << '[';
+        out <<  '[';
         std::copy(v.begin(), v.end(), std::ostream_iterator<T>(out, ", "));
         out << "\b\b]";
     }
