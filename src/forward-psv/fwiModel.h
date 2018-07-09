@@ -37,6 +37,13 @@ public:
     // Constructors
     fwiModel();
 
+    fwiModel(double dx,
+             double dz,
+             arma::uword nx_interior,
+             arma::uword nz_interior,
+             arma::uword np_boundary,
+             double np_factor);
+
     // Public methods
     void updateInnerFieldsElastic(arma::mat &_density, arma::mat &_lambda, arma::mat &_mu);
 

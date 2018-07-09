@@ -9,13 +9,40 @@
 using namespace arma;
 
 // Constructor
-fwiExperiment::fwiExperiment(imat _receivers, imat _sources, vec _sourceFunction, double _samplingTime, double _samplingTimestep,
-                             int _samplingAmount, fwiShot::SourceTypes sourceType = fwiShot::momentSource) {
+
+fwiExperiment::fwiExperiment(double _dx,
+                             double _dz,
+                             arma::uword _nx_interior,
+                             arma::uword _nz_interior,
+                             arma::uword _np_boundary,
+                             double _np_factor,
+                             arma::imat _receivers,
+                             arma::imat _sources,
+                             arma::vec _sourceFunction,
+                             double _samplingTimestep,
+                             int _samplingAmount,
+                             fwiShot::SourceTypes _sourceType) :
+        fwiExperiment(_receivers,
+                      _sources,
+                      _sourceFunction,
+                      _samplingTimestep,
+                      _samplingAmount,
+                      _sourceType) {
+    model = fwiModel(_dx, _dz, _nx_interior, _nz_interior, _np_boundary, _np_factor);
+    model.setTime(samplingTimestep, samplingAmount, samplingTime);
+}
+
+fwiExperiment::fwiExperiment(imat _receivers,
+                             imat _sources,
+                             vec _sourceFunction,
+                             double _samplingTimestep,
+                             int _samplingAmount,
+                             fwiShot::SourceTypes _sourceType) {
     // Create a fwiExperiment
     receivers = std::move(_receivers);
     sources = std::move(_sources);
     sourceFunction = std::move(_sourceFunction);
-    samplingTime = _samplingTime;
+    samplingTime = _samplingTimestep * _samplingAmount;
     samplingTimestep = _samplingTimestep;
     samplingAmount = _samplingAmount;
     model.setTime(samplingTimestep, samplingAmount, samplingTime);
@@ -40,7 +67,7 @@ fwiExperiment::fwiExperiment(imat _receivers, imat _sources, vec _sourceFunction
     for (uword ishot = 0; ishot < sources.n_rows; ++ishot) {
         shots.emplace_back(
                 fwiShot(sources.row(ishot), receivers, sourceFunction, samplingAmount, samplingTimestep, samplingTime, ishot, snapshotInterval,
-                        sourceType));
+                        _sourceType));
     }
 
 }

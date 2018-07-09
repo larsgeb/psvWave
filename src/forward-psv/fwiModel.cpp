@@ -146,7 +146,7 @@ double fwiModel::get_dt() {
 }
 
 unsigned int fwiModel::get_nt() {
-    return this->nt;
+    return static_cast<unsigned int>(this->nt);
 }
 
 double fwiModel::get_samplingTime() {
@@ -155,4 +155,31 @@ double fwiModel::get_samplingTime() {
 
 double fwiModel::get_targetCourant() {
     return targetCourant;
+}
+
+fwiModel::fwiModel(double _dx, double _dz, arma::uword _nx_interior, arma::uword _nz_interior, arma::uword _np_boundary, double _np_factor) {
+    // Fields
+    dx = _dx;
+    dz = _dz;
+    nx_interior = _nx_interior;
+    nz_interior = _nz_interior;
+    np_boundary = _np_boundary;
+    np_factor = _np_factor;
+    nx = nx_interior + 2 * np_boundary;
+    nz = nz_interior + np_boundary;
+
+    // Static simulation fields
+    la = arma::mat(nx, nz);
+    mu = arma::mat(nx, nz);
+    lm = arma::mat(nx, nz);
+    b_vx = arma::mat(nx, nz);
+    de = arma::mat(nx, nz);
+    b_vz = arma::mat(nx, nz);
+
+    vp = arma::mat(nx, nz);
+    vs = arma::mat(nx, nz);
+
+    // Interior of domain (excluding boundary layer)
+    interiorX = arma::span(np_boundary, np_boundary + nx_interior - 1);
+    interiorZ = arma::span(0, nz_interior - 1);
 }
