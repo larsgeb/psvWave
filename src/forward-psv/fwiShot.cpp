@@ -29,7 +29,9 @@ fwiShot::fwiShot(irowvec _source, imat &_receivers, vec &_sourceFunction, int _s
 void fwiShot::writeShot(file_type type, std::string folder) {
     std::string filename = folder + "/seismogram" + std::to_string(static_cast<int>(ishot));
     seismogramSyn_ux.save(filename + (type == arma_binary ? "_ux.bin" : "_ux.txt"), type);
+    seismogramSyn_ux.save(filename + "_ux.txt", raw_ascii);
     seismogramSyn_uz.save(filename + (type == arma_binary ? "_uz.bin" : "_uz.txt"), type);
+    seismogramSyn_uz.save(filename + "_uz.txt", raw_ascii);
 }
 
 void fwiShot::calculateAdjointSources() {
