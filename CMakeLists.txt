@@ -7,8 +7,15 @@ SET(CMAKE_CXX_COMPILER /home/lars/Applications/pgi/linux86-64/2018/bin/pgc++)
 add_executable(gpuWave main.cpp)
 add_executable(cpuWave main.cpp)
 
-# 1 for double, 2 for float
-add_definitions(-DREALTYPE=2)
+# 1 for double, 2 for float, defaults to doubles
+OPTION(FLOATS "Use floats instead of doubles. CMake caches this variable, so mind when changing ti!" off)
+IF(FLOATS)
+    message(STATUS "Using floats in wave simulation. CMake caches this variable, so mind when changing ti!")
+    ADD_DEFINITIONS(-DFLOATS)
+ELSE()
+    message(STATUS "Using doubles in wave simulation. CMake caches this variable, so mind when changing ti!")
+ENDIF(FLOATS)
+
 set_target_properties(gpuWave PROPERTIES COMPILE_DEFINITIONS "OPENACCCOMPILE=1")
 
 set(CMAKE_CXX_FLAGS_RELEASE "-fast -O3")

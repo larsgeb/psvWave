@@ -11,23 +11,23 @@
 
 using namespace std;
 
-#if OPENACCCOMPILE==1
+#if OPENACCCOMPILE == 1
     #define OPENACC 1
 #else
     #define OPENACC 0
 #endif
 
-#if REALTYPE==2
+#if FLOATS
     #define real float
 #else
     #define real double
 #endif
 
 int main() {
-    if(OPENACC==1){
-        cout << "OpenACC acceleration enabled from cmake, code should run on GPU." << endl;
-    } else{
-        cout << "OpenACC acceleration not enabled from cmake, code should run on CPU." << endl;
+    if (OPENACC == 1) {
+        cout << endl << "OpenACC acceleration enabled from cmake, code should run on GPU." << endl;
+    } else {
+        cout << endl << "OpenACC acceleration not enabled from cmake, code should run on CPU." << endl;
     }
     cout << "Code compiled with " << typeid(real).name() << " (d for double, accurate, f for float, fast)" << endl << flush;
 
