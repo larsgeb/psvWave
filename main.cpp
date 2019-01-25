@@ -1,6 +1,8 @@
 //
 // Created by Lars Gebraad on 28/12/18.
 //
+
+// Includes
 #include <omp.h>
 #include <iostream>
 #include <cmath>
@@ -17,18 +19,19 @@ using namespace std;
     #define OPENACC 0
 #endif
 
-#if FLOATS
-    #define real float
-#else
-    #define real double
-#endif
+#define real float
+
 
 int main() {
+
+    // Output whether or not compiled with OpenACC
     if (OPENACC == 1) {
-        cout << endl << "OpenACC acceleration enabled from cmake, code should run on GPU." << endl;
+        cout << endl << "OpenACC acceleration enabled, code should run on GPU." << endl;
     } else {
-        cout << endl << "OpenACC acceleration not enabled from cmake, code should run on CPU." << endl;
+        cout << endl << "OpenACC acceleration not enabled, code should run on CPU." << endl;
     }
+
+    // Show real type (single or double precision)
     cout << "Code compiled with " << typeid(real).name() << " (d for double, accurate, f for float, fast)" << endl << flush;
 
     // Finite difference coefficients
@@ -36,9 +39,9 @@ int main() {
     constexpr static real coeff2 = real(1.0 / 24.0);
 
     // Simulation size
-    const uint nt = 250;
-    const uint nx = 4096;
-    const uint nz = 1024;
+    const uint nt = 4000;
+    const uint nx = 200;
+    const uint nz = 150;
 
     // Discretisation size
     real dx = 100;
@@ -54,9 +57,9 @@ int main() {
     // Define material parameters
     real poissons = 0.25;
     real vratio = sqrt((1 - 2 * poissons) / (2 * (1 - poissons)));
-    static real rho[nx][nz] = {{2500}}; // array[n][m] = {{xxx}}; does not set full array, only first element, watch out!
+    static real rho[nx][nz] = {{1500}}; // array[n][m] = {{xxx}}; does not set full array, only first element, watch out!
     static real vp[nx][nz] = {{2000}};
-    static real vs[nx][nz] = {{float(vp[0][0] * vratio)}};
+    static real vs[nx][nz] = {{800}};
     static real taper[nx][nz] = {{1}};
 
     // Assign stf/rtf arrays
@@ -108,28 +111,6 @@ int main() {
         }
     }
 
-//    uint ixp1;
-//    uint ixp2;
-//    uint ixm1;
-//    uint ixm2;
-//    uint izp1;
-//    uint izp2;
-//    uint izm1;
-//    uint izm2;
-    // Logic for periodic BC's
-//                    ixp1 = ix < nx - 1 ? ix + 1 : 0;
-//                    ixp2 = ix < nx - 2 ? ix + 2 : (ix < nx - 1 ? 0 : 1);
-//                    ixm1 = ix > 0 ? ix - 1 : nx - 1;
-//                    ixm2 = ix > 1 ? ix - 2 : (ix > 0 ? nx - 1 : nx - 2);
-//
-//                    izp1 = iz < nz - 1 ? iz + 1 : 0;
-//                    izp2 = iz < nz - 2 ? iz + 2 : (iz < nz - 1 ? 0 : 1);
-//                    izm1 = iz > 0 ? iz - 1 : nz - 1;
-//                    izm2 = iz > 1 ? iz - 2 : (iz > 0 ? nz - 1 : nz - 2);
-
-//    cout << "CUDA devices: " << acc_get_num_devices(acc_get_device_type()) << endl;
-//    cout << "CUDA device: " << acc_get_current_cuda_device() << endl;
-
     real startTime = real(omp_get_wtime());
     #pragma acc data copyin( lm, taper, la, mu, b_vx, b_vz, stf, moment) copyout(txx, vz, txz, tzz, vx)
     {
@@ -138,9 +119,7 @@ int main() {
             {
                 #pragma omp parallel for collapse(2)
                 #pragma acc loop tile(32, 32)
-//                    #pragma acc loop gang, vector(512) /* blockIdx.y threadIdx.y */
                 for (uint ix = 2; ix < nx - 2; ++ix) {
-//                        #pragma acc loop gang, vector(4) /* blockIdx.x threadIdx.x */
                     for (uint iz = 2; iz < nz - 2; ++iz) {
                         txx[ix][iz] = taper[ix][iz] *
                                       (txx[ix][iz] +
@@ -171,9 +150,7 @@ int main() {
                 }
                 #pragma omp parallel for collapse(2)
                 #pragma acc loop tile(32, 32)
-//                    #pragma acc loop gang, vector(512) /* blockIdx.y threadIdx.y */
                 for (uint ix = 2; ix < nx - 2; ++ix) {
-//                        #pragma acc loop gang, vector(4) /* blockIdx.x threadIdx.x */
                     for (uint iz = 2; iz < nz - 2; ++iz) {
                         vx[ix][iz] =
                                 taper[ix][iz] *
