@@ -209,17 +209,31 @@ int fdWaveModel::forwardSimulate(bool store_fields, bool verbose, int isource) {
 }
 
 void fdWaveModel::write_receivers() {
-    std::ofstream receiver_file;
-    for (int i = 0; i < ns; ++i) {
-        std::string filename = "data" + std::to_string(i) + ".txt";
-        receiver_file.open(filename);
-        for (int iRec = 0; iRec < nr; ++iRec) {
-            receiver_file << std::endl;
-            for (const auto &rtf_it : rtf_ux[i][iRec]) {
-                receiver_file << rtf_it << " ";
+    std::string filename_ux;
+    std::string filename_uz;
+
+    std::ofstream receiver_file_ux;
+    std::ofstream receiver_file_uz;
+
+    for (int i_source = 0; i_source < ns; ++i_source) {
+
+        filename_ux = "rtf_ux" + std::to_string(i_source) + ".txt";
+        filename_uz = "rtf_uz" + std::to_string(i_source) + ".txt";
+
+        receiver_file_ux.open(filename_ux);
+        receiver_file_uz.open(filename_uz);
+
+        for (int i_receiver = 0; i_receiver < nr; ++i_receiver) {
+            receiver_file_ux << std::endl;
+            receiver_file_uz << std::endl;
+            for (int it = 0; it < nt; ++it) {
+                receiver_file_ux << rtf_ux[i_source][i_receiver][it] << " ";
+                receiver_file_uz << rtf_uz[i_source][i_receiver][it] << " ";
+
             }
         }
-        receiver_file.close();
+        receiver_file_ux.close();
+        receiver_file_uz.close();
     }
 }
 
