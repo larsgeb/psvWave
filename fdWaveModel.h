@@ -14,18 +14,27 @@
 
 #define real float
 
-class fdWaveModel {
+class fdWaveModel { // TODO restructure public vs private methods and fields
 public:
     fdWaveModel();
 
     // ---- METHODS ----
 
-    int forwardSimulate(bool store_fields, bool verbose, int isource);
+    void forward_simulate(int i_source, bool store_fields, bool verbose);
+
+    void adjoint_simulate(int i_source, bool verbose);
 
     void write_receivers();
 
+    void load_receivers();
+
+    void map_kernels_to_velocity();
+
     void update_from_velocity();
 
+    real calculate_misfit();
+
+    void calculate_adjoint_sources();
 
     // ----  FIELDS ----
 
@@ -64,8 +73,14 @@ public:
     const static int nr = 6;
     int ix_receivers[nr] = {90 + np_boundary, 90 + np_boundary, 90 + np_boundary, 50 + np_boundary, 50 + np_boundary, 10 + np_boundary};
     int iz_receivers[nr] = {50 + np_boundary, 10 + np_boundary, 90 + np_boundary, 10 + np_boundary, 90 + np_boundary, 50 + np_boundary};
-    real rtf_ux[2][nr][nt];
-    real rtf_uz[2][nr][nt];
+    real rtf_ux[ns][nr][nt];
+    real rtf_uz[ns][nr][nt];
+    real rtf_ux_true[ns][nr][nt];
+    real rtf_uz_true[ns][nr][nt];
+
+    real a_stf_ux[ns][nr][nt];
+    real a_stf_uz[ns][nr][nt];
+
     // | Source moment
     real moment[2][2];
     // | Dynamic fields
@@ -81,14 +96,26 @@ public:
     real b_vx[nx][nz] = {{1}};
     real b_vz[nx][nz] = {{1}};
     // | accumulators and snapshot interval
-    int snapshotInterval = 10;
+    int snapshot_interval = 10;
     const static int snapshots = 400;
-    real accu_vx[snapshots][nx][nz];
-    real accu_vz[snapshots][nx][nz];
-    real accu_txx[snapshots][nx][nz];
-    real accu_tzz[snapshots][nx][nz];
-    real accu_txz[snapshots][nx][nz];
+    real accu_vx[ns][snapshots][nx][nz]; // todo Debate whether or not to add one dimension per shot, or just overwrite each simulation.
+    real accu_vz[ns][snapshots][nx][nz];
+    real accu_txx[ns][snapshots][nx][nz];
+    real accu_tzz[ns][snapshots][nx][nz];
+    real accu_txz[ns][snapshots][nx][nz];
 
+
+    // -- Helper stuff for inverse problems --
+    real data_variance_ux[ns][nr][nt];
+    real data_variance_uz[ns][nr][nt];
+
+    real density_l_kernel[nx][nz];
+    real lambda_kernel[nx][nz];
+    real mu_kernel[nx][nz];
+
+    real vp_kernel[nx][nz];
+    real vs_kernel[nx][nz];
+    real density_v_kernel[nx][nz];
 };
 
 
