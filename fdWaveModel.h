@@ -20,7 +20,12 @@ public:
 
     // ---- METHODS ----
 
-    int forwardSimulate(bool storeFields, bool verbose, int isource);
+    int forwardSimulate(bool store_fields, bool verbose, int isource);
+
+    void write_receivers();
+
+    void update_from_velocity();
+
 
     // ----  FIELDS ----
 
@@ -48,18 +53,17 @@ public:
     real vs[nx][nz];
     real taper[nx][nz];
     // | Source parameters (Gaussian wavelet)
-    int ix_source[2] = {10 + np_boundary, 10 + np_boundary};
-    int iz_source[2] = {10 + np_boundary, 90 + np_boundary};
+    const static int ns = 2;
+    int ix_source[ns] = {10 + np_boundary, 10 + np_boundary};
+    int iz_source[ns] = {10 + np_boundary, 90 + np_boundary};
     real alpha = 1.0 / 50.0;
     real t0 = 0.005;
     // | stf/rtf_ux arrays
     real t[nt];
     real stf[nt];
-    const static int nr = 100;
-    int ix_receivers[nr];
-    int iz_receivers[nr];
-//    int ix_receivers[nr] = {90 + np_boundary, 90 + np_boundary, 90 + np_boundary, 50 + np_boundary, 50 + np_boundary, 10 + np_boundary};
-//    int iz_receivers[nr] = {50 + np_boundary, 10 + np_boundary, 90 + np_boundary, 10 + np_boundary, 90 + np_boundary, 50 + np_boundary};
+    const static int nr = 6;
+    int ix_receivers[nr] = {90 + np_boundary, 90 + np_boundary, 90 + np_boundary, 50 + np_boundary, 50 + np_boundary, 10 + np_boundary};
+    int iz_receivers[nr] = {50 + np_boundary, 10 + np_boundary, 90 + np_boundary, 10 + np_boundary, 90 + np_boundary, 50 + np_boundary};
     real rtf_ux[2][nr][nt];
     real rtf_uz[2][nr][nt];
     // | Source moment

@@ -6,14 +6,12 @@
 #include <iostream>
 #include <cmath>
 #include <typeinfo>
+#include <fstream>
 #include "fdWaveModel.h"
 
 fdWaveModel::fdWaveModel() {
 
-    for (int ir = 0; ir < nr; ++ir) {
-        ix_receivers[ir] = ir + np_boundary;
-        iz_receivers[ir] = 10;
-    }
+    // --- Informative section ---
 
     // Output whether or not compiled with OpenACC
     if (OPENACC == 1) {
@@ -21,25 +19,15 @@ fdWaveModel::fdWaveModel() {
     } else {
         std::cout << std::endl << "OpenACC acceleration not enabled, code should run on CPU." << std::endl;
     }
-
     // Show real type (single or double precision)
     std::cout << "Code compiled with " << typeid(real).name() << " (d for double, accurate, f for float, fast)" << std::endl << std::flush;
 
 
-    // Initialize fields
-    for (int ix = 0; ix < nx; ++ix) {
-        for (int iz = 0; iz < nz; ++iz) {
-            rho[ix][iz] = scalar_rho;
-            vp[ix][iz] = scalar_vp;
-            vs[ix][iz] = scalar_vs;
-            taper[ix][iz] = 1; // todo rewrite Gaussian taper
-        }
-    }
+    // --- Initialization section ---
 
     // Assign stf/rtf_ux
     for (unsigned int it = 0; it < nt; ++it) {
         t[it] = it * dt;
-//        stf[it] = real(exp(-alpha * pow(it - t0 / dt, 2))); Gaussian pulse
         real f = 1.0 / alpha;
         real shiftedTime = t[it] - 1.4 / f;
         stf[it] = real((1 - 2 * pow(M_PI * f * shiftedTime, 2)) * exp(-pow(M_PI * f * shiftedTime, 2)));
@@ -51,34 +39,25 @@ fdWaveModel::fdWaveModel() {
     moment[1][1] = -1;
 
     // Setting all fields.
-    #pragma omp parallel for collapse(2)
-    for (int ix = 0; ix < nx; ++ix) {
-        for (int iz = 0; iz < nz; ++iz) {
-            rho[ix][iz] = rho[0][0];
-            vp[ix][iz] = vp[0][0];
-            vs[ix][iz] = vs[0][0];
-            taper[ix][iz] = 0;
+    std::fill(&vp[0][0], &vp[0][0] + sizeof(vp) / sizeof(real), scalar_vp);
+    std::fill(&vs[0][0], &vs[0][0] + sizeof(vs) / sizeof(real), scalar_vs);
+    std::fill(&rho[0][0], &rho[0][0] + sizeof(rho) / sizeof(real), scalar_rho);
+    update_from_velocity();
 
-            mu[ix][iz] = real(pow(vs[ix][iz], 2) * rho[ix][iz]);
-            lm[ix][iz] = real(pow(vp[ix][iz], 2) * rho[ix][iz]);
-            la[ix][iz] = lm[ix][iz] - 2 * mu[ix][iz];
-            b_vx[ix][iz] = real(1.0 / rho[ix][iz]);
-            b_vz[ix][iz] = b_vx[ix][iz];
-        }
-    }
-
-
-    for (int id = 0; id < np_boundary; ++id) {
-        for (int ix = id; ix < nx - id; ++ix) {
-            for (int iz = id; iz < nz; ++iz) {
-                taper[ix][iz]++;
+    {
+        // Initialize
+        std::fill(&taper[0][0], &taper[0][0] + sizeof(taper) / sizeof(real), 0);
+        for (int id = 0; id < np_boundary; ++id) {
+            for (int ix = id; ix < nx - id; ++ix) {
+                for (int iz = id; iz < nz; ++iz) {
+                    taper[ix][iz]++;
+                }
             }
         }
-    }
-
-    for (int ix = 0; ix < nx; ++ix) {
-        for (int iz = 0; iz < nz; ++iz) {
-            taper[ix][iz] = exp(-pow(np_factor * (50 - taper[ix][iz]), 2));
+        for (auto &ix : taper) {
+            for (float &element : ix) {
+                element = static_cast<float>(exp(-pow(np_factor * (50 - element), 2)));
+            }
         }
     }
 
@@ -89,9 +68,15 @@ fdWaveModel::fdWaveModel() {
 
 }
 
-
 // Forward modeller
-int fdWaveModel::forwardSimulate(bool storeFields, bool verbose, int isource) {
+int fdWaveModel::forwardSimulate(bool store_fields, bool verbose, int isource) {
+
+    // Reset dynamical fields
+    std::fill(&vx[0][0], &vx[0][0] + sizeof(vx) / sizeof(int), 0);
+    std::fill(&vz[0][0], &vz[0][0] + sizeof(vz) / sizeof(int), 0);
+    std::fill(&txx[0][0], &txx[0][0] + sizeof(txx) / sizeof(int), 0);
+    std::fill(&tzz[0][0], &tzz[0][0] + sizeof(tzz) / sizeof(int), 0);
+    std::fill(&txz[0][0], &txz[0][0] + sizeof(txz) / sizeof(int), 0);
 
     // If verbose, count time
     double startTime = 0, stopTime = 0, secsElapsed = 0;
@@ -100,15 +85,15 @@ int fdWaveModel::forwardSimulate(bool storeFields, bool verbose, int isource) {
     for (int it = 0; it < nt; ++it) {
 
         // Record!
-        for (int ireceiver = 0; ireceiver < nr; ++ireceiver) {
+        for (int i_receiver = 0; i_receiver < nr; ++i_receiver) {
             if (it == 0) {
-                rtf_ux[isource][ireceiver][it] = dt * vx[ix_receivers[ireceiver]][iz_receivers[ireceiver]] / (dx * dz);
-                rtf_uz[isource][ireceiver][it] = dt * vz[ix_receivers[ireceiver]][iz_receivers[ireceiver]] / (dx * dz);
+                rtf_ux[isource][i_receiver][it] = dt * vx[ix_receivers[i_receiver]][iz_receivers[i_receiver]] / (dx * dz);
+                rtf_uz[isource][i_receiver][it] = dt * vz[ix_receivers[i_receiver]][iz_receivers[i_receiver]] / (dx * dz);
             } else {
-                rtf_ux[isource][ireceiver][it] =
-                        rtf_ux[isource][ireceiver][it - 1] + dt * vx[ix_receivers[ireceiver]][iz_receivers[ireceiver]] / (dx * dz);
-                rtf_uz[isource][ireceiver][it] =
-                        rtf_uz[isource][ireceiver][it - 1] + dt * vz[ix_receivers[ireceiver]][iz_receivers[ireceiver]] / (dx * dz);
+                rtf_ux[isource][i_receiver][it] =
+                        rtf_ux[isource][i_receiver][it - 1] + dt * vx[ix_receivers[i_receiver]][iz_receivers[i_receiver]] / (dx * dz);
+                rtf_uz[isource][i_receiver][it] =
+                        rtf_uz[isource][i_receiver][it - 1] + dt * vz[ix_receivers[i_receiver]][iz_receivers[i_receiver]] / (dx * dz);
             }
         }
 
@@ -169,12 +154,14 @@ int fdWaveModel::forwardSimulate(bool storeFields, bool verbose, int isource) {
         // (x,x)-couple
         vx[ix_source[isource] - 1][iz_source[isource]] -=
                 moment[0][0] * stf[it] * dt * b_vz[ix_source[isource] - 1][iz_source[isource]] / (dx * dx * dx * dx);
-        vx[ix_source[isource]][iz_source[isource]] += moment[0][0] * stf[it] * dt * b_vz[ix_source[isource]][iz_source[isource]] / (dx * dx * dx * dx);
+        vx[ix_source[isource]][iz_source[isource]] +=
+                moment[0][0] * stf[it] * dt * b_vz[ix_source[isource]][iz_source[isource]] / (dx * dx * dx * dx);
 
         // (z,z)-couple
         vz[ix_source[isource]][iz_source[isource] - 1] -=
                 moment[1][1] * stf[it] * dt * b_vz[ix_source[isource]][iz_source[isource] - 1] / (dz * dz * dz * dz);
-        vz[ix_source[isource]][iz_source[isource]] += moment[1][1] * stf[it] * dt * b_vz[ix_source[isource]][iz_source[isource]] / (dz * dz * dz * dz);
+        vz[ix_source[isource]][iz_source[isource]] +=
+                moment[1][1] * stf[it] * dt * b_vz[ix_source[isource]][iz_source[isource]] / (dz * dz * dz * dz);
 
         // (x,z)-couple
         vx[ix_source[isource] - 1][iz_source[isource] + 1] +=
@@ -196,7 +183,7 @@ int fdWaveModel::forwardSimulate(bool storeFields, bool verbose, int isource) {
         vz[ix_source[isource] - 1][iz_source[isource]] -=
                 0.25 * moment[1][0] * stf[it] * dt * b_vz[ix_source[isource] - 1][iz_source[isource]] / (dz * dz * dz * dz);
 
-        if (it % snapshotInterval == 0) {
+        if (it % snapshotInterval == 0 and store_fields) {
             #pragma omp parallel for collapse(2)
             for (int ix = 0; ix < nx; ++ix) {
                 for (int iz = 0; iz < nz; ++iz) {
@@ -210,8 +197,6 @@ int fdWaveModel::forwardSimulate(bool storeFields, bool verbose, int isource) {
         }
     }
 
-//    std::cout << std::endl << sizeof(accu_vx) << std::endl;
-
     // Output timing
     if (verbose) {
         stopTime = omp_get_wtime();
@@ -220,25 +205,33 @@ int fdWaveModel::forwardSimulate(bool storeFields, bool verbose, int isource) {
                   std::endl;
     }
 
-    // Cumulative check
-//    real a = 0;
-//    for (const auto &item : vx) {
-//        for (const auto &item2 : item) {
-//            a += item2;
-//        }
-//    }
-//    std::cout << a << std::endl;
-
-    // Cumulative check
-//    real b = 0;
-//    for (const auto &accu_it : accu_vx) {
-//        for (const auto &accu_ix : accu_it) {
-//            for (const auto &iter_iz : accu_ix) {
-//                b += iter_iz;
-//            }
-//        }
-//    }
-//    std::cout << b << std::endl;
-
     return 0;
+}
+
+void fdWaveModel::write_receivers() {
+    std::ofstream receiver_file;
+    for (int i = 0; i < ns; ++i) {
+        std::string filename = "data" + std::to_string(i) + ".txt";
+        receiver_file.open(filename);
+        for (int iRec = 0; iRec < nr; ++iRec) {
+            receiver_file << std::endl;
+            for (const auto &rtf_it : rtf_ux[i][iRec]) {
+                receiver_file << rtf_it << " ";
+            }
+        }
+        receiver_file.close();
+    }
+}
+
+void fdWaveModel::update_from_velocity() {
+    #pragma omp parallel for collapse(2)
+    for (int ix = 0; ix < nx; ++ix) {
+        for (int iz = 0; iz < nz; ++iz) {
+            mu[ix][iz] = real(pow(vs[ix][iz], 2) * rho[ix][iz]);
+            lm[ix][iz] = real(pow(vp[ix][iz], 2) * rho[ix][iz]);
+            la[ix][iz] = lm[ix][iz] - 2 * mu[ix][iz];
+            b_vx[ix][iz] = real(1.0 / rho[ix][iz]);
+            b_vz[ix][iz] = b_vx[ix][iz];
+        }
+    }
 }
