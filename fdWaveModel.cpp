@@ -7,6 +7,7 @@
 #include <cmath>
 #include <typeinfo>
 #include <fstream>
+#include <limits>
 #include "fdWaveModel.h"
 
 fdWaveModel::fdWaveModel() {
@@ -223,6 +224,9 @@ void fdWaveModel::write_receivers() {
         receiver_file_ux.open(filename_ux);
         receiver_file_uz.open(filename_uz);
 
+        receiver_file_ux.precision(std::numeric_limits<float>::digits10 + 10);
+        receiver_file_uz.precision(std::numeric_limits<float>::digits10 + 10);
+
         for (int i_receiver = 0; i_receiver < nr; ++i_receiver) {
             receiver_file_ux << std::endl;
             receiver_file_uz << std::endl;
@@ -248,4 +252,37 @@ void fdWaveModel::update_from_velocity() {
             b_vz[ix][iz] = b_vx[ix][iz];
         }
     }
+}
+
+void fdWaveModel::load_receivers() {
+    std::string filename_ux;
+    std::string filename_uz;
+
+    std::ifstream receiver_file_ux;
+    std::ifstream receiver_file_uz;
+
+    for (int i_source = 0; i_source < 2; ++i_source) {
+        filename_ux = "rtf_ux" + std::to_string(i_source) + ".txt";
+        filename_uz = "rtf_uz" + std::to_string(i_source) + ".txt";
+
+        receiver_file_ux.open(filename_ux);
+        receiver_file_uz.open(filename_uz);
+
+        real placeholder_ux;
+        real placeholder_uz;
+
+        for (int i_receiver = 0; i_receiver < nr; ++i_receiver) {
+            for (int it = 0; it < nt; ++it) {
+
+                receiver_file_ux >> placeholder_ux;
+                receiver_file_uz >> placeholder_uz;
+
+                rtf_ux_true[i_source][i_receiver][it] = placeholder_ux;
+                rtf_uz_true[i_source][i_receiver][it] = placeholder_uz;
+            }
+        }
+        receiver_file_uz.close();
+        receiver_file_ux.close();
+    }
+
 }
