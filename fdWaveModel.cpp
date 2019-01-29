@@ -472,7 +472,7 @@ real fdWaveModel::calculate_misfit() { // todo Evaluate need for data variance
     return misfit;
 }
 
-void fdWaveModel::calculate_adjoint_sources() {
+void fdWaveModel::calculate_adjoint_sources() { // Todo implement non-uniform data variance in adjoint sources
     #pragma omp parallel for collapse(3)
     for (int is = 0; is < n_shots; ++is) {
         for (int ir = 0; ir < nr; ++ir) {
@@ -496,4 +496,70 @@ void fdWaveModel::map_kernels_to_velocity() {
                                        + vs[ix][iz] * vs[ix][iz] * mu_kernel[ix][iz];
         }
     }
+}
+
+void fdWaveModel::load_target(std::string de_target_relative_path, std::string vp_target_relative_path, std::string vs_target_relative_path) {
+    std::ifstream de_target_file;
+    std::ifstream vp_target_file;
+    std::ifstream vs_target_file;
+
+    de_target_file.open(de_target_relative_path);
+    vp_target_file.open(vp_target_relative_path);
+    vs_target_file.open(vs_target_relative_path);
+
+    // Check if the file actually exists
+    std::cout << "File for de_target is " << (de_target_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
+    std::cout << "File for vp_target is " << (vp_target_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
+    std::cout << "File for vs_target is " << (vs_target_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
+    if (!de_target_file.good() or !vp_target_file.good() or !vs_target_file.good()) {
+        throw std::invalid_argument("Not all data is present!");
+    }
+
+    real placeholder_de;
+    real placeholder_vp;
+    real placeholder_vs;
+    for (int ix = 0; ix < nx; ++ix) {
+        for (int iz = 0; iz < nz; ++iz) {
+
+            de_target_file >> placeholder_de;
+            vp_target_file >> placeholder_vp;
+            vs_target_file >> placeholder_vs;
+
+            rho[ix][iz] = placeholder_de;
+            vp[ix][iz] = placeholder_vp;
+            vs[ix][iz] = placeholder_vs;
+        }
+    }
+
+    // Check data was large enough for set up
+    if (!de_target_file.good() or !vp_target_file.good() or !vs_target_file.good()) {
+        std::cout << "Received bad state of file at end of reading. Does the data match the domain?" << std::endl;
+        throw std::invalid_argument("Not enough data is present!");
+    }
+    // Try to load more data ...
+    de_target_file >> placeholder_de;
+    vp_target_file >> placeholder_vp;
+    vs_target_file >> placeholder_vs;
+    // ... which shouldn't be possible
+    if (de_target_file.good() or vp_target_file.good() or vs_target_file.good()) {
+        std::cout << "Received good state of file past reading. Does the data match the domain?" << std::endl;
+        throw std::invalid_argument("Too much data is present!");
+    }
+
+    de_target_file.close();
+    vp_target_file.close();
+    vs_target_file.close();
+
+    update_from_velocity();
+}
+
+void fdWaveModel::reset_velocity_fields() {
+    reset_velocity_fields(true, true, true);
+}
+
+void fdWaveModel::reset_velocity_fields(bool reset_de, bool reset_vp, bool reset_vs) {
+    if (reset_de) { std::fill(&rho[0][0], &rho[0][0] + sizeof(rho) / sizeof(real), scalar_rho); }
+    if (reset_vp) { std::fill(&vp[0][0], &vp[0][0] + sizeof(vp) / sizeof(real), scalar_vp); }
+    if (reset_vs) { std::fill(&vs[0][0], &vs[0][0] + sizeof(vs) / sizeof(real), scalar_vs); }
+    update_from_velocity();
 }

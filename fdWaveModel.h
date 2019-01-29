@@ -125,6 +125,12 @@ public:
     real vp_kernel[nx][nz];
     real vs_kernel[nx][nz];
     real density_v_kernel[nx][nz];
+
+    void load_target(std::string de_target_relative_path, std::string vp_target_relative_path, std::string vs_target_relative_path);
+
+    void reset_velocity_fields();
+
+    void reset_velocity_fields(bool reset_de, bool reset_vp, bool reset_vs);
 };
 
 
