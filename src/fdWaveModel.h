@@ -65,11 +65,8 @@ public:
     real taper[nx][nz];
     // | Source parameters (Gaussian wavelet)
     const static int n_sources = 4;
-    const static int n_shots = 4;
-    std::vector<std::vector<int>> which_source_to_fire_in_which_shot = {{0},
-                                                                        {1},
-                                                                        {3},
-                                                                        {2}};
+    const static int n_shots = 1;
+    std::vector<std::vector<int>> which_source_to_fire_in_which_shot = {{0,1,2,3}};
     int ix_sources[n_sources] = {10, 10, 90, 90};
     int iz_sources[n_sources] = {30, 70, 70, 30};
     bool add_np_to_source_location = true;

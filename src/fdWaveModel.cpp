@@ -1,5 +1,5 @@
 //
-// Created by lars on 25.01.19.
+// Created by Lars Gebraad on 25.01.19.
 //
 
 #include <omp.h>
@@ -21,8 +21,8 @@ fdWaveModel::fdWaveModel() {
 //        std::cout << std::endl << "OpenACC acceleration not enabled, code should run on CPU." << std::endl;
 //    }
     // Show real type (single or double precision)
-    std::cout << "Code compiled with " << typeid(real).name() << " (d for double, accurate, f for float, fast)" << std::endl << std::flush;
-
+    std::cout << "Code compiled with " << typeid(real).name() << " (d for double, accurate, f for float, fast)" << std::endl;
+    std::cout << "Running on (at most) " << omp_get_max_threads() << " OpenMP threads" << std::endl << std::flush;
 
     // --- Initialization section ---
 
@@ -188,7 +188,7 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose) 
 
         for (int i_source = 0; i_source < which_source_to_fire_in_which_shot[i_shot].size(); ++i_source) {
             int i_source_in_array = which_source_to_fire_in_which_shot[i_shot][i_source];
-            if (it < 1) { std::cout << "Firing source " << i_source_in_array << " in shot " << i_shot << std::endl; }
+            if (it < 1 and verbose) { std::cout << "Firing source " << i_source_in_array << " in shot " << i_shot << std::endl; }
 // |-inject source
             // | (x,x)-couple
             vx[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array]] -=
