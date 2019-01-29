@@ -26,6 +26,20 @@ fdWaveModel::fdWaveModel() {
 
     // --- Initialization section ---
 
+    // Place sources/receivers inside the domain
+    if (add_np_to_receiver_location) {
+        for (int ir = 0; ir < nr; ++ir) {
+            ix_receivers[ir] += 50;
+            iz_receivers[ir] += 50;
+        }
+    }
+    if (add_np_to_source_location) {
+        for (int is = 0; is < n_sources; ++is) {
+            ix_sources[is] += 50;
+            iz_sources[is] += 50;
+        }
+    }
+
     // Initialize data variance to one (take care of it outside of the code)
     std::fill(&data_variance_ux[0][0][0], &data_variance_ux[0][0][0] + sizeof(data_variance_ux) / sizeof(real), 1);
     std::fill(&data_variance_uz[0][0][0], &data_variance_uz[0][0][0] + sizeof(data_variance_uz) / sizeof(real), 1);
@@ -74,7 +88,7 @@ fdWaveModel::fdWaveModel() {
 }
 
 // Forward modeller
-void fdWaveModel::forward_simulate(int i_source, bool store_fields, bool verbose) {
+void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose) {
 
     // Reset dynamical fields
     std::fill(&vx[0][0], &vx[0][0] + sizeof(vx) / sizeof(int), 0);
@@ -94,11 +108,11 @@ void fdWaveModel::forward_simulate(int i_source, bool store_fields, bool verbose
             #pragma omp parallel for collapse(2)
             for (int ix = 0; ix < nx; ++ix) {
                 for (int iz = 0; iz < nz; ++iz) {
-                    accu_vx[i_source][it / snapshot_interval][ix][iz] = vx[ix][iz];
-                    accu_vz[i_source][it / snapshot_interval][ix][iz] = vz[ix][iz];
-                    accu_txx[i_source][it / snapshot_interval][ix][iz] = txx[ix][iz];
-                    accu_txz[i_source][it / snapshot_interval][ix][iz] = txz[ix][iz];
-                    accu_tzz[i_source][it / snapshot_interval][ix][iz] = tzz[ix][iz];
+                    accu_vx[i_shot][it / snapshot_interval][ix][iz] = vx[ix][iz];
+                    accu_vz[i_shot][it / snapshot_interval][ix][iz] = vz[ix][iz];
+                    accu_txx[i_shot][it / snapshot_interval][ix][iz] = txx[ix][iz];
+                    accu_txz[i_shot][it / snapshot_interval][ix][iz] = txz[ix][iz];
+                    accu_tzz[i_shot][it / snapshot_interval][ix][iz] = tzz[ix][iz];
                 }
             }
         }
@@ -107,13 +121,13 @@ void fdWaveModel::forward_simulate(int i_source, bool store_fields, bool verbose
         #pragma omp parallel for collapse(1)
         for (int i_receiver = 0; i_receiver < nr; ++i_receiver) {
             if (it == 0) {
-                rtf_ux[i_source][i_receiver][it] = dt * vx[ix_receivers[i_receiver]][iz_receivers[i_receiver]] / (dx * dz);
-                rtf_uz[i_source][i_receiver][it] = dt * vz[ix_receivers[i_receiver]][iz_receivers[i_receiver]] / (dx * dz);
+                rtf_ux[i_shot][i_receiver][it] = dt * vx[ix_receivers[i_receiver]][iz_receivers[i_receiver]] / (dx * dz);
+                rtf_uz[i_shot][i_receiver][it] = dt * vz[ix_receivers[i_receiver]][iz_receivers[i_receiver]] / (dx * dz);
             } else {
-                rtf_ux[i_source][i_receiver][it] =
-                        rtf_ux[i_source][i_receiver][it - 1] + dt * vx[ix_receivers[i_receiver]][iz_receivers[i_receiver]] / (dx * dz);
-                rtf_uz[i_source][i_receiver][it] =
-                        rtf_uz[i_source][i_receiver][it - 1] + dt * vz[ix_receivers[i_receiver]][iz_receivers[i_receiver]] / (dx * dz);
+                rtf_ux[i_shot][i_receiver][it] =
+                        rtf_ux[i_shot][i_receiver][it - 1] + dt * vx[ix_receivers[i_receiver]][iz_receivers[i_receiver]] / (dx * dz);
+                rtf_uz[i_shot][i_receiver][it] =
+                        rtf_uz[i_shot][i_receiver][it - 1] + dt * vz[ix_receivers[i_receiver]][iz_receivers[i_receiver]] / (dx * dz);
             }
         }
 
@@ -172,36 +186,43 @@ void fdWaveModel::forward_simulate(int i_source, bool store_fields, bool verbose
             }
         }
 
-        // |-inject source
-        // | (x,x)-couple
-        vx[ix_source[i_source] - 1][iz_source[i_source]] -=
-                moment[0][0] * stf[it] * dt * b_vz[ix_source[i_source] - 1][iz_source[i_source]] / (dx * dx * dx * dx);
-        vx[ix_source[i_source]][iz_source[i_source]] +=
-                moment[0][0] * stf[it] * dt * b_vz[ix_source[i_source]][iz_source[i_source]] / (dx * dx * dx * dx);
-        // | (z,z)-couple
-        vz[ix_source[i_source]][iz_source[i_source] - 1] -=
-                moment[1][1] * stf[it] * dt * b_vz[ix_source[i_source]][iz_source[i_source] - 1] / (dz * dz * dz * dz);
-        vz[ix_source[i_source]][iz_source[i_source]] +=
-                moment[1][1] * stf[it] * dt * b_vz[ix_source[i_source]][iz_source[i_source]] / (dz * dz * dz * dz);
-        // | (x,z)-couple
-        vx[ix_source[i_source] - 1][iz_source[i_source] + 1] +=
-                0.25 * moment[0][1] * stf[it] * dt * b_vz[ix_source[i_source] - 1][iz_source[i_source] + 1] / (dx * dx * dx * dx);
-        vx[ix_source[i_source]][iz_source[i_source] + 1] +=
-                0.25 * moment[0][1] * stf[it] * dt * b_vz[ix_source[i_source]][iz_source[i_source] + 1] / (dx * dx * dx * dx);
-        vx[ix_source[i_source] - 1][iz_source[i_source] - 1] -=
-                0.25 * moment[0][1] * stf[it] * dt * b_vz[ix_source[i_source] - 1][iz_source[i_source] - 1] / (dx * dx * dx * dx);
-        vx[ix_source[i_source]][iz_source[i_source] - 1] -=
-                0.25 * moment[0][1] * stf[it] * dt * b_vz[ix_source[i_source]][iz_source[i_source] - 1] / (dx * dx * dx * dx);
-        // | (z,x)-couple
-        vz[ix_source[i_source] + 1][iz_source[i_source] - 1] +=
-                0.25 * moment[1][0] * stf[it] * dt * b_vz[ix_source[i_source] + 1][iz_source[i_source] - 1] / (dz * dz * dz * dz);
-        vz[ix_source[i_source] + 1][iz_source[i_source]] +=
-                0.25 * moment[1][0] * stf[it] * dt * b_vz[ix_source[i_source] + 1][iz_source[i_source]] / (dz * dz * dz * dz);
-        vz[ix_source[i_source] - 1][iz_source[i_source] - 1] -=
-                0.25 * moment[1][0] * stf[it] * dt * b_vz[ix_source[i_source] - 1][iz_source[i_source] - 1] / (dz * dz * dz * dz);
-        vz[ix_source[i_source] - 1][iz_source[i_source]] -=
-                0.25 * moment[1][0] * stf[it] * dt * b_vz[ix_source[i_source] - 1][iz_source[i_source]] / (dz * dz * dz * dz);
-
+        for (int i_source = 0; i_source < which_source_to_fire_in_which_shot[i_shot].size(); ++i_source) {
+            int i_source_in_array = which_source_to_fire_in_which_shot[i_shot][i_source];
+            if (it < 1) { std::cout << "Firing source " << i_source_in_array << " in shot " << i_shot << std::endl; }
+// |-inject source
+            // | (x,x)-couple
+            vx[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array]] -=
+                    moment[0][0] * stf[it] * dt * b_vz[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array]] / (dx * dx * dx * dx);
+            vx[ix_sources[i_source_in_array]][iz_sources[i_source_in_array]] +=
+                    moment[0][0] * stf[it] * dt * b_vz[ix_sources[i_source_in_array]][iz_sources[i_source_in_array]] / (dx * dx * dx * dx);
+            // | (z,z)-couple
+            vz[ix_sources[i_source_in_array]][iz_sources[i_source_in_array] - 1] -=
+                    moment[1][1] * stf[it] * dt * b_vz[ix_sources[i_source_in_array]][iz_sources[i_source_in_array] - 1] / (dz * dz * dz * dz);
+            vz[ix_sources[i_source_in_array]][iz_sources[i_source_in_array]] +=
+                    moment[1][1] * stf[it] * dt * b_vz[ix_sources[i_source_in_array]][iz_sources[i_source_in_array]] / (dz * dz * dz * dz);
+            // | (x,z)-couple
+            vx[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array] + 1] +=
+                    0.25 * moment[0][1] * stf[it] * dt * b_vz[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array] + 1] /
+                    (dx * dx * dx * dx);
+            vx[ix_sources[i_source_in_array]][iz_sources[i_source_in_array] + 1] +=
+                    0.25 * moment[0][1] * stf[it] * dt * b_vz[ix_sources[i_source_in_array]][iz_sources[i_source_in_array] + 1] / (dx * dx * dx * dx);
+            vx[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array] - 1] -=
+                    0.25 * moment[0][1] * stf[it] * dt * b_vz[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array] - 1] /
+                    (dx * dx * dx * dx);
+            vx[ix_sources[i_source_in_array]][iz_sources[i_source_in_array] - 1] -=
+                    0.25 * moment[0][1] * stf[it] * dt * b_vz[ix_sources[i_source_in_array]][iz_sources[i_source_in_array] - 1] / (dx * dx * dx * dx);
+            // | (z,x)-couple
+            vz[ix_sources[i_source_in_array] + 1][iz_sources[i_source_in_array] - 1] +=
+                    0.25 * moment[1][0] * stf[it] * dt * b_vz[ix_sources[i_source_in_array] + 1][iz_sources[i_source_in_array] - 1] /
+                    (dz * dz * dz * dz);
+            vz[ix_sources[i_source_in_array] + 1][iz_sources[i_source_in_array]] +=
+                    0.25 * moment[1][0] * stf[it] * dt * b_vz[ix_sources[i_source_in_array] + 1][iz_sources[i_source_in_array]] / (dz * dz * dz * dz);
+            vz[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array] - 1] -=
+                    0.25 * moment[1][0] * stf[it] * dt * b_vz[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array] - 1] /
+                    (dz * dz * dz * dz);
+            vz[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array]] -=
+                    0.25 * moment[1][0] * stf[it] * dt * b_vz[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array]] / (dz * dz * dz * dz);
+        }
     }
 
     // Output timing
@@ -214,7 +235,7 @@ void fdWaveModel::forward_simulate(int i_source, bool store_fields, bool verbose
 }
 
 
-void fdWaveModel::adjoint_simulate(int i_source, bool verbose) {
+void fdWaveModel::adjoint_simulate(int i_shot, bool verbose) {
     // Reset dynamical fields
     std::fill(&vx[0][0], &vx[0][0] + sizeof(vx) / sizeof(int), 0);
     std::fill(&vz[0][0], &vz[0][0] + sizeof(vz) / sizeof(int), 0);
@@ -233,30 +254,30 @@ void fdWaveModel::adjoint_simulate(int i_source, bool verbose) {
             #pragma omp parallel for collapse(2)
             for (int ix = 0; ix < nx; ++ix) {
                 for (int iz = 0; iz < nz; ++iz) {
-                    density_l_kernel[ix][iz] -= snapshot_interval * dt * (accu_vx[i_source][it / snapshot_interval][ix][iz] * vx[ix][iz] +
-                                                                          accu_vz[i_source][it / snapshot_interval][ix][iz] * vz[ix][iz]);
+                    density_l_kernel[ix][iz] -= snapshot_interval * dt * (accu_vx[i_shot][it / snapshot_interval][ix][iz] * vx[ix][iz] +
+                                                                          accu_vz[i_shot][it / snapshot_interval][ix][iz] * vz[ix][iz]);
 
                     lambda_kernel[ix][iz] += snapshot_interval * dt * // Todo ??
-                                             (((accu_txx[i_source][it / snapshot_interval][ix][iz] -
-                                                (accu_tzz[i_source][it / snapshot_interval][ix][iz] * la[ix][iz]) / lm[ix][iz]) +
-                                               (accu_tzz[i_source][it / snapshot_interval][ix][iz] -
-                                                (accu_txx[i_source][it / snapshot_interval][ix][iz] * la[ix][iz]) / lm[ix][iz]))
+                                             (((accu_txx[i_shot][it / snapshot_interval][ix][iz] -
+                                                (accu_tzz[i_shot][it / snapshot_interval][ix][iz] * la[ix][iz]) / lm[ix][iz]) +
+                                               (accu_tzz[i_shot][it / snapshot_interval][ix][iz] -
+                                                (accu_txx[i_shot][it / snapshot_interval][ix][iz] * la[ix][iz]) / lm[ix][iz]))
                                               * ((txx[ix][iz] - (tzz[ix][iz] * la[ix][iz]) / lm[ix][iz]) +
                                                  (tzz[ix][iz] - (txx[ix][iz] * la[ix][iz]) / lm[ix][iz]))) *
                                              pow(lm[ix][iz] - (pow(la[ix][iz], 2) / (lm[ix][iz])), -2); // todo optimize pows
 
                     mu_kernel[ix][iz] += snapshot_interval * dt * 2 *
                                          ((((txx[ix][iz] - (tzz[ix][iz] * la[ix][iz]) / lm[ix][iz]) *
-                                            (accu_txx[i_source][it / snapshot_interval][ix][iz] -
-                                             (accu_tzz[i_source][it / snapshot_interval][ix][iz] * la[ix][iz]) /
+                                            (accu_txx[i_shot][it / snapshot_interval][ix][iz] -
+                                             (accu_tzz[i_shot][it / snapshot_interval][ix][iz] * la[ix][iz]) /
                                              lm[ix][iz])) +
                                            ((tzz[ix][iz] - (txx[ix][iz] * la[ix][iz]) / lm[ix][iz]) *
-                                            (accu_tzz[i_source][it / snapshot_interval][ix][iz] -
-                                             (accu_txx[i_source][it / snapshot_interval][ix][iz] * la[ix][iz]) /
+                                            (accu_tzz[i_shot][it / snapshot_interval][ix][iz] -
+                                             (accu_txx[i_shot][it / snapshot_interval][ix][iz] * la[ix][iz]) /
                                              lm[ix][iz]))
                                           ) * pow(lm[ix][iz] - (pow(la[ix][iz], 2) / (lm[ix][iz])), -2) + // todo optimize pows
                                           2 *
-                                          (txz[ix][iz] * accu_txz[i_source][it / snapshot_interval][ix][iz] *
+                                          (txz[ix][iz] * accu_txz[i_shot][it / snapshot_interval][ix][iz] *
                                            pow(2 * mu[ix][iz], -2))); // todo optimize pows
                 }
             }
@@ -319,8 +340,8 @@ void fdWaveModel::adjoint_simulate(int i_source, bool verbose) {
 
         // Inject adjoint sources
         for (int ir = 0; ir < nr; ++ir) {
-            vx[ix_receivers[ir]][iz_receivers[ir]] += dt * b_vx[ix_receivers[ir]][iz_receivers[ir]] * a_stf_ux[i_source][ir][it] / (dx * dz);
-            vz[ix_receivers[ir]][iz_receivers[ir]] += dt * b_vz[ix_receivers[ir]][iz_receivers[ir]] * a_stf_uz[i_source][ir][it] / (dx * dz);
+            vx[ix_receivers[ir]][iz_receivers[ir]] += dt * b_vx[ix_receivers[ir]][iz_receivers[ir]] * a_stf_ux[i_shot][ir][it] / (dx * dz);
+            vz[ix_receivers[ir]][iz_receivers[ir]] += dt * b_vz[ix_receivers[ir]][iz_receivers[ir]] * a_stf_uz[i_shot][ir][it] / (dx * dz);
         }
     }
 
@@ -341,10 +362,10 @@ void fdWaveModel::write_receivers() {
     std::ofstream receiver_file_ux;
     std::ofstream receiver_file_uz;
 
-    for (int i_source = 0; i_source < ns; ++i_source) {
+    for (int i_shot = 0; i_shot < n_shots; ++i_shot) {
 
-        filename_ux = "rtf_ux" + std::to_string(i_source) + ".txt";
-        filename_uz = "rtf_uz" + std::to_string(i_source) + ".txt";
+        filename_ux = "rtf_ux" + std::to_string(i_shot) + ".txt";
+        filename_uz = "rtf_uz" + std::to_string(i_shot) + ".txt";
 
         receiver_file_ux.open(filename_ux);
         receiver_file_uz.open(filename_uz);
@@ -356,8 +377,8 @@ void fdWaveModel::write_receivers() {
             receiver_file_ux << std::endl;
             receiver_file_uz << std::endl;
             for (int it = 0; it < nt; ++it) {
-                receiver_file_ux << rtf_ux[i_source][i_receiver][it] << " ";
-                receiver_file_uz << rtf_uz[i_source][i_receiver][it] << " ";
+                receiver_file_ux << rtf_ux[i_shot][i_receiver][it] << " ";
+                receiver_file_uz << rtf_uz[i_shot][i_receiver][it] << " ";
 
             }
         }
@@ -386,17 +407,17 @@ void fdWaveModel::load_receivers() { // Todo better file checking??
     std::ifstream receiver_file_ux;
     std::ifstream receiver_file_uz;
 
-    for (int i_source = 0; i_source < 2; ++i_source) {
-        filename_ux = "rtf_ux" + std::to_string(i_source) + ".txt";
-        filename_uz = "rtf_uz" + std::to_string(i_source) + ".txt";
+    for (int i_shot = 0; i_shot < n_shots; ++i_shot) {
+        filename_ux = "rtf_ux" + std::to_string(i_shot) + ".txt";
+        filename_uz = "rtf_uz" + std::to_string(i_shot) + ".txt";
 
         receiver_file_ux.open(filename_ux);
         receiver_file_uz.open(filename_uz);
 
         // Check if the file actually exists
-        std::cout << "File for ux data at source " << i_source << " is "
+        std::cout << "File for ux data at shot " << i_shot << " is "
                   << (receiver_file_ux.good() ? "good (exists at least)." : "ungood.") << std::endl;
-        std::cout << "File for uz data at source " << i_source << " is "
+        std::cout << "File for uz data at shot " << i_shot << " is "
                   << (receiver_file_uz.good() ? "good (exists at least)." : "ungood.") << std::endl;
         if (!receiver_file_ux.good() or !receiver_file_uz.good()) {
             throw std::invalid_argument("Not all data is present!");
@@ -411,8 +432,8 @@ void fdWaveModel::load_receivers() { // Todo better file checking??
                 receiver_file_ux >> placeholder_ux;
                 receiver_file_uz >> placeholder_uz;
 
-                rtf_ux_true[i_source][i_receiver][it] = placeholder_ux;
-                rtf_uz_true[i_source][i_receiver][it] = placeholder_uz;
+                rtf_ux_true[i_shot][i_receiver][it] = placeholder_ux;
+                rtf_uz_true[i_shot][i_receiver][it] = placeholder_uz;
             }
         }
 
@@ -438,13 +459,13 @@ void fdWaveModel::load_receivers() { // Todo better file checking??
 
 real fdWaveModel::calculate_misfit() { // todo Evaluate need for data variance
     real misfit = 0;
-    for (int i_source = 0; i_source < ns; ++i_source) {
+    for (int i_shot = 0; i_shot < n_shots; ++i_shot) {
         for (int i_receiver = 0; i_receiver < nr; ++i_receiver) {
             for (int it = 0; it < nt; ++it) {
-                misfit += 0.5 * dt * pow(rtf_ux_true[i_source][i_receiver][it] - rtf_ux[i_source][i_receiver][it], 2) /
-                          data_variance_ux[i_source][i_receiver][it];
-                misfit += 0.5 * dt * pow(rtf_uz_true[i_source][i_receiver][it] - rtf_uz[i_source][i_receiver][it], 2) /
-                          data_variance_uz[i_source][i_receiver][it];
+                misfit += 0.5 * dt * pow(rtf_ux_true[i_shot][i_receiver][it] - rtf_ux[i_shot][i_receiver][it], 2) /
+                          data_variance_ux[i_shot][i_receiver][it];
+                misfit += 0.5 * dt * pow(rtf_uz_true[i_shot][i_receiver][it] - rtf_uz[i_shot][i_receiver][it], 2) /
+                          data_variance_uz[i_shot][i_receiver][it];
             }
         }
     }
@@ -453,7 +474,7 @@ real fdWaveModel::calculate_misfit() { // todo Evaluate need for data variance
 
 void fdWaveModel::calculate_adjoint_sources() {
     #pragma omp parallel for collapse(3)
-    for (int is = 0; is < ns; ++is) {
+    for (int is = 0; is < n_shots; ++is) {
         for (int ir = 0; ir < nr; ++ir) {
             for (int it = 0; it < nt; ++it) {
                 a_stf_ux[is][ir][it] = rtf_ux[is][ir][it] - rtf_ux_true[is][ir][it];
@@ -469,8 +490,7 @@ void fdWaveModel::map_kernels_to_velocity() {
     for (int ix = 0; ix < nx; ++ix) {
         for (int iz = 0; iz < nz; ++iz) {
             vp_kernel[ix][iz] = 2 * vp[ix][iz] * lambda_kernel[ix][iz] / b_vx[ix][iz];
-            vs_kernel[ix][iz] = (2 * vs[ix][iz] * mu_kernel[ix][iz] - 4 * vs[ix][iz] * lambda_kernel[ix][iz]) /
-                                b_vx[ix][iz];
+            vs_kernel[ix][iz] = (2 * vs[ix][iz] * mu_kernel[ix][iz] - 4 * vs[ix][iz] * lambda_kernel[ix][iz]) / b_vx[ix][iz];
             density_v_kernel[ix][iz] = density_l_kernel[ix][iz]
                                        + (vp[ix][iz] * vp[ix][iz] - 2 * vs[ix][iz] * vs[ix][iz]) * lambda_kernel[ix][iz]
                                        + vs[ix][iz] * vs[ix][iz] * mu_kernel[ix][iz];

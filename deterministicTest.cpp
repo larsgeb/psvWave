@@ -13,20 +13,26 @@ int main() {
 
     auto *model = new fdWaveModel();
 
+    std::cout << std::endl << "Creating true data" << std::endl << std::flush;
+    (*model).load_target("de_target.txt", "vp_target.txt", "vs_target.txt");
+    for (int is = 0; is < fdWaveModel::n_shots; ++is) {
+        (*model).forward_simulate(is, true, true);
+    }
+    (*model).write_receivers();
+
+    std::cout << std::endl << "Computing kernel" << std::endl << std::flush;
+    bool reset_de = false, reset_vp = false, reset_vs = true;
+    (*model).reset_velocity_fields(reset_de, reset_vp, reset_vs);
     (*model).load_receivers();
-
-    (*model).vs[100][120] = 450;
-    (*model).vs[100][121] = 450;
-    (*model).vs[101][120] = 450;
-    (*model).vs[101][121] = 450;
     (*model).update_from_velocity();
-
-    (*model).forward_simulate(1, true, true);
-    (*model).forward_simulate(0, true, true);
+    for (int is = 0; is < fdWaveModel::n_shots; ++is) {
+        (*model).forward_simulate(is, true, true);
+    }
     std::cout << "Misfit: " << (*model).calculate_misfit() << std::endl;
     (*model).calculate_adjoint_sources();
-    (*model).adjoint_simulate(1, true);
-    (*model).adjoint_simulate(0, true);
+    for (int is = 0; is < fdWaveModel::n_shots; ++is) {
+        (*model).adjoint_simulate(is, true);
+    }
     (*model).map_kernels_to_velocity();
 
     std::ofstream mu_file;
@@ -71,7 +77,6 @@ int main() {
     vp_file.close();
     vs_file.close();
     de_v_file.close();
-
 
     exit(0);
 }

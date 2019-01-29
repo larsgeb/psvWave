@@ -6,6 +6,8 @@
 #define FDWAVEMODEL_H
 
 
+#include <vector>
+
 #if OPENACCCOMPILE == 1
     #define OPENACC 1
 #else
@@ -20,9 +22,9 @@ public:
 
     // ---- METHODS ----
 
-    void forward_simulate(int i_source, bool store_fields, bool verbose);
+    void forward_simulate(int i_shot, bool store_fields, bool verbose);
 
-    void adjoint_simulate(int i_source, bool verbose);
+    void adjoint_simulate(int i_shot, bool verbose);
 
     void write_receivers();
 
@@ -62,24 +64,31 @@ public:
     real vs[nx][nz];
     real taper[nx][nz];
     // | Source parameters (Gaussian wavelet)
-    const static int ns = 2;
-    int ix_source[ns] = {10 + np_boundary, 10 + np_boundary};
-    int iz_source[ns] = {10 + np_boundary, 90 + np_boundary};
-    real alpha = 1.0 / 50.0;
+    const static int n_sources = 4;
+    const static int n_shots = 4;
+    std::vector<std::vector<int>> which_source_to_fire_in_which_shot = {{0},
+                                                                        {1},
+                                                                        {3},
+                                                                        {2}};
+    int ix_sources[n_sources] = {10, 10, 90, 90};
+    int iz_sources[n_sources] = {30, 70, 70, 30};
+    bool add_np_to_source_location = true;
+    real alpha = static_cast<float>(1.0 / 50.0);
     real t0 = 0.005;
     // | stf/rtf_ux arrays
     real t[nt];
     real stf[nt];
-    const static int nr = 6;
-    int ix_receivers[nr] = {90 + np_boundary, 90 + np_boundary, 90 + np_boundary, 50 + np_boundary, 50 + np_boundary, 10 + np_boundary};
-    int iz_receivers[nr] = {50 + np_boundary, 10 + np_boundary, 90 + np_boundary, 10 + np_boundary, 90 + np_boundary, 50 + np_boundary};
-    real rtf_ux[ns][nr][nt];
-    real rtf_uz[ns][nr][nt];
-    real rtf_ux_true[ns][nr][nt];
-    real rtf_uz_true[ns][nr][nt];
+    const static int nr = 12;
+    int ix_receivers[nr] = {10, 50, 50, 90, 90, 90, 10, 10, 30, 30, 70, 70};
+    int iz_receivers[nr] = {50, 10, 90, 10, 50, 90, 10, 90, 10, 90, 10, 90};
+    bool add_np_to_receiver_location = true;
+    real rtf_ux[n_shots][nr][nt];
+    real rtf_uz[n_shots][nr][nt];
+    real rtf_ux_true[n_shots][nr][nt];
+    real rtf_uz_true[n_shots][nr][nt];
 
-    real a_stf_ux[ns][nr][nt];
-    real a_stf_uz[ns][nr][nt];
+    real a_stf_ux[n_shots][nr][nt];
+    real a_stf_uz[n_shots][nr][nt];
 
     // | Source moment
     real moment[2][2];
@@ -98,16 +107,16 @@ public:
     // | accumulators and snapshot interval
     int snapshot_interval = 10;
     const static int snapshots = 400;
-    real accu_vx[ns][snapshots][nx][nz]; // todo Debate whether or not to add one dimension per shot, or just overwrite each simulation.
-    real accu_vz[ns][snapshots][nx][nz];
-    real accu_txx[ns][snapshots][nx][nz];
-    real accu_tzz[ns][snapshots][nx][nz];
-    real accu_txz[ns][snapshots][nx][nz];
+    real accu_vx[n_shots][snapshots][nx][nz]; // todo Debate whether or not to add one dimension per shot, or just overwrite each simulation.
+    real accu_vz[n_shots][snapshots][nx][nz];
+    real accu_txx[n_shots][snapshots][nx][nz];
+    real accu_tzz[n_shots][snapshots][nx][nz];
+    real accu_txz[n_shots][snapshots][nx][nz];
 
 
     // -- Helper stuff for inverse problems --
-    real data_variance_ux[ns][nr][nt];
-    real data_variance_uz[ns][nr][nt];
+    real data_variance_ux[n_shots][nr][nt];
+    real data_variance_uz[n_shots][nr][nt];
 
     real density_l_kernel[nx][nz];
     real lambda_kernel[nx][nz];
