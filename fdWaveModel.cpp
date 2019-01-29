@@ -15,11 +15,11 @@ fdWaveModel::fdWaveModel() {
     // --- Informative section ---
 
     // Output whether or not compiled with OpenACC
-    if (OPENACC == 1) {
-        std::cout << std::endl << "OpenACC acceleration enabled, code should run on GPU." << std::endl;
-    } else {
-        std::cout << std::endl << "OpenACC acceleration not enabled, code should run on CPU." << std::endl;
-    }
+//    if (OPENACC == 1) {
+//        std::cout << std::endl << "OpenACC acceleration enabled, code should run on GPU." << std::endl;
+//    } else {
+//        std::cout << std::endl << "OpenACC acceleration not enabled, code should run on CPU." << std::endl;
+//    }
     // Show real type (single or double precision)
     std::cout << "Code compiled with " << typeid(real).name() << " (d for double, accurate, f for float, fast)" << std::endl << std::flush;
 
@@ -379,7 +379,7 @@ void fdWaveModel::update_from_velocity() {
     }
 }
 
-void fdWaveModel::load_receivers() {
+void fdWaveModel::load_receivers() { // Todo better file checking??
     std::string filename_ux;
     std::string filename_uz;
 
@@ -392,6 +392,15 @@ void fdWaveModel::load_receivers() {
 
         receiver_file_ux.open(filename_ux);
         receiver_file_uz.open(filename_uz);
+
+        // Check if the file actually exists
+        std::cout << "File for ux data at source " << i_source << " is "
+                  << (receiver_file_ux.good() ? "good (exists at least)." : "ungood.") << std::endl;
+        std::cout << "File for uz data at source " << i_source << " is "
+                  << (receiver_file_uz.good() ? "good (exists at least)." : "ungood.") << std::endl;
+        if (!receiver_file_ux.good() or !receiver_file_uz.good()) {
+            throw std::invalid_argument("Not all data is present!");
+        }
 
         real placeholder_ux;
         real placeholder_uz;
@@ -406,6 +415,21 @@ void fdWaveModel::load_receivers() {
                 rtf_uz_true[i_source][i_receiver][it] = placeholder_uz;
             }
         }
+
+        // Check data was large enough for set up
+        if (!receiver_file_ux.good() or !receiver_file_uz.good()) {
+            std::cout << "Received bad state of file at end of reading! Does the data match the set up?" << std::endl;
+            throw std::invalid_argument("Not enough data is present!");
+        }
+        // Try to load more data ...
+        receiver_file_ux >> placeholder_ux;
+        receiver_file_uz >> placeholder_uz;
+        // ... which shouldn't be possible
+        if (receiver_file_ux.good() or receiver_file_uz.good()) {
+            std::cout << "Received good state of file past reading! Does the data match the set up?" << std::endl;
+            throw std::invalid_argument("Too much data is present!");
+        }
+
         receiver_file_uz.close();
         receiver_file_ux.close();
     }
