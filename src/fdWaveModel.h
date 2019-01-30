@@ -69,11 +69,18 @@ public:
     real starting_vs[nx][nz];
     real taper[nx][nz];
     // | Source parameters (Gaussian wavelet)
-    const static int n_sources = 4;
-    const static int n_shots = 1;
-    std::vector<std::vector<int>> which_source_to_fire_in_which_shot = {{0,1,2,3}};
-    int ix_sources[n_sources] = {10, 10, 90, 90};
-    int iz_sources[n_sources] = {30, 70, 70, 30};
+    const static int n_sources = 7;
+    const static int n_shots = 7;
+    std::vector<std::vector<int>> which_source_to_fire_in_which_shot = {{0},
+                                                                        {1},
+                                                                        {2},
+                                                                        {3},
+                                                                        {4},
+                                                                        {5},
+                                                                        {6}};
+    int ix_sources[n_sources] = {25, 50, 75, 100, 125, 150, 175};
+    int iz_sources[n_sources] = {10, 10, 10, 10, 10, 10, 10};
+    real moment_angles[n_sources] = {90, 81, 41, 300, 147, 252, 327};
     bool add_np_to_source_location = true;
     real alpha = static_cast<real>(1.0 / 50.0);
     real t0 = 0.005;
@@ -93,7 +100,7 @@ public:
     real a_stf_uz[n_shots][nr][nt];
 
     // | Source moment
-    real moment[2][2];
+    real moment[n_sources][2][2];
     // | Dynamic fields
     real vx[nx][nz];
     real vz[nx][nz];

@@ -53,11 +53,12 @@ fdWaveModel::fdWaveModel() {
         real shiftedTime = static_cast<real>(t[it] - 1.4 / f);
         stf[it] = real((1 - 2 * pow(M_PI * f * shiftedTime, 2)) * exp(-pow(M_PI * f * shiftedTime, 2)));
     }
-
-    moment[0][0] = 1;
-    moment[0][1] = 0;
-    moment[1][0] = 0;
-    moment[1][1] = -1;
+    for (int i_source = 0; i_source < n_sources; ++i_source) {
+        moment[i_source][0][0] = static_cast<real>(cos(moment_angles[i_source] * PI / 180.0));
+        moment[i_source][0][1] = static_cast<real>(-sin(moment_angles[i_source] * PI / 180.0));
+        moment[i_source][1][0] = static_cast<real>(-sin(moment_angles[i_source] * PI / 180.0));
+        moment[i_source][1][1] = static_cast<real>(-cos(moment_angles[i_source] * PI / 180.0));
+    }
 
     // Setting all fields.
     std::fill(&vp[0][0], &vp[0][0] + sizeof(vp) / sizeof(real), scalar_vp);
@@ -194,36 +195,48 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose) 
 // |-inject source
             // | (x,x)-couple
             vx[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array]] -=
-                    moment[0][0] * stf[it] * dt * b_vz[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array]] / (dx * dx * dx * dx);
+                    moment[i_source_in_array][0][0] * stf[it] * dt * b_vz[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array]] /
+                    (dx * dx * dx * dx);
             vx[ix_sources[i_source_in_array]][iz_sources[i_source_in_array]] +=
-                    moment[0][0] * stf[it] * dt * b_vz[ix_sources[i_source_in_array]][iz_sources[i_source_in_array]] / (dx * dx * dx * dx);
+                    moment[i_source_in_array][0][0] * stf[it] * dt * b_vz[ix_sources[i_source_in_array]][iz_sources[i_source_in_array]] /
+                    (dx * dx * dx * dx);
             // | (z,z)-couple
             vz[ix_sources[i_source_in_array]][iz_sources[i_source_in_array] - 1] -=
-                    moment[1][1] * stf[it] * dt * b_vz[ix_sources[i_source_in_array]][iz_sources[i_source_in_array] - 1] / (dz * dz * dz * dz);
+                    moment[i_source_in_array][1][1] * stf[it] * dt * b_vz[ix_sources[i_source_in_array]][iz_sources[i_source_in_array] - 1] /
+                    (dz * dz * dz * dz);
             vz[ix_sources[i_source_in_array]][iz_sources[i_source_in_array]] +=
-                    moment[1][1] * stf[it] * dt * b_vz[ix_sources[i_source_in_array]][iz_sources[i_source_in_array]] / (dz * dz * dz * dz);
+                    moment[i_source_in_array][1][1] * stf[it] * dt * b_vz[ix_sources[i_source_in_array]][iz_sources[i_source_in_array]] /
+                    (dz * dz * dz * dz);
             // | (x,z)-couple
             vx[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array] + 1] +=
-                    0.25 * moment[0][1] * stf[it] * dt * b_vz[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array] + 1] /
+                    0.25 * moment[i_source_in_array][0][1] * stf[it] * dt *
+                    b_vz[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array] + 1] /
                     (dx * dx * dx * dx);
             vx[ix_sources[i_source_in_array]][iz_sources[i_source_in_array] + 1] +=
-                    0.25 * moment[0][1] * stf[it] * dt * b_vz[ix_sources[i_source_in_array]][iz_sources[i_source_in_array] + 1] / (dx * dx * dx * dx);
+                    0.25 * moment[i_source_in_array][0][1] * stf[it] * dt * b_vz[ix_sources[i_source_in_array]][iz_sources[i_source_in_array] + 1] /
+                    (dx * dx * dx * dx);
             vx[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array] - 1] -=
-                    0.25 * moment[0][1] * stf[it] * dt * b_vz[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array] - 1] /
+                    0.25 * moment[i_source_in_array][0][1] * stf[it] * dt *
+                    b_vz[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array] - 1] /
                     (dx * dx * dx * dx);
             vx[ix_sources[i_source_in_array]][iz_sources[i_source_in_array] - 1] -=
-                    0.25 * moment[0][1] * stf[it] * dt * b_vz[ix_sources[i_source_in_array]][iz_sources[i_source_in_array] - 1] / (dx * dx * dx * dx);
+                    0.25 * moment[i_source_in_array][0][1] * stf[it] * dt * b_vz[ix_sources[i_source_in_array]][iz_sources[i_source_in_array] - 1] /
+                    (dx * dx * dx * dx);
             // | (z,x)-couple
             vz[ix_sources[i_source_in_array] + 1][iz_sources[i_source_in_array] - 1] +=
-                    0.25 * moment[1][0] * stf[it] * dt * b_vz[ix_sources[i_source_in_array] + 1][iz_sources[i_source_in_array] - 1] /
+                    0.25 * moment[i_source_in_array][1][0] * stf[it] * dt *
+                    b_vz[ix_sources[i_source_in_array] + 1][iz_sources[i_source_in_array] - 1] /
                     (dz * dz * dz * dz);
             vz[ix_sources[i_source_in_array] + 1][iz_sources[i_source_in_array]] +=
-                    0.25 * moment[1][0] * stf[it] * dt * b_vz[ix_sources[i_source_in_array] + 1][iz_sources[i_source_in_array]] / (dz * dz * dz * dz);
+                    0.25 * moment[i_source_in_array][1][0] * stf[it] * dt * b_vz[ix_sources[i_source_in_array] + 1][iz_sources[i_source_in_array]] /
+                    (dz * dz * dz * dz);
             vz[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array] - 1] -=
-                    0.25 * moment[1][0] * stf[it] * dt * b_vz[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array] - 1] /
+                    0.25 * moment[i_source_in_array][1][0] * stf[it] * dt *
+                    b_vz[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array] - 1] /
                     (dz * dz * dz * dz);
             vz[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array]] -=
-                    0.25 * moment[1][0] * stf[it] * dt * b_vz[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array]] / (dz * dz * dz * dz);
+                    0.25 * moment[i_source_in_array][1][0] * stf[it] * dt * b_vz[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array]] /
+                    (dz * dz * dz * dz);
         }
     }
 

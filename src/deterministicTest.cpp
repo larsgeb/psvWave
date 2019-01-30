@@ -79,8 +79,6 @@ int main() {
     vs_file.close();
     de_v_file.close();
 
-    MPI_Finalize();
-
     exit(0);
 }
 
