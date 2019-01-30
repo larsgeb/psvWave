@@ -14,7 +14,7 @@
     #define OPENACC 0
 #endif
 
-#define real float
+#define real float // todo Debug nan's on double
 
 class fdWaveModel { // TODO restructure public vs private methods and fields
 public:
@@ -42,15 +42,17 @@ public:
 
     // -- Definition of simulation --
     // | Gaussian taper specs
-    int np_boundary = 50;
-    real np_factor = 0.0075; // todo determine otpimal
+    const static int np_boundary = 10;
+    real np_factor = 0.075; // todo determine optimal
     // | Finite difference coefficients
     real c1 = real(9.0 / 8.0);
     real c2 = real(1.0 / 24.0);
     // | Simulation size
     const static int nt = 4000;
-    const static int nx = 200;
-    const static int nz = 150;
+    const static int nx_inner = 200;
+    const static int nz_inner = 100;
+    const static int nx = nx_inner + np_boundary * 2;
+    const static int nz = nz_inner + np_boundary;
     // | Discretization size
     real dx = 1.249;
     real dz = 1.249;
@@ -62,6 +64,9 @@ public:
     real rho[nx][nz];
     real vp[nx][nz];
     real vs[nx][nz];
+    real starting_rho[nx][nz];
+    real starting_vp[nx][nz];
+    real starting_vs[nx][nz];
     real taper[nx][nz];
     // | Source parameters (Gaussian wavelet)
     const static int n_sources = 4;
@@ -70,14 +75,14 @@ public:
     int ix_sources[n_sources] = {10, 10, 90, 90};
     int iz_sources[n_sources] = {30, 70, 70, 30};
     bool add_np_to_source_location = true;
-    real alpha = static_cast<float>(1.0 / 50.0);
+    real alpha = static_cast<real>(1.0 / 50.0);
     real t0 = 0.005;
     // | stf/rtf_ux arrays
     real t[nt];
     real stf[nt];
-    const static int nr = 12;
-    int ix_receivers[nr] = {10, 50, 50, 90, 90, 90, 10, 10, 30, 30, 70, 70};
-    int iz_receivers[nr] = {50, 10, 90, 10, 50, 90, 10, 90, 10, 90, 10, 90};
+    const static int nr = 19;
+    int ix_receivers[nr] = {100, 10, 30, 50, 70, 90, 110, 130, 150, 170, 190, 20, 40, 60, 80, 120, 140, 160, 180,};
+    int iz_receivers[nr] = {90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90,};
     bool add_np_to_receiver_location = true;
     real rtf_ux[n_shots][nr][nt];
     real rtf_uz[n_shots][nr][nt];
@@ -124,6 +129,8 @@ public:
     real density_v_kernel[nx][nz];
 
     void load_target(std::string de_target_relative_path, std::string vp_target_relative_path, std::string vs_target_relative_path);
+
+    void load_starting(std::string de_starting_relative_path, std::string vp_starting_relative_path, std::string vs_starting_relative_path);
 
     void reset_velocity_fields();
 

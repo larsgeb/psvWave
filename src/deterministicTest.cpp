@@ -3,7 +3,6 @@
 //
 
 // Includes
-#include <mpi.h>
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -12,36 +11,18 @@
 
 int main() {
 
-
-    // Initialize MPI
-    MPI_Init(nullptr, nullptr);
-
-    // Get the number of processes
-    int world_size;
-    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-
-    // Get the rank of the process
-    int world_rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-
-    // Get the name of the processor
-    char processor_name[MPI_MAX_PROCESSOR_NAME];
-    int name_len;
-    MPI_Get_processor_name(processor_name, &name_len);
-
-    printf("Hello world from processor %s, rank %d out of %d processors\n", processor_name, world_rank, world_size);
-
     auto *model = new fdWaveModel();
 
     std::cout << std::endl << "Creating true data" << std::endl << std::flush;
     (*model).load_target("de_target.txt", "vp_target.txt", "vs_target.txt");
+    (*model).load_starting("de_starting.txt", "vp_starting.txt", "vs_starting.txt");
     for (int is = 0; is < fdWaveModel::n_shots; ++is) {
         (*model).forward_simulate(is, true, true);
     }
     (*model).write_receivers();
 
     std::cout << std::endl << "Computing kernel" << std::endl << std::flush;
-    bool reset_de = false, reset_vp = false, reset_vs = true;
+    bool reset_de = false, reset_vp = true, reset_vs = false;
     (*model).reset_velocity_fields(reset_de, reset_vp, reset_vs);
     (*model).load_receivers();
     (*model).update_from_velocity();

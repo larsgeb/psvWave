@@ -10,6 +10,8 @@
 #include <limits>
 #include "fdWaveModel.h"
 
+#define PI 3.14159265
+
 fdWaveModel::fdWaveModel() {
 
     // --- Informative section ---
@@ -29,14 +31,14 @@ fdWaveModel::fdWaveModel() {
     // Place sources/receivers inside the domain
     if (add_np_to_receiver_location) {
         for (int ir = 0; ir < nr; ++ir) {
-            ix_receivers[ir] += 50;
-            iz_receivers[ir] += 50;
+            ix_receivers[ir] += np_boundary;
+            iz_receivers[ir] += np_boundary;
         }
     }
     if (add_np_to_source_location) {
         for (int is = 0; is < n_sources; ++is) {
-            ix_sources[is] += 50;
-            iz_sources[is] += 50;
+            ix_sources[is] += np_boundary;
+            iz_sources[is] += np_boundary;
         }
     }
 
@@ -47,8 +49,8 @@ fdWaveModel::fdWaveModel() {
     // Assign stf/rtf_ux
     for (unsigned int it = 0; it < nt; ++it) {
         t[it] = it * dt;
-        real f = 1.0 / alpha;
-        real shiftedTime = t[it] - 1.4 / f;
+        real f = static_cast<real>(1.0 / alpha);
+        real shiftedTime = static_cast<real>(t[it] - 1.4 / f);
         stf[it] = real((1 - 2 * pow(M_PI * f * shiftedTime, 2)) * exp(-pow(M_PI * f * shiftedTime, 2)));
     }
 
@@ -74,8 +76,8 @@ fdWaveModel::fdWaveModel() {
             }
         }
         for (auto &ix : taper) {
-            for (float &element : ix) {
-                element = static_cast<float>(exp(-pow(np_factor * (50 - element), 2)));
+            for (real &element : ix) {
+                element = static_cast<real>(exp(-pow(np_factor * (np_boundary - element), 2)));
             }
         }
     }
@@ -106,8 +108,8 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose) 
         // Take wavefield snapshot
         if (it % snapshot_interval == 0 and store_fields) {
             #pragma omp parallel for collapse(2)
-            for (int ix = 0; ix < nx; ++ix) {
-                for (int iz = 0; iz < nz; ++iz) {
+            for (int ix = np_boundary; ix < nx_inner + np_boundary; ++ix) {
+                for (int iz = np_boundary; iz < nz_inner + np_boundary; ++iz) {
                     accu_vx[i_shot][it / snapshot_interval][ix][iz] = vx[ix][iz];
                     accu_vz[i_shot][it / snapshot_interval][ix][iz] = vz[ix][iz];
                     accu_txx[i_shot][it / snapshot_interval][ix][iz] = txx[ix][iz];
@@ -252,8 +254,8 @@ void fdWaveModel::adjoint_simulate(int i_shot, bool verbose) {
         // Correlate wavefields
         if (it % snapshot_interval == 0) { // Todo, rewrite for only relevant parameters
             #pragma omp parallel for collapse(2)
-            for (int ix = 0; ix < nx; ++ix) {
-                for (int iz = 0; iz < nz; ++iz) {
+            for (int ix = np_boundary; ix < np_boundary + nx_inner; ++ix) {
+                for (int iz = np_boundary; iz < np_boundary + nz_inner; ++iz) {
                     density_l_kernel[ix][iz] -= snapshot_interval * dt * (accu_vx[i_shot][it / snapshot_interval][ix][iz] * vx[ix][iz] +
                                                                           accu_vz[i_shot][it / snapshot_interval][ix][iz] * vz[ix][iz]);
 
@@ -370,8 +372,8 @@ void fdWaveModel::write_receivers() {
         receiver_file_ux.open(filename_ux);
         receiver_file_uz.open(filename_uz);
 
-        receiver_file_ux.precision(std::numeric_limits<float>::digits10 + 10);
-        receiver_file_uz.precision(std::numeric_limits<float>::digits10 + 10);
+        receiver_file_ux.precision(std::numeric_limits<real>::digits10 + 10);
+        receiver_file_uz.precision(std::numeric_limits<real>::digits10 + 10);
 
         for (int i_receiver = 0; i_receiver < nr; ++i_receiver) {
             receiver_file_ux << std::endl;
@@ -558,8 +560,81 @@ void fdWaveModel::reset_velocity_fields() {
 }
 
 void fdWaveModel::reset_velocity_fields(bool reset_de, bool reset_vp, bool reset_vs) {
-    if (reset_de) { std::fill(&rho[0][0], &rho[0][0] + sizeof(rho) / sizeof(real), scalar_rho); }
-    if (reset_vp) { std::fill(&vp[0][0], &vp[0][0] + sizeof(vp) / sizeof(real), scalar_vp); }
-    if (reset_vs) { std::fill(&vs[0][0], &vs[0][0] + sizeof(vs) / sizeof(real), scalar_vs); }
+    if (reset_de) {
+        for (int ix = 0; ix < nx; ++ix) {
+            for (int iz = 0; iz < nz; ++iz) {
+                rho[ix][iz] = starting_rho[ix][iz];
+            }
+        }
+    }
+    if (reset_vp) {
+        for (int ix = 0; ix < nx; ++ix) {
+            for (int iz = 0; iz < nz; ++iz) {
+                vp[ix][iz] = starting_vp[ix][iz];
+            }
+        }
+    }
+    if (reset_vs) {
+        for (int ix = 0; ix < nx; ++ix) {
+            for (int iz = 0; iz < nz; ++iz) {
+                vs[ix][iz] = starting_vs[ix][iz];
+            }
+        }
+    }
+    update_from_velocity();
+}
+
+void fdWaveModel::load_starting(std::string de_starting_relative_path, std::string vp_starting_relative_path, std::string vs_starting_relative_path) {
+    std::ifstream de_starting_file;
+    std::ifstream vp_starting_file;
+    std::ifstream vs_starting_file;
+
+    de_starting_file.open(de_starting_relative_path);
+    vp_starting_file.open(vp_starting_relative_path);
+    vs_starting_file.open(vs_starting_relative_path);
+
+    // Check if the file actually exists
+    std::cout << "File for de_starting is " << (de_starting_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
+    std::cout << "File for vp_starting is " << (vp_starting_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
+    std::cout << "File for vs_starting is " << (vs_starting_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
+    if (!de_starting_file.good() or !vp_starting_file.good() or !vs_starting_file.good()) {
+        throw std::invalid_argument("Not all data is present!");
+    }
+
+    real placeholder_de;
+    real placeholder_vp;
+    real placeholder_vs;
+    for (int ix = 0; ix < nx; ++ix) {
+        for (int iz = 0; iz < nz; ++iz) {
+
+            de_starting_file >> placeholder_de;
+            vp_starting_file >> placeholder_vp;
+            vs_starting_file >> placeholder_vs;
+
+            starting_rho[ix][iz] = placeholder_de;
+            starting_vp[ix][iz] = placeholder_vp;
+            starting_vs[ix][iz] = placeholder_vs;
+        }
+    }
+
+    // Check data was large enough for set up
+    if (!de_starting_file.good() or !vp_starting_file.good() or !vs_starting_file.good()) {
+        std::cout << "Received bad state of file at end of reading. Does the data match the domain?" << std::endl;
+        throw std::invalid_argument("Not enough data is present!");
+    }
+    // Try to load more data ...
+    de_starting_file >> placeholder_de;
+    vp_starting_file >> placeholder_vp;
+    vs_starting_file >> placeholder_vs;
+    // ... which shouldn't be possible
+    if (de_starting_file.good() or vp_starting_file.good() or vs_starting_file.good()) {
+        std::cout << "Received good state of file past reading. Does the data match the domain?" << std::endl;
+        throw std::invalid_argument("Too much data is present!");
+    }
+
+    de_starting_file.close();
+    vp_starting_file.close();
+    vs_starting_file.close();
+
     update_from_velocity();
 }
