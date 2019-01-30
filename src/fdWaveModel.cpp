@@ -54,10 +54,10 @@ fdWaveModel::fdWaveModel() {
         stf[it] = real((1 - 2 * pow(M_PI * f * shiftedTime, 2)) * exp(-pow(M_PI * f * shiftedTime, 2)));
     }
     for (int i_source = 0; i_source < n_sources; ++i_source) {
-        moment[i_source][0][0] = static_cast<real>(cos(moment_angles[i_source] * PI / 180.0));
-        moment[i_source][0][1] = static_cast<real>(-sin(moment_angles[i_source] * PI / 180.0));
-        moment[i_source][1][0] = static_cast<real>(-sin(moment_angles[i_source] * PI / 180.0));
-        moment[i_source][1][1] = static_cast<real>(-cos(moment_angles[i_source] * PI / 180.0));
+        moment[i_source][0][0] = static_cast<real>(cos(moment_angles[i_source] * PI / 180.0) * 1e15);
+        moment[i_source][0][1] = static_cast<real>(-sin(moment_angles[i_source] * PI / 180.0) * 1e15);
+        moment[i_source][1][0] = static_cast<real>(-sin(moment_angles[i_source] * PI / 180.0) * 1e15);
+        moment[i_source][1][1] = static_cast<real>(-cos(moment_angles[i_source] * PI / 180.0) * 1e15);
     }
 
     // Setting all fields.
