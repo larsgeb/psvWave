@@ -1,0 +1,43 @@
+intel 8850H, 6 cores, 12 threads @ 2.60 GHz base, 4.30 GHz turbo
+
+## 1 MPI process, using 2 physical cores
+Hello world from processor lars-Precision-5530, rank 0 out of 1 processors
+Running on (at most) 2 OpenMP threads
+Creating true data
+elapsed time: 1.96289
+Computing kernel
+Misfit: 24150.2
+Seconds elapsed for adjoint wave simulation: 1.60037
+elapsed time: 3.35645
+
+## 3 MPI processes in parallel, using all 6 physical cores once (2 per process)
+Hello world from processor lars-Precision-5530, rank 0 out of 3 processors
+Hello world from processor lars-Precision-5530, rank 1 out of 3 processors
+Hello world from processor lars-Precision-5530, rank 2 out of 3 processors
+Creating true data on rank 0
+elapsed time: 1.97461
+Computing kernel on rank 0
+Computing kernel on rank 1
+Computing kernel on rank 2
+Misfit on rank 0: 7064.99
+Misfit on rank 2: 24001.7
+Misfit on rank 1: 82.9274
+elapsed time on rank 0: 3.74316
+elapsed time on rank 2: 3.79883
+elapsed time on rank 1: 3.8252
+
+## 3 MPI processes in parallel, using all 6 physical cores twice (hyperthreading, 4 per process)
+Hello world from processor lars-Precision-5530, rank 1 out of 3 processors
+Hello world from processor lars-Precision-5530, rank 2 out of 3 processors
+Hello world from processor lars-Precision-5530, rank 0 out of 3 processors
+Creating true data on rank 0
+elapsed time: 1.30859
+Computing kernel on rank 0
+Computing kernel on rank 1
+Computing kernel on rank 2
+Misfit on rank 0: 7064.99
+Misfit on rank 2: 24001.7
+Misfit on rank 1: 82.9274
+elapsed time on rank 0: 3.68848
+elapsed time on rank 2: 3.69922
+elapsed time on rank 1: 3.83496

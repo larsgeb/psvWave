@@ -1,10 +1,10 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from obspy.imaging.beachball import beach
 
-vp = np.loadtxt("vp_file.txt")
-vs = np.loadtxt("vs_file.txt")
-de = np.loadtxt("de_v_file.txt")
+vp = np.loadtxt("vp_2file.txt")
+vs = np.loadtxt("vs_2file.txt")
+de = np.loadtxt("de_2file.txt")
 
 kernels = [vp, vs, de]
 
