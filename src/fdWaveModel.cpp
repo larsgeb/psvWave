@@ -5,7 +5,6 @@
 #include <omp.h>
 #include <iostream>
 #include <cmath>
-#include <typeinfo>
 #include <fstream>
 #include <limits>
 #include "fdWaveModel.h"
@@ -47,12 +46,19 @@ fdWaveModel::fdWaveModel() {
     std::fill(&data_variance_uz[0][0][0], &data_variance_uz[0][0][0] + sizeof(data_variance_uz) / sizeof(real), 1);
 
     // Assign stf/rtf_ux
-    for (unsigned int it = 0; it < nt; ++it) {
-        t[it] = it * dt;
-        real f = static_cast<real>(1.0 / alpha);
-        real shiftedTime = static_cast<real>(t[it] - 1.4 / f);
-        stf[it] = real((1 - 2 * pow(M_PI * f * shiftedTime, 2)) * exp(-pow(M_PI * f * shiftedTime, 2)));
+    for (int i_shot = 0; i_shot < n_shots; ++i_shot) {
+        for (int i_source = 0; i_source < which_source_to_fire_in_which_shot[i_shot].size(); ++i_source) {
+            for (unsigned int it = 0; it < nt; ++it) {
+                t[it] = it * dt;
+                real f = static_cast<real>(1.0 / alpha);
+                real shiftedTime = static_cast<real>(t[it] - 1.4 / f - delay_per_shot * i_source / f);
+                stf[which_source_to_fire_in_which_shot[i_shot][i_source]][it] = real(
+                        (1 - 2 * pow(M_PI * f * shiftedTime, 2)) * exp(-pow(M_PI * f * shiftedTime, 2)));
+            }
+        }
+
     }
+
     for (int i_source = 0; i_source < n_sources; ++i_source) {
         moment[i_source][0][0] = static_cast<real>(cos(moment_angles[i_source] * PI / 180.0) * 1e15);
         moment[i_source][0][1] = static_cast<real>(-sin(moment_angles[i_source] * PI / 180.0) * 1e15);
@@ -189,53 +195,60 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose) 
             }
         }
 
-        for (int i_source = 0; i_source < which_source_to_fire_in_which_shot[i_shot].size(); ++i_source) {
-            int i_source_in_array = which_source_to_fire_in_which_shot[i_shot][i_source];
-            if (it < 1 and verbose) { std::cout << "Firing source " << i_source_in_array << " in shot " << i_shot << std::endl; }
-// |-inject source
+        for (const auto &i_source : which_source_to_fire_in_which_shot[i_shot]) {
+            if (it < 1 and verbose) { std::cout << "Firing source " << i_source << " in shot " << i_shot << std::endl; }
+            // |-inject source
             // | (x,x)-couple
-            vx[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array]] -=
-                    moment[i_source_in_array][0][0] * stf[it] * dt * b_vz[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array]] /
+            vx[ix_sources[i_source] - 1][iz_sources[i_source]] -=
+                    moment[i_source][0][0] * stf[i_source][it] * dt *
+                    b_vz[ix_sources[i_source] - 1][iz_sources[i_source]] /
                     (dx * dx * dx * dx);
-            vx[ix_sources[i_source_in_array]][iz_sources[i_source_in_array]] +=
-                    moment[i_source_in_array][0][0] * stf[it] * dt * b_vz[ix_sources[i_source_in_array]][iz_sources[i_source_in_array]] /
+            vx[ix_sources[i_source]][iz_sources[i_source]] +=
+                    moment[i_source][0][0] * stf[i_source][it] * dt *
+                    b_vz[ix_sources[i_source]][iz_sources[i_source]] /
                     (dx * dx * dx * dx);
             // | (z,z)-couple
-            vz[ix_sources[i_source_in_array]][iz_sources[i_source_in_array] - 1] -=
-                    moment[i_source_in_array][1][1] * stf[it] * dt * b_vz[ix_sources[i_source_in_array]][iz_sources[i_source_in_array] - 1] /
+            vz[ix_sources[i_source]][iz_sources[i_source] - 1] -=
+                    moment[i_source][1][1] * stf[i_source][it] * dt *
+                    b_vz[ix_sources[i_source]][iz_sources[i_source] - 1] /
                     (dz * dz * dz * dz);
-            vz[ix_sources[i_source_in_array]][iz_sources[i_source_in_array]] +=
-                    moment[i_source_in_array][1][1] * stf[it] * dt * b_vz[ix_sources[i_source_in_array]][iz_sources[i_source_in_array]] /
+            vz[ix_sources[i_source]][iz_sources[i_source]] +=
+                    moment[i_source][1][1] * stf[i_source][it] * dt *
+                    b_vz[ix_sources[i_source]][iz_sources[i_source]] /
                     (dz * dz * dz * dz);
             // | (x,z)-couple
-            vx[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array] + 1] +=
-                    0.25 * moment[i_source_in_array][0][1] * stf[it] * dt *
-                    b_vz[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array] + 1] /
+            vx[ix_sources[i_source] - 1][iz_sources[i_source] + 1] +=
+                    0.25 * moment[i_source][0][1] * stf[i_source][it] * dt *
+                    b_vz[ix_sources[i_source] - 1][iz_sources[i_source] + 1] /
                     (dx * dx * dx * dx);
-            vx[ix_sources[i_source_in_array]][iz_sources[i_source_in_array] + 1] +=
-                    0.25 * moment[i_source_in_array][0][1] * stf[it] * dt * b_vz[ix_sources[i_source_in_array]][iz_sources[i_source_in_array] + 1] /
+            vx[ix_sources[i_source]][iz_sources[i_source] + 1] +=
+                    0.25 * moment[i_source][0][1] * stf[i_source][it] * dt *
+                    b_vz[ix_sources[i_source]][iz_sources[i_source] + 1] /
                     (dx * dx * dx * dx);
-            vx[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array] - 1] -=
-                    0.25 * moment[i_source_in_array][0][1] * stf[it] * dt *
-                    b_vz[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array] - 1] /
+            vx[ix_sources[i_source] - 1][iz_sources[i_source] - 1] -=
+                    0.25 * moment[i_source][0][1] * stf[i_source][it] * dt *
+                    b_vz[ix_sources[i_source] - 1][iz_sources[i_source] - 1] /
                     (dx * dx * dx * dx);
-            vx[ix_sources[i_source_in_array]][iz_sources[i_source_in_array] - 1] -=
-                    0.25 * moment[i_source_in_array][0][1] * stf[it] * dt * b_vz[ix_sources[i_source_in_array]][iz_sources[i_source_in_array] - 1] /
+            vx[ix_sources[i_source]][iz_sources[i_source] - 1] -=
+                    0.25 * moment[i_source][0][1] * stf[i_source][it] * dt *
+                    b_vz[ix_sources[i_source]][iz_sources[i_source] - 1] /
                     (dx * dx * dx * dx);
             // | (z,x)-couple
-            vz[ix_sources[i_source_in_array] + 1][iz_sources[i_source_in_array] - 1] +=
-                    0.25 * moment[i_source_in_array][1][0] * stf[it] * dt *
-                    b_vz[ix_sources[i_source_in_array] + 1][iz_sources[i_source_in_array] - 1] /
+            vz[ix_sources[i_source] + 1][iz_sources[i_source] - 1] +=
+                    0.25 * moment[i_source][1][0] * stf[i_source][it] * dt *
+                    b_vz[ix_sources[i_source] + 1][iz_sources[i_source] - 1] /
                     (dz * dz * dz * dz);
-            vz[ix_sources[i_source_in_array] + 1][iz_sources[i_source_in_array]] +=
-                    0.25 * moment[i_source_in_array][1][0] * stf[it] * dt * b_vz[ix_sources[i_source_in_array] + 1][iz_sources[i_source_in_array]] /
+            vz[ix_sources[i_source] + 1][iz_sources[i_source]] +=
+                    0.25 * moment[i_source][1][0] * stf[i_source][it] * dt *
+                    b_vz[ix_sources[i_source] + 1][iz_sources[i_source]] /
                     (dz * dz * dz * dz);
-            vz[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array] - 1] -=
-                    0.25 * moment[i_source_in_array][1][0] * stf[it] * dt *
-                    b_vz[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array] - 1] /
+            vz[ix_sources[i_source] - 1][iz_sources[i_source] - 1] -=
+                    0.25 * moment[i_source][1][0] * stf[i_source][it] * dt *
+                    b_vz[ix_sources[i_source] - 1][iz_sources[i_source] - 1] /
                     (dz * dz * dz * dz);
-            vz[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array]] -=
-                    0.25 * moment[i_source_in_array][1][0] * stf[it] * dt * b_vz[ix_sources[i_source_in_array] - 1][iz_sources[i_source_in_array]] /
+            vz[ix_sources[i_source] - 1][iz_sources[i_source]] -=
+                    0.25 * moment[i_source][1][0] * stf[i_source][it] * dt *
+                    b_vz[ix_sources[i_source] - 1][iz_sources[i_source]] /
                     (dz * dz * dz * dz);
         }
     }
@@ -244,11 +257,9 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose) 
     if (verbose) {
         stopTime = omp_get_wtime();
         secsElapsed = stopTime - startTime;
-        std::cout << "Seconds elapsed for wave simulation: " << secsElapsed <<
-                  std::endl;
+        std::cout << "Seconds elapsed for forward wave simulation: " << secsElapsed << std::endl;
     }
 }
-
 
 void fdWaveModel::adjoint_simulate(int i_shot, bool verbose) {
     // Reset dynamical fields
@@ -272,14 +283,15 @@ void fdWaveModel::adjoint_simulate(int i_shot, bool verbose) {
                     density_l_kernel[ix][iz] -= snapshot_interval * dt * (accu_vx[i_shot][it / snapshot_interval][ix][iz] * vx[ix][iz] +
                                                                           accu_vz[i_shot][it / snapshot_interval][ix][iz] * vz[ix][iz]);
 
-                    lambda_kernel[ix][iz] += snapshot_interval * dt * // Todo ??
+                    lambda_kernel[ix][iz] += snapshot_interval * dt *
                                              (((accu_txx[i_shot][it / snapshot_interval][ix][iz] -
                                                 (accu_tzz[i_shot][it / snapshot_interval][ix][iz] * la[ix][iz]) / lm[ix][iz]) +
                                                (accu_tzz[i_shot][it / snapshot_interval][ix][iz] -
                                                 (accu_txx[i_shot][it / snapshot_interval][ix][iz] * la[ix][iz]) / lm[ix][iz]))
                                               * ((txx[ix][iz] - (tzz[ix][iz] * la[ix][iz]) / lm[ix][iz]) +
-                                                 (tzz[ix][iz] - (txx[ix][iz] * la[ix][iz]) / lm[ix][iz]))) *
-                                             pow(lm[ix][iz] - (pow(la[ix][iz], 2) / (lm[ix][iz])), -2); // todo optimize pows
+                                                 (tzz[ix][iz] - (txx[ix][iz] * la[ix][iz]) / lm[ix][iz]))) /
+                                             ((lm[ix][iz] - ((la[ix][iz] * la[ix][iz]) / (lm[ix][iz]))) *
+                                              (lm[ix][iz] - ((la[ix][iz] * la[ix][iz]) / (lm[ix][iz]))));
 
                     mu_kernel[ix][iz] += snapshot_interval * dt * 2 *
                                          ((((txx[ix][iz] - (tzz[ix][iz] * la[ix][iz]) / lm[ix][iz]) *
@@ -290,10 +302,9 @@ void fdWaveModel::adjoint_simulate(int i_shot, bool verbose) {
                                             (accu_tzz[i_shot][it / snapshot_interval][ix][iz] -
                                              (accu_txx[i_shot][it / snapshot_interval][ix][iz] * la[ix][iz]) /
                                              lm[ix][iz]))
-                                          ) * pow(lm[ix][iz] - (pow(la[ix][iz], 2) / (lm[ix][iz])), -2) + // todo optimize pows
-                                          2 *
-                                          (txz[ix][iz] * accu_txz[i_shot][it / snapshot_interval][ix][iz] *
-                                           pow(2 * mu[ix][iz], -2))); // todo optimize pows
+                                          ) / ((lm[ix][iz] - ((la[ix][iz] * la[ix][iz]) / (lm[ix][iz]))) *
+                                               (lm[ix][iz] - ((la[ix][iz] * la[ix][iz]) / (lm[ix][iz])))) +
+                                          2 * (txz[ix][iz] * accu_txz[i_shot][it / snapshot_interval][ix][iz] / (4 * mu[ix][iz] * mu[ix][iz])));
                 }
             }
         }
@@ -364,8 +375,7 @@ void fdWaveModel::adjoint_simulate(int i_shot, bool verbose) {
     if (verbose) {
         stopTime = omp_get_wtime();
         secsElapsed = stopTime - startTime;
-        std::cout << "Seconds elapsed for wave simulation: " << secsElapsed <<
-                  std::endl;
+        std::cout << "Seconds elapsed for adjoint wave simulation: " << secsElapsed << std::endl;
     }
 
 }
@@ -402,6 +412,28 @@ void fdWaveModel::write_receivers() {
     }
 }
 
+void fdWaveModel::write_sources() {
+    std::string filename_sources;
+    std::ofstream shot_file;
+
+    for (int i_shot = 0; i_shot < n_shots; ++i_shot) {
+
+        filename_sources = "sources_shot_" + std::to_string(i_shot) + ".txt";
+
+        shot_file.open(filename_sources);
+
+        shot_file.precision(std::numeric_limits<real>::digits10 + 10);
+
+        for (int i_source : which_source_to_fire_in_which_shot[i_shot]) {
+            shot_file << std::endl;
+            for (int it = 0; it < nt; ++it) {
+                shot_file << stf[i_source][it] << " ";
+            }
+        }
+        shot_file.close();
+    }
+}
+
 void fdWaveModel::update_from_velocity() {
     #pragma omp parallel for collapse(2)
     for (int ix = 0; ix < nx; ++ix) {
@@ -415,7 +447,7 @@ void fdWaveModel::update_from_velocity() {
     }
 }
 
-void fdWaveModel::load_receivers() { // Todo better file checking??
+void fdWaveModel::load_receivers(bool verbose) { // Todo better file checking??
     std::string filename_ux;
     std::string filename_uz;
 
@@ -430,10 +462,12 @@ void fdWaveModel::load_receivers() { // Todo better file checking??
         receiver_file_uz.open(filename_uz);
 
         // Check if the file actually exists
-        std::cout << "File for ux data at shot " << i_shot << " is "
-                  << (receiver_file_ux.good() ? "good (exists at least)." : "ungood.") << std::endl;
-        std::cout << "File for uz data at shot " << i_shot << " is "
-                  << (receiver_file_uz.good() ? "good (exists at least)." : "ungood.") << std::endl;
+        if (verbose) {
+            std::cout << "File for ux data at shot " << i_shot << " is "
+                      << (receiver_file_ux.good() ? "good (exists at least)." : "ungood.") << std::endl;
+            std::cout << "File for uz data at shot " << i_shot << " is "
+                      << (receiver_file_uz.good() ? "good (exists at least)." : "ungood.") << std::endl;
+        }
         if (!receiver_file_ux.good() or !receiver_file_uz.good()) {
             throw std::invalid_argument("Not all data is present!");
         }
@@ -513,7 +547,8 @@ void fdWaveModel::map_kernels_to_velocity() {
     }
 }
 
-void fdWaveModel::load_target(std::string de_target_relative_path, std::string vp_target_relative_path, std::string vs_target_relative_path) {
+void fdWaveModel::load_target(std::string de_target_relative_path, std::string vp_target_relative_path, std::string vs_target_relative_path,
+                              bool verbose) {
     std::ifstream de_target_file;
     std::ifstream vp_target_file;
     std::ifstream vs_target_file;
@@ -523,9 +558,11 @@ void fdWaveModel::load_target(std::string de_target_relative_path, std::string v
     vs_target_file.open(vs_target_relative_path);
 
     // Check if the file actually exists
-    std::cout << "File for de_target is " << (de_target_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
-    std::cout << "File for vp_target is " << (vp_target_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
-    std::cout << "File for vs_target is " << (vs_target_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
+    if (verbose) {
+        std::cout << "File for de_target is " << (de_target_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
+        std::cout << "File for vp_target is " << (vp_target_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
+        std::cout << "File for vs_target is " << (vs_target_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
+    }
     if (!de_target_file.good() or !vp_target_file.good() or !vs_target_file.good()) {
         throw std::invalid_argument("Not all data is present!");
     }
@@ -597,7 +634,8 @@ void fdWaveModel::reset_velocity_fields(bool reset_de, bool reset_vp, bool reset
     update_from_velocity();
 }
 
-void fdWaveModel::load_starting(std::string de_starting_relative_path, std::string vp_starting_relative_path, std::string vs_starting_relative_path) {
+void fdWaveModel::load_starting(std::string de_starting_relative_path, std::string vp_starting_relative_path, std::string vs_starting_relative_path,
+                                bool verbose) {
     std::ifstream de_starting_file;
     std::ifstream vp_starting_file;
     std::ifstream vs_starting_file;
@@ -607,9 +645,11 @@ void fdWaveModel::load_starting(std::string de_starting_relative_path, std::stri
     vs_starting_file.open(vs_starting_relative_path);
 
     // Check if the file actually exists
-    std::cout << "File for de_starting is " << (de_starting_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
-    std::cout << "File for vp_starting is " << (vp_starting_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
-    std::cout << "File for vs_starting is " << (vs_starting_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
+    if (verbose) {
+        std::cout << "File for de_starting is " << (de_starting_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
+        std::cout << "File for vp_starting is " << (vp_starting_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
+        std::cout << "File for vs_starting is " << (vs_starting_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
+    }
     if (!de_starting_file.good() or !vp_starting_file.good() or !vs_starting_file.good()) {
         throw std::invalid_argument("Not all data is present!");
     }

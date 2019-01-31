@@ -28,7 +28,9 @@ public:
 
     void write_receivers();
 
-    void load_receivers();
+    void write_sources();
+
+    void load_receivers(bool verbose);
 
     void map_kernels_to_velocity();
 
@@ -48,7 +50,7 @@ public:
     real c1 = real(9.0 / 8.0);
     real c2 = real(1.0 / 24.0);
     // | Simulation size
-    const static int nt = 4000;
+    const static int nt = 8000;
     const static int nx_inner = 200;
     const static int nz_inner = 100;
     const static int nx = nx_inner + np_boundary * 2;
@@ -70,14 +72,9 @@ public:
     real taper[nx][nz];
     // | Source parameters (Gaussian wavelet)
     const static int n_sources = 7;
-    const static int n_shots = 7;
-    std::vector<std::vector<int>> which_source_to_fire_in_which_shot = {{0},
-                                                                        {1},
-                                                                        {2},
-                                                                        {3},
-                                                                        {4},
-                                                                        {5},
-                                                                        {6}};
+    const static int n_shots = 1;
+    std::vector<std::vector<int>> which_source_to_fire_in_which_shot = {{0, 1, 2, 3, 4, 5, 6}};
+    real delay_per_shot = 12; // over f
     int ix_sources[n_sources] = {25, 50, 75, 100, 125, 150, 175};
     int iz_sources[n_sources] = {10, 10, 10, 10, 10, 10, 10};
     real moment_angles[n_sources] = {90, 81, 41, 300, 147, 252, 327};
@@ -86,9 +83,9 @@ public:
     real t0 = 0.005;
     // | stf/rtf_ux arrays
     real t[nt];
-    real stf[nt];
+    real stf[n_sources][nt];
     const static int nr = 19;
-    int ix_receivers[nr] = {100, 10, 30, 50, 70, 90, 110, 130, 150, 170, 190, 20, 40, 60, 80, 120, 140, 160, 180,};
+    int ix_receivers[nr] = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190,};
     int iz_receivers[nr] = {90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90,};
     bool add_np_to_receiver_location = true;
     real rtf_ux[n_shots][nr][nt];
@@ -115,7 +112,7 @@ public:
     real b_vz[nx][nz] = {{1}};
     // | accumulators and snapshot interval
     int snapshot_interval = 10;
-    const static int snapshots = 400;
+    const static int snapshots = 800;
     real accu_vx[n_shots][snapshots][nx][nz]; // todo Debate whether or not to add one dimension per shot, or just overwrite each simulation.
     real accu_vz[n_shots][snapshots][nx][nz];
     real accu_txx[n_shots][snapshots][nx][nz];
@@ -135,9 +132,10 @@ public:
     real vs_kernel[nx][nz];
     real density_v_kernel[nx][nz];
 
-    void load_target(std::string de_target_relative_path, std::string vp_target_relative_path, std::string vs_target_relative_path);
+    void load_target(std::string de_target_relative_path, std::string vp_target_relative_path, std::string vs_target_relative_path, bool verbose);
 
-    void load_starting(std::string de_starting_relative_path, std::string vp_starting_relative_path, std::string vs_starting_relative_path);
+    void
+    load_starting(std::string de_starting_relative_path, std::string vp_starting_relative_path, std::string vs_starting_relative_path, bool verbose);
 
     void reset_velocity_fields();
 

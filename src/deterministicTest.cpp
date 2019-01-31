@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <fstream>
 #include <tgmath.h>
+#include <omp.h>
 #include "fdWaveModel.h"
 
 int main() {
@@ -14,20 +15,26 @@ int main() {
     auto *model = new fdWaveModel();
 
     std::cout << std::endl << "Creating true data" << std::endl << std::flush;
-    (*model).load_target("de_target.txt", "vp_target.txt", "vs_target.txt");
-    (*model).load_starting("de_starting.txt", "vp_starting.txt", "vs_starting.txt");
+    real startTime = real(omp_get_wtime());
+    (*model).load_target("de_target.txt", "vp_target.txt", "vs_target.txt", false);
+    (*model).load_starting("de_starting.txt", "vp_starting.txt", "vs_starting.txt", false);
     for (int is = 0; is < fdWaveModel::n_shots; ++is) {
-        (*model).forward_simulate(is, true, true);
+        (*model).forward_simulate(is, true, false);
     }
     (*model).write_receivers();
+    (*model).write_sources();
+    real endTime = real(omp_get_wtime());
+    std::cout << "elapsed time: " << endTime - startTime << std::endl;
 
     std::cout << std::endl << "Computing kernel" << std::endl << std::flush;
-    bool reset_de = false, reset_vp = true, reset_vs = false;
+
+    startTime = real(omp_get_wtime());
+    bool reset_de = false, reset_vp = true, reset_vs = true;
     (*model).reset_velocity_fields(reset_de, reset_vp, reset_vs);
-    (*model).load_receivers();
+    (*model).load_receivers(false);
     (*model).update_from_velocity();
     for (int is = 0; is < fdWaveModel::n_shots; ++is) {
-        (*model).forward_simulate(is, true, true);
+        (*model).forward_simulate(is, true, false);
     }
     std::cout << "Misfit: " << (*model).calculate_misfit() << std::endl;
     (*model).calculate_adjoint_sources();
@@ -35,6 +42,8 @@ int main() {
         (*model).adjoint_simulate(is, true);
     }
     (*model).map_kernels_to_velocity();
+    endTime = real(omp_get_wtime());
+    std::cout << "elapsed time: " << endTime - startTime << std::endl;
 
     std::ofstream mu_file;
     std::ofstream lambda_file;

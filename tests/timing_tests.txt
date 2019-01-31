@@ -1,0 +1,15 @@
+7 sources, each it's own shot
+PGI Compiler on -fast -mp
+18 cores:
+Kernel in ~2.8 seconds (7 forward and 7 adjoint simulations)
+
+7 sources, all naively stacked
+PGI Compiler on -fast -mp
+18 cores:
+Kernel in ~0.4 seconds (1 forward and 1 adjoint simulation)
+
+7 sources, all optimally stacked
+PGI Compiler on -fast -mp
+18 cores:
+Kernel in ~0.8 seconds (1 forward and 1 adjoint simulation, twice as many time iterations to allow for optimal spacing)
+
