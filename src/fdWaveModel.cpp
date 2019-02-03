@@ -15,15 +15,17 @@ fdWaveModel::fdWaveModel() {
 
     // --- Informative section ---
 
+    /*
     // Output whether or not compiled with OpenACC
-//    if (OPENACC == 1) {
-//        std::cout << std::endl << "OpenACC acceleration enabled, code should run on GPU." << std::endl;
-//    } else {
-//        std::cout << std::endl << "OpenACC acceleration not enabled, code should run on CPU." << std::endl;
-//    }
+    if (OPENACC == 1) {
+        std::cout << std::endl << "OpenACC acceleration enabled, code should run on GPU." << std::endl;
+    } else {
+        std::cout << std::endl << "OpenACC acceleration not enabled, code should run on CPU." << std::endl;
+    }
     // Show real type (single or double precision)
-//    std::cout << "Code compiled with " << typeid(real).name() << " (d for double, accurate, f for float, fast)" << std::endl;
-//    std::cout << "Running on (at most) " << omp_get_max_threads() << " OpenMP threads" << std::endl << std::flush;
+    std::cout << "Code compiled with " << typeid(real).name() << " (d for double, accurate, f for float, fast)" << std::endl;
+    std::cout << "Running on (at most) " << omp_get_max_threads() << " OpenMP threads" << std::endl << std::flush;
+    */
 
     // --- Initialization section ---
 
