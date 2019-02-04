@@ -36,7 +36,7 @@ public:
 
     void update_from_velocity();
 
-    real calculate_misfit();
+    void calculate_misfit();
 
     void calculate_adjoint_sources();
 
@@ -125,6 +125,7 @@ public:
     // -- Helper stuff for inverse problems --
     real data_variance_ux[n_shots][nr][nt];
     real data_variance_uz[n_shots][nr][nt];
+    real misfit;
 
     real density_l_kernel[nx][nz];
     real lambda_kernel[nx][nz];
@@ -142,6 +143,8 @@ public:
     void reset_velocity_fields();
 
     void reset_velocity_fields(bool reset_de, bool reset_vp, bool reset_vs);
+
+    void run_model(bool verbose);
 };
 
 

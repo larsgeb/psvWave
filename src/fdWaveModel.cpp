@@ -43,7 +43,7 @@ fdWaveModel::fdWaveModel() {
         }
     }
 
-    // Initialize data variance to one (take care of it outside of the code)
+    // Initialize data variance to one (should for now be taken care of it outside of the code)
     std::fill(&data_variance_ux[0][0][0], &data_variance_ux[0][0][0] + sizeof(data_variance_ux) / sizeof(real), 1);
     std::fill(&data_variance_uz[0][0][0], &data_variance_uz[0][0][0] + sizeof(data_variance_uz) / sizeof(real), 1);
 
@@ -508,8 +508,8 @@ void fdWaveModel::load_receivers(bool verbose) { // Todo better file checking??
 
 }
 
-real fdWaveModel::calculate_misfit() { // todo Evaluate need for data variance
-    real misfit = 0;
+void fdWaveModel::calculate_misfit() { // todo Evaluate need for data variance
+    misfit = 0;
     for (int i_shot = 0; i_shot < n_shots; ++i_shot) {
         for (int i_receiver = 0; i_receiver < nr; ++i_receiver) {
             for (int it = 0; it < nt; ++it) {
@@ -520,7 +520,6 @@ real fdWaveModel::calculate_misfit() { // todo Evaluate need for data variance
             }
         }
     }
-    return misfit;
 }
 
 void fdWaveModel::calculate_adjoint_sources() { // Todo implement non-uniform data variance in adjoint sources
@@ -532,7 +531,6 @@ void fdWaveModel::calculate_adjoint_sources() { // Todo implement non-uniform da
                 a_stf_uz[is][ir][it] = rtf_uz[is][ir][it] - rtf_uz_true[is][ir][it];
             }
         }
-
     }
 }
 
@@ -566,7 +564,7 @@ void fdWaveModel::load_target(std::string de_target_relative_path, std::string v
         std::cout << "File for vs_target is " << (vs_target_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
     }
     if (!de_target_file.good() or !vp_target_file.good() or !vs_target_file.good()) {
-        throw std::invalid_argument("Not all data is present!");
+        throw std::invalid_argument("Not all data for target models is present!");
     }
 
     real placeholder_de;
@@ -692,4 +690,16 @@ void fdWaveModel::load_starting(std::string de_starting_relative_path, std::stri
     vs_starting_file.close();
 
     update_from_velocity();
+}
+
+void fdWaveModel::run_model(bool verbose) {
+    for (int i_shot = 0; i_shot < n_shots; ++i_shot) {
+        forward_simulate(i_shot, true, verbose);
+    }
+    calculate_misfit();
+    calculate_adjoint_sources();
+    for (int is = 0; is < n_shots; ++is) {
+        adjoint_simulate(is, verbose);
+    }
+    map_kernels_to_velocity();
 }
