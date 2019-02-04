@@ -55,6 +55,8 @@ public:
     const static int nz_inner = 100;
     const static int nx = nx_inner + np_boundary * 2;
     const static int nz = nz_inner + np_boundary;
+    const static int nx_free_parameters = nx_inner - 20; // todo refactor into parametrization
+    const static int nz_free_parameters = nz_inner - 40; // todo refactor into parametrization
     // | Discretization size
     real dx = 1.249;
     real dz = 1.249;
