@@ -15,7 +15,7 @@ int main() {
     auto *model = new fdWaveModel();
 
     std::cout << std::endl << "Creating true data" << std::endl << std::flush;
-    real startTime = real(omp_get_wtime());
+    real_simulation startTime = real_simulation(omp_get_wtime());
     (*model).load_target("de_target.txt", "vp_target.txt", "vs_target.txt", false);
     (*model).load_starting("de_starting.txt", "vp_starting.txt", "vs_starting.txt", false);
     for (int is = 0; is < fdWaveModel::n_shots; ++is) {
@@ -23,12 +23,12 @@ int main() {
     }
     (*model).write_receivers();
     (*model).write_sources();
-    real endTime = real(omp_get_wtime());
+    real_simulation endTime = real_simulation(omp_get_wtime());
     std::cout << "elapsed time: " << endTime - startTime << std::endl;
 
     std::cout << std::endl << "Computing kernel" << std::endl << std::flush;
 
-    startTime = real(omp_get_wtime());
+    startTime = real_simulation(omp_get_wtime());
     bool reset_de = false, reset_vp = true, reset_vs = true;
     (*model).reset_velocity_fields(reset_de, reset_vp, reset_vs);
     (*model).load_receivers(false);
@@ -42,7 +42,7 @@ int main() {
         (*model).adjoint_simulate(is, true);
     }
     (*model).map_kernels_to_velocity();
-    endTime = real(omp_get_wtime());
+    endTime = real_simulation(omp_get_wtime());
     std::cout << "elapsed time: " << endTime - startTime << std::endl;
 
     std::ofstream mu_file;

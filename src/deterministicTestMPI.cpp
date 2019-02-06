@@ -32,27 +32,27 @@ int main() {
     printf("Hello world from processor %s, rank %d out of %d processors\n", processor_name, world_rank, world_size);
     MPI_Barrier(MPI_COMM_WORLD);
     auto *model = new fdWaveModel();
-    real startTime, endTime;
+    real_simulation startTime, endTime;
     (*model).load_target("de_target.txt", "vp_target.txt", "vs_target.txt", false);
     (*model).load_starting("de_starting.txt", "vp_starting.txt", "vs_starting.txt", false);
     MPI_Barrier(MPI_COMM_WORLD);
     // Generate data on MPI process 1
     if (world_rank == 0) {
-        startTime = real(omp_get_wtime());
+        startTime = real_simulation(omp_get_wtime());
         std::cout << std::endl << "Creating true data on rank " << world_rank << std::endl << std::flush;
         for (int is = 0; is < fdWaveModel::n_shots; ++is) {
             (*model).forward_simulate(is, true, false);
         }
         (*model).write_receivers();
         (*model).write_sources();
-        endTime = real(omp_get_wtime());
+        endTime = real_simulation(omp_get_wtime());
         std::cout << "elapsed time: " << endTime - startTime << std::endl;
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
     std::cout << "Computing kernel on rank " << world_rank << std::endl << std::flush;
     MPI_Barrier(MPI_COMM_WORLD);
-    startTime = real(omp_get_wtime());
+    startTime = real_simulation(omp_get_wtime());
     bool reset_de = false, reset_vp = false, reset_vs = false;
 
     switch (world_rank) {
@@ -79,7 +79,7 @@ int main() {
         (*model).adjoint_simulate(is, false);
     }
     (*model).map_kernels_to_velocity();
-    endTime = real(omp_get_wtime());
+    endTime = real_simulation(omp_get_wtime());
     std::cout << "elapsed time on rank " << world_rank << ": " << endTime - startTime << std::endl;
 
     std::string vp_filename = "vp_" + std::to_string(world_rank) + "file.txt";

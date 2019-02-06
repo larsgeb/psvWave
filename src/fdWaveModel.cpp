@@ -44,17 +44,17 @@ fdWaveModel::fdWaveModel() {
     }
 
     // Initialize data variance to one (should for now be taken care of it outside of the code)
-    std::fill(&data_variance_ux[0][0][0], &data_variance_ux[0][0][0] + sizeof(data_variance_ux) / sizeof(real), 1);
-    std::fill(&data_variance_uz[0][0][0], &data_variance_uz[0][0][0] + sizeof(data_variance_uz) / sizeof(real), 1);
+    std::fill(&data_variance_ux[0][0][0], &data_variance_ux[0][0][0] + sizeof(data_variance_ux) / sizeof(real_simulation), 1);
+    std::fill(&data_variance_uz[0][0][0], &data_variance_uz[0][0][0] + sizeof(data_variance_uz) / sizeof(real_simulation), 1);
 
     // Assign stf/rtf_ux
     for (int i_shot = 0; i_shot < n_shots; ++i_shot) {
         for (int i_source = 0; i_source < which_source_to_fire_in_which_shot[i_shot].size(); ++i_source) {
             for (unsigned int it = 0; it < nt; ++it) {
                 t[it] = it * dt;
-                real f = static_cast<real>(1.0 / alpha);
-                real shiftedTime = static_cast<real>(t[it] - 1.4 / f - delay_per_shot * i_source / f);
-                stf[which_source_to_fire_in_which_shot[i_shot][i_source]][it] = real(
+                real_simulation f = static_cast<real_simulation>(1.0 / alpha);
+                real_simulation shiftedTime = static_cast<real_simulation>(t[it] - 1.4 / f - delay_per_shot * i_source / f);
+                stf[which_source_to_fire_in_which_shot[i_shot][i_source]][it] = real_simulation(
                         (1 - 2 * pow(M_PI * f * shiftedTime, 2)) * exp(-pow(M_PI * f * shiftedTime, 2)));
             }
         }
@@ -62,21 +62,21 @@ fdWaveModel::fdWaveModel() {
     }
 
     for (int i_source = 0; i_source < n_sources; ++i_source) {
-        moment[i_source][0][0] = static_cast<real>(cos(moment_angles[i_source] * PI / 180.0) * 1e15);
-        moment[i_source][0][1] = static_cast<real>(-sin(moment_angles[i_source] * PI / 180.0) * 1e15);
-        moment[i_source][1][0] = static_cast<real>(-sin(moment_angles[i_source] * PI / 180.0) * 1e15);
-        moment[i_source][1][1] = static_cast<real>(-cos(moment_angles[i_source] * PI / 180.0) * 1e15);
+        moment[i_source][0][0] = static_cast<real_simulation>(cos(moment_angles[i_source] * PI / 180.0) * 1e15);
+        moment[i_source][0][1] = static_cast<real_simulation>(-sin(moment_angles[i_source] * PI / 180.0) * 1e15);
+        moment[i_source][1][0] = static_cast<real_simulation>(-sin(moment_angles[i_source] * PI / 180.0) * 1e15);
+        moment[i_source][1][1] = static_cast<real_simulation>(-cos(moment_angles[i_source] * PI / 180.0) * 1e15);
     }
 
     // Setting all fields.
-    std::fill(&vp[0][0], &vp[0][0] + sizeof(vp) / sizeof(real), scalar_vp);
-    std::fill(&vs[0][0], &vs[0][0] + sizeof(vs) / sizeof(real), scalar_vs);
-    std::fill(&rho[0][0], &rho[0][0] + sizeof(rho) / sizeof(real), scalar_rho);
+    std::fill(&vp[0][0], &vp[0][0] + sizeof(vp) / sizeof(real_simulation), scalar_vp);
+    std::fill(&vs[0][0], &vs[0][0] + sizeof(vs) / sizeof(real_simulation), scalar_vs);
+    std::fill(&rho[0][0], &rho[0][0] + sizeof(rho) / sizeof(real_simulation), scalar_rho);
     update_from_velocity();
 
     {
         // Initialize
-        std::fill(&taper[0][0], &taper[0][0] + sizeof(taper) / sizeof(real), 0);
+        std::fill(&taper[0][0], &taper[0][0] + sizeof(taper) / sizeof(real_simulation), 0);
         for (int id = 0; id < np_boundary; ++id) {
             for (int ix = id; ix < nx - id; ++ix) {
                 for (int iz = id; iz < nz; ++iz) {
@@ -85,8 +85,8 @@ fdWaveModel::fdWaveModel() {
             }
         }
         for (auto &ix : taper) {
-            for (real &element : ix) {
-                element = static_cast<real>(exp(-pow(np_factor * (np_boundary - element), 2)));
+            for (real_simulation &element : ix) {
+                element = static_cast<real_simulation>(exp(-pow(np_factor * (np_boundary - element), 2)));
             }
         }
     }
@@ -110,7 +110,7 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose) 
 
     // If verbose, count time
     double startTime = 0, stopTime = 0, secsElapsed = 0;
-    if (verbose) { startTime = real(omp_get_wtime()); }
+    if (verbose) { startTime = real_simulation(omp_get_wtime()); }
 
     for (int it = 0; it < nt; ++it) {
 
@@ -273,7 +273,7 @@ void fdWaveModel::adjoint_simulate(int i_shot, bool verbose) {
 
     // If verbose, count time
     double startTime = 0, stopTime = 0, secsElapsed = 0;
-    if (verbose) { startTime = real(omp_get_wtime()); }
+    if (verbose) { startTime = real_simulation(omp_get_wtime()); }
 
     for (int it = nt - 1; it >= 0; --it) {
 
@@ -397,8 +397,8 @@ void fdWaveModel::write_receivers() {
         receiver_file_ux.open(filename_ux);
         receiver_file_uz.open(filename_uz);
 
-        receiver_file_ux.precision(std::numeric_limits<real>::digits10 + 10);
-        receiver_file_uz.precision(std::numeric_limits<real>::digits10 + 10);
+        receiver_file_ux.precision(std::numeric_limits<real_simulation>::digits10 + 10);
+        receiver_file_uz.precision(std::numeric_limits<real_simulation>::digits10 + 10);
 
         for (int i_receiver = 0; i_receiver < nr; ++i_receiver) {
             receiver_file_ux << std::endl;
@@ -424,7 +424,7 @@ void fdWaveModel::write_sources() {
 
         shot_file.open(filename_sources);
 
-        shot_file.precision(std::numeric_limits<real>::digits10 + 10);
+        shot_file.precision(std::numeric_limits<real_simulation>::digits10 + 10);
 
         for (int i_source : which_source_to_fire_in_which_shot[i_shot]) {
             shot_file << std::endl;
@@ -440,10 +440,10 @@ void fdWaveModel::update_from_velocity() {
     #pragma omp parallel for collapse(2)
     for (int ix = 0; ix < nx; ++ix) {
         for (int iz = 0; iz < nz; ++iz) {
-            mu[ix][iz] = real(pow(vs[ix][iz], 2) * rho[ix][iz]);
-            lm[ix][iz] = real(pow(vp[ix][iz], 2) * rho[ix][iz]);
+            mu[ix][iz] = real_simulation(pow(vs[ix][iz], 2) * rho[ix][iz]);
+            lm[ix][iz] = real_simulation(pow(vp[ix][iz], 2) * rho[ix][iz]);
             la[ix][iz] = lm[ix][iz] - 2 * mu[ix][iz];
-            b_vx[ix][iz] = real(1.0 / rho[ix][iz]);
+            b_vx[ix][iz] = real_simulation(1.0 / rho[ix][iz]);
             b_vz[ix][iz] = b_vx[ix][iz];
         }
     }
@@ -474,8 +474,8 @@ void fdWaveModel::load_receivers(bool verbose) { // Todo better file checking??
             throw std::invalid_argument("Not all data is present!");
         }
 
-        real placeholder_ux;
-        real placeholder_uz;
+        real_simulation placeholder_ux;
+        real_simulation placeholder_uz;
 
         for (int i_receiver = 0; i_receiver < nr; ++i_receiver) {
             for (int it = 0; it < nt; ++it) {
@@ -567,9 +567,9 @@ void fdWaveModel::load_target(std::string de_target_relative_path, std::string v
         throw std::invalid_argument("Not all data for target models is present!");
     }
 
-    real placeholder_de;
-    real placeholder_vp;
-    real placeholder_vs;
+    real_simulation placeholder_de;
+    real_simulation placeholder_vp;
+    real_simulation placeholder_vs;
     for (int ix = 0; ix < nx; ++ix) {
         for (int iz = 0; iz < nz; ++iz) {
 
@@ -654,9 +654,9 @@ void fdWaveModel::load_starting(std::string de_starting_relative_path, std::stri
         throw std::invalid_argument("Not all data is present!");
     }
 
-    real placeholder_de;
-    real placeholder_vp;
-    real placeholder_vs;
+    real_simulation placeholder_de;
+    real_simulation placeholder_vp;
+    real_simulation placeholder_vs;
     for (int ix = 0; ix < nx; ++ix) {
         for (int iz = 0; iz < nz; ++iz) {
 
@@ -698,8 +698,15 @@ void fdWaveModel::run_model(bool verbose) {
     }
     calculate_misfit();
     calculate_adjoint_sources();
+    reset_kernels();
     for (int is = 0; is < n_shots; ++is) {
         adjoint_simulate(is, verbose);
     }
     map_kernels_to_velocity();
+}
+
+void fdWaveModel::reset_kernels() {
+    std::fill(&lambda_kernel[0][0], &lambda_kernel[0][0] + sizeof(lambda_kernel) / sizeof(real_simulation), 0);
+    std::fill(&mu_kernel[0][0], &mu_kernel[0][0] + sizeof(mu_kernel) / sizeof(real_simulation), 0);
+    std::fill(&density_l_kernel[0][0], &density_l_kernel[0][0] + sizeof(density_l_kernel) / sizeof(real_simulation), 0);
 }
