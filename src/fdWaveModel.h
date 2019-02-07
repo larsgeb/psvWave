@@ -14,8 +14,17 @@
     #define OPENACC 0
 #endif
 
-#define real_simulation float // todo Debug nan's on double
+/** \typedef
+ * \brief Typedef that determines simulation precision.
+ *
+ */
+using real_simulation = float;
 
+/** \brief Finite difference wave modelling class.
+ *
+ * Finite difference wave modelling class. Contains all configuration within the header, and as such is defined at compile time. Contains all
+ * necessary functions to perform FWI, but lacks optimization schemes.
+ */
 class fdWaveModel { // TODO restructure public vs private methods and fields
 public:
     fdWaveModel();
@@ -125,8 +134,8 @@ public:
 
 
     // -- Helper stuff for inverse problems --
-    real_simulation data_variance_ux[n_shots][nr][nt];
-    real_simulation data_variance_uz[n_shots][nr][nt];
+//    real_simulation data_variance_ux[n_shots][nr][nt];
+//    real_simulation data_variance_uz[n_shots][nr][nt];
     real_simulation misfit;
 
     real_simulation density_l_kernel[nx][nz];

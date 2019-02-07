@@ -44,21 +44,20 @@ fdWaveModel::fdWaveModel() {
     }
 
     // Initialize data variance to one (should for now be taken care of it outside of the code)
-    std::fill(&data_variance_ux[0][0][0], &data_variance_ux[0][0][0] + sizeof(data_variance_ux) / sizeof(real_simulation), 1);
-    std::fill(&data_variance_uz[0][0][0], &data_variance_uz[0][0][0] + sizeof(data_variance_uz) / sizeof(real_simulation), 1);
+//    std::fill(&data_variance_ux[0][0][0], &data_variance_ux[0][0][0] + sizeof(data_variance_ux) / sizeof(real_simulation), 1);
+//    std::fill(&data_variance_uz[0][0][0], &data_variance_uz[0][0][0] + sizeof(data_variance_uz) / sizeof(real_simulation), 1);
 
     // Assign stf/rtf_ux
     for (int i_shot = 0; i_shot < n_shots; ++i_shot) {
         for (int i_source = 0; i_source < which_source_to_fire_in_which_shot[i_shot].size(); ++i_source) {
             for (unsigned int it = 0; it < nt; ++it) {
                 t[it] = it * dt;
-                real_simulation f = static_cast<real_simulation>(1.0 / alpha);
-                real_simulation shiftedTime = static_cast<real_simulation>(t[it] - 1.4 / f - delay_per_shot * i_source / f);
+                auto f = static_cast<real_simulation>(1.0 / alpha);
+                auto shiftedTime = static_cast<real_simulation>(t[it] - 1.4 / f - delay_per_shot * i_source / f);
                 stf[which_source_to_fire_in_which_shot[i_shot][i_source]][it] = real_simulation(
                         (1 - 2 * pow(M_PI * f * shiftedTime, 2)) * exp(-pow(M_PI * f * shiftedTime, 2)));
             }
         }
-
     }
 
     for (int i_source = 0; i_source < n_sources; ++i_source) {
@@ -91,11 +90,9 @@ fdWaveModel::fdWaveModel() {
         }
     }
 
-    // Todo include more sanity checks
     if (floor(double(nt) / snapshot_interval) != snapshots) {
         throw std::length_error("Snapshot interval and size of accumulator don't match!");
     }
-
 }
 
 // Forward modeller
@@ -278,10 +275,10 @@ void fdWaveModel::adjoint_simulate(int i_shot, bool verbose) {
     for (int it = nt - 1; it >= 0; --it) {
 
         // Correlate wavefields
-        if (it % snapshot_interval == 0) { // Todo, rewrite for only relevant parameters
+        if (it % snapshot_interval == 0) { // Todo, [X] rewrite for only relevant parameters [ ] Check if done properly
             #pragma omp parallel for collapse(2)
-            for (int ix = np_boundary; ix < np_boundary + nx_inner; ++ix) {
-                for (int iz = np_boundary; iz < np_boundary + nz_inner; ++iz) {
+            for (int ix = np_boundary + nx_inner_boundary; ix < np_boundary + nx_inner - nx_inner_boundary; ++ix) {
+                for (int iz = np_boundary + nz_inner_boundary; iz < np_boundary + nz_inner - nz_inner_boundary; ++iz) {
                     density_l_kernel[ix][iz] -= snapshot_interval * dt * (accu_vx[i_shot][it / snapshot_interval][ix][iz] * vx[ix][iz] +
                                                                           accu_vz[i_shot][it / snapshot_interval][ix][iz] * vz[ix][iz]);
 
@@ -449,7 +446,7 @@ void fdWaveModel::update_from_velocity() {
     }
 }
 
-void fdWaveModel::load_receivers(bool verbose) { // Todo better file checking??
+void fdWaveModel::load_receivers(bool verbose) {
     std::string filename_ux;
     std::string filename_uz;
 
@@ -508,21 +505,21 @@ void fdWaveModel::load_receivers(bool verbose) { // Todo better file checking??
 
 }
 
-void fdWaveModel::calculate_misfit() { // todo Evaluate need for data variance
+void fdWaveModel::calculate_misfit() {
     misfit = 0;
     for (int i_shot = 0; i_shot < n_shots; ++i_shot) {
         for (int i_receiver = 0; i_receiver < nr; ++i_receiver) {
             for (int it = 0; it < nt; ++it) {
-                misfit += 0.5 * dt * pow(rtf_ux_true[i_shot][i_receiver][it] - rtf_ux[i_shot][i_receiver][it], 2) /
-                          data_variance_ux[i_shot][i_receiver][it];
-                misfit += 0.5 * dt * pow(rtf_uz_true[i_shot][i_receiver][it] - rtf_uz[i_shot][i_receiver][it], 2) /
-                          data_variance_uz[i_shot][i_receiver][it];
+                misfit += 0.5 * dt * pow(rtf_ux_true[i_shot][i_receiver][it] - rtf_ux[i_shot][i_receiver][it], 2);// /
+                          //data_variance_ux[i_shot][i_receiver][it];
+                misfit += 0.5 * dt * pow(rtf_uz_true[i_shot][i_receiver][it] - rtf_uz[i_shot][i_receiver][it], 2);// /
+                          //data_variance_uz[i_shot][i_receiver][it];
             }
         }
     }
 }
 
-void fdWaveModel::calculate_adjoint_sources() { // Todo implement non-uniform data variance in adjoint sources
+void fdWaveModel::calculate_adjoint_sources() {
     #pragma omp parallel for collapse(3)
     for (int is = 0; is < n_shots; ++is) {
         for (int ir = 0; ir < nr; ++ir) {
