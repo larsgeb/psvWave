@@ -511,9 +511,9 @@ void fdWaveModel::calculate_misfit() {
         for (int i_receiver = 0; i_receiver < nr; ++i_receiver) {
             for (int it = 0; it < nt; ++it) {
                 misfit += 0.5 * dt * pow(rtf_ux_true[i_shot][i_receiver][it] - rtf_ux[i_shot][i_receiver][it], 2);// /
-                          //data_variance_ux[i_shot][i_receiver][it];
+                //data_variance_ux[i_shot][i_receiver][it];
                 misfit += 0.5 * dt * pow(rtf_uz_true[i_shot][i_receiver][it] - rtf_uz[i_shot][i_receiver][it], 2);// /
-                          //data_variance_uz[i_shot][i_receiver][it];
+                //data_variance_uz[i_shot][i_receiver][it];
             }
         }
     }
@@ -556,8 +556,11 @@ void fdWaveModel::load_target(std::string de_target_relative_path, std::string v
 
     // Check if the file actually exists
     if (verbose) {
+        std::cout << "File: " << de_target_relative_path << std::endl;
         std::cout << "File for de_target is " << (de_target_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
+        std::cout << "File: " << vp_target_relative_path << std::endl;
         std::cout << "File for vp_target is " << (vp_target_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
+        std::cout << "File: " << vs_target_relative_path << std::endl;
         std::cout << "File for vs_target is " << (vs_target_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
     }
     if (!de_target_file.good() or !vp_target_file.good() or !vs_target_file.good()) {
@@ -685,6 +688,8 @@ void fdWaveModel::load_starting(std::string de_starting_relative_path, std::stri
     de_starting_file.close();
     vp_starting_file.close();
     vs_starting_file.close();
+
+    reset_velocity_fields();
 
     update_from_velocity();
 }
