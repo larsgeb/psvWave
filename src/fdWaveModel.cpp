@@ -388,8 +388,8 @@ void fdWaveModel::write_receivers() {
 
     for (int i_shot = 0; i_shot < n_shots; ++i_shot) {
 
-        filename_ux = "rtf_ux" + std::to_string(i_shot) + ".txt";
-        filename_uz = "rtf_uz" + std::to_string(i_shot) + ".txt";
+        filename_ux = observed_data_folder + "/rtf_ux" + std::to_string(i_shot) + ".txt";
+        filename_uz = observed_data_folder + "/rtf_uz" + std::to_string(i_shot) + ".txt";
 
         receiver_file_ux.open(filename_ux);
         receiver_file_uz.open(filename_uz);
@@ -417,7 +417,7 @@ void fdWaveModel::write_sources() {
 
     for (int i_shot = 0; i_shot < n_shots; ++i_shot) {
 
-        filename_sources = "sources_shot_" + std::to_string(i_shot) + ".txt";
+        filename_sources = stf_folder + "/sources_shot_" + std::to_string(i_shot) + ".txt";
 
         shot_file.open(filename_sources);
 
@@ -454,8 +454,8 @@ void fdWaveModel::load_receivers(bool verbose) {
     std::ifstream receiver_file_uz;
 
     for (int i_shot = 0; i_shot < n_shots; ++i_shot) {
-        filename_ux = "rtf_ux" + std::to_string(i_shot) + ".txt";
-        filename_uz = "rtf_uz" + std::to_string(i_shot) + ".txt";
+        filename_ux = observed_data_folder + "/rtf_ux" + std::to_string(i_shot) + ".txt";
+        filename_uz = observed_data_folder + "/rtf_uz" + std::to_string(i_shot) + ".txt";
 
         receiver_file_ux.open(filename_ux);
         receiver_file_uz.open(filename_uz);

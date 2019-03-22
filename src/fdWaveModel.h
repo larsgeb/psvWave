@@ -158,6 +158,9 @@ public:
     void run_model(bool verbose);
 
     void reset_kernels();
+
+    std::string observed_data_folder = "observed_data";
+    std::string stf_folder = "sources";
 };
 
 
