@@ -1,1 +1,0 @@
-/usr/bin/c++   -fopenmp -O3 -DNDEBUG    -Wl,-Bsymbolic-functions CMakeFiles/cpuWaveOOPMPI.dir/src/deterministicTestMPI.cpp.o CMakeFiles/cpuWaveOOPMPI.dir/src/fdWaveModel.cpp.o  -o cpuWaveOOPMPI /usr/lib/x86_64-linux-gnu/libmpichcxx.so /usr/lib/x86_64-linux-gnu/libmpich.so 

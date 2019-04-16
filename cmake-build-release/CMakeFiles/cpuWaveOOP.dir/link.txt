@@ -1,1 +1,0 @@
-/usr/bin/c++   -fopenmp -O3 -DNDEBUG    CMakeFiles/cpuWaveOOP.dir/src/deterministicTest.cpp.o CMakeFiles/cpuWaveOOP.dir/src/fdWaveModel.cpp.o  -o cpuWaveOOP 

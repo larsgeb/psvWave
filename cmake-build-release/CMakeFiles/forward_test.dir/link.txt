@@ -1,1 +1,0 @@
-/usr/bin/c++   -fopenmp -O3 -DNDEBUG    CMakeFiles/forward_test.dir/tests/forward_test.cpp.o CMakeFiles/forward_test.dir/src/fdWaveModel.cpp.o  -o forward_test 
