@@ -7,7 +7,8 @@ addons:
     sources:
       - ubuntu-toolchain-r-test
     packages:
-      - g++-6
+      - mpich
+      - g++-7
 
 script:
   - CXX=/usr/bin/g++-6 CC=/usr/bin/gcc-6 cmake .
