@@ -36,7 +36,8 @@ int main() {
     for (int is = 0; is < fdWaveModel::n_shots; ++is) {
         (*model).forward_simulate(is, true, false);
     }
-    std::cout << "Misfit: " << (*model).calculate_misfit() << std::endl;
+    model->calculate_misfit();
+    std::cout << "Misfit: " << model->misfit << std::endl;
     (*model).calculate_adjoint_sources();
     for (int is = 0; is < fdWaveModel::n_shots; ++is) {
         (*model).adjoint_simulate(is, true);
