@@ -157,6 +157,8 @@ public:
 
     void run_model(bool verbose);
 
+    void run_model(bool verbose, bool simulate_adjoint);
+
     void reset_kernels();
 
     std::string observed_data_folder = "observed_data";

@@ -379,7 +379,7 @@ void fdWaveModel::adjoint_simulate(int i_shot, bool verbose) {
 
 }
 
-void fdWaveModel::write_receivers() {
+void fdWaveModel::write_receivers() { // todo rewrite to require filename manual specification
     std::string filename_ux;
     std::string filename_uz;
 
@@ -705,6 +705,21 @@ void fdWaveModel::run_model(bool verbose) {
         adjoint_simulate(is, verbose);
     }
     map_kernels_to_velocity();
+}
+
+void fdWaveModel::run_model(bool verbose, bool simulate_adjoint) {
+    for (int i_shot = 0; i_shot < n_shots; ++i_shot) {
+        forward_simulate(i_shot, true, verbose);
+    }
+    calculate_misfit();
+    if (simulate_adjoint) {
+        calculate_adjoint_sources();
+        reset_kernels();
+        for (int is = 0; is < n_shots; ++is) {
+            adjoint_simulate(is, verbose);
+        }
+        map_kernels_to_velocity();
+    }
 }
 
 void fdWaveModel::reset_kernels() {
