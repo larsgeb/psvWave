@@ -102,7 +102,7 @@ instance/
 .scrapy
 
 # Sphinx documentation
-docs/_build/
+docs-source/_build/
 
 # PyBuilder
 target/
@@ -141,3 +141,4 @@ venv.bak/
 # mypy
 .mypy_cache/
 
+/docs-source/source/doxygen/xml/

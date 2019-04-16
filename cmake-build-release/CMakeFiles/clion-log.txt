@@ -1,0 +1,4 @@
+/home/lars/.local/share/JetBrains/Toolbox/apps/CLion/ch-0/191.6183.77/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Release -G "CodeBlocks - Unix Makefiles" /home/lars/Documents/PhD/forward-virieux
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/lars/Documents/PhD/forward-virieux/cmake-build-release
