@@ -45,6 +45,9 @@ public:
 
     void update_from_velocity();
 
+    /**
+     * Function to calculate misfit between observed seismograms and synthetic seismograms.
+     */
     void calculate_misfit();
 
     void calculate_adjoint_sources();
