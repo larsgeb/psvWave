@@ -7,27 +7,59 @@
 #include <cmath>
 #include <fstream>
 #include <limits>
+#include <iomanip>
 #include "fdWaveModel.h"
 
 #define PI 3.14159265
 
 fdWaveModel::fdWaveModel() {
-
-    // --- Informative section ---
-
-    /*
-    // Output whether or not compiled with OpenACC
-    if (OPENACC == 1) {
-        std::cout << std::endl << "OpenACC acceleration enabled, code should run on GPU." << std::endl;
-    } else {
-        std::cout << std::endl << "OpenACC acceleration not enabled, code should run on CPU." << std::endl;
-    }
-    // Show real type (single or double precision)
-    std::cout << "Code compiled with " << typeid(real).name() << " (d for double, accurate, f for float, fast)" << std::endl;
-    std::cout << "Running on (at most) " << omp_get_max_threads() << " OpenMP threads" << std::endl << std::flush;
-    */
-
     // --- Initialization section ---
+
+    // Allocate fields
+    allocate_2d_array(vx, nx, nz);
+    allocate_2d_array(vz, nx, nz);
+    allocate_2d_array(txx, nx, nz);
+    allocate_2d_array(tzz, nx, nz);
+    allocate_2d_array(txz, nx, nz);
+
+    allocate_2d_array(lm, nx, nz);
+    allocate_2d_array(la, nx, nz);
+    allocate_2d_array(mu, nx, nz);
+    allocate_2d_array(b_vx, nx, nz);
+    allocate_2d_array(b_vz, nx, nz);
+    allocate_2d_array(rho, nx, nz);
+    allocate_2d_array(vp, nx, nz);
+    allocate_2d_array(vs, nx, nz);
+
+    allocate_2d_array(density_l_kernel, nx, nz);
+    allocate_2d_array(lambda_kernel, nx, nz);
+    allocate_2d_array(mu_kernel, nx, nz);
+
+    allocate_2d_array(vp_kernel, nx, nz);
+    allocate_2d_array(vs_kernel, nx, nz);
+    allocate_2d_array(density_v_kernel, nx, nz);
+
+    allocate_2d_array(starting_rho, nx, nz);
+    allocate_2d_array(starting_vp, nx, nz);
+    allocate_2d_array(starting_vs, nx, nz);
+
+    allocate_2d_array(taper, nx, nz);
+
+    //
+    allocate_1d_array(t, nt);
+    allocate_2d_array(stf, n_sources, nt);
+    allocate_3d_array(moment, n_sources, 2, 2);
+    allocate_3d_array(rtf_ux, n_shots, nr, nt);
+    allocate_3d_array(rtf_uz, n_shots, nr, nt);
+    allocate_3d_array(rtf_ux_true, n_shots, nr, nt);
+    allocate_3d_array(rtf_uz_true, n_shots, nr, nt);
+    allocate_3d_array(a_stf_ux, n_shots, nr, nt);
+    allocate_3d_array(a_stf_uz, n_shots, nr, nt);
+    allocate_4d_array(accu_vx, n_shots, snapshots, nx, nz);
+    allocate_4d_array(accu_vz, n_shots, snapshots, nx, nz);
+    allocate_4d_array(accu_txx, n_shots, snapshots, nx, nz);
+    allocate_4d_array(accu_tzz, n_shots, snapshots, nx, nz);
+    allocate_4d_array(accu_txz, n_shots, snapshots, nx, nz);
 
     // Place sources/receivers inside the domain
     if (add_np_to_receiver_location) {
@@ -68,14 +100,15 @@ fdWaveModel::fdWaveModel() {
     }
 
     // Setting all fields.
-    std::fill(&vp[0][0], &vp[0][0] + sizeof(vp) / sizeof(real_simulation), scalar_vp);
-    std::fill(&vs[0][0], &vs[0][0] + sizeof(vs) / sizeof(real_simulation), scalar_vs);
-    std::fill(&rho[0][0], &rho[0][0] + sizeof(rho) / sizeof(real_simulation), scalar_rho);
+    std::fill(*vp, &vp[nx - 1][nz - 1] + 1, scalar_vp);
+    std::fill(*vs, &vs[nx - 1][nz - 1] + 1, scalar_vs);
+    std::fill(*rho, &rho[nx - 1][nz - 1] + 1, scalar_rho);
+
     update_from_velocity();
 
     {
         // Initialize
-        std::fill(&taper[0][0], &taper[0][0] + sizeof(taper) / sizeof(real_simulation), 0);
+        std::fill(*taper, &taper[nx - 1][nz - 1] + 1, 0.0);
         for (int id = 0; id < np_boundary; ++id) {
             for (int ix = id; ix < nx - id; ++ix) {
                 for (int iz = id; iz < nz; ++iz) {
@@ -83,9 +116,10 @@ fdWaveModel::fdWaveModel() {
                 }
             }
         }
-        for (auto &ix : taper) {
-            for (real_simulation &element : ix) {
-                element = static_cast<real_simulation>(exp(-pow(np_factor * (np_boundary - element), 2)));
+
+        for (int ix = 0; ix < nx; ++ix) {
+            for (int iz = 0; iz < nz; ++iz) {
+                taper[ix][iz] = static_cast<real_simulation>(exp(-pow(np_factor * (np_boundary - taper[ix][iz]), 2)));
             }
         }
     }
@@ -95,22 +129,66 @@ fdWaveModel::fdWaveModel() {
     }
 }
 
+fdWaveModel::~fdWaveModel() {
+    deallocate_2d_array(vx, nx);
+    deallocate_2d_array(vz, nx);
+    deallocate_2d_array(txx, nx);
+    deallocate_2d_array(tzz, nx);
+    deallocate_2d_array(txz, nx);
+
+    deallocate_2d_array(lm, nx);
+    deallocate_2d_array(la, nx);
+    deallocate_2d_array(mu, nx);
+    deallocate_2d_array(b_vx, nx);
+    deallocate_2d_array(b_vz, nx);
+    deallocate_2d_array(rho, nx);
+    deallocate_2d_array(vp, nx);
+    deallocate_2d_array(vs, nx);
+
+    deallocate_2d_array(density_l_kernel, nx);
+    deallocate_2d_array(lambda_kernel, nx);
+    deallocate_2d_array(mu_kernel, nx);
+
+    deallocate_2d_array(vp_kernel, nx);
+    deallocate_2d_array(vs_kernel, nx);
+    deallocate_2d_array(density_v_kernel, nx);
+
+    deallocate_2d_array(starting_rho, nx);
+    deallocate_2d_array(starting_vp, nx);
+    deallocate_2d_array(starting_vs, nx);
+
+    deallocate_2d_array(taper, nx);
+
+    deallocate_1d_array(t);
+    deallocate_2d_array(stf, n_sources);
+    deallocate_3d_array(moment, n_sources, 2);
+    deallocate_3d_array(rtf_ux, n_shots, nr);
+    deallocate_3d_array(rtf_uz, n_shots, nr);
+    deallocate_3d_array(rtf_ux_true, n_shots, nr);
+    deallocate_3d_array(rtf_uz_true, n_shots, nr);
+    deallocate_3d_array(a_stf_ux, n_shots, nr);
+    deallocate_3d_array(a_stf_uz, n_shots, nr);
+    deallocate_4d_array(accu_vx, n_shots, snapshots, nx);
+    deallocate_4d_array(accu_vz, n_shots, snapshots, nx);
+    deallocate_4d_array(accu_txx, n_shots, snapshots, nx);
+    deallocate_4d_array(accu_tzz, n_shots, snapshots, nx);
+    deallocate_4d_array(accu_txz, n_shots, snapshots, nx);
+}
+
 // Forward modeller
 void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose) {
 
-    // Reset dynamical fields
-    std::fill(&vx[0][0], &vx[0][0] + sizeof(vx) / sizeof(int), 0);
-    std::fill(&vz[0][0], &vz[0][0] + sizeof(vz) / sizeof(int), 0);
-    std::fill(&txx[0][0], &txx[0][0] + sizeof(txx) / sizeof(int), 0);
-    std::fill(&tzz[0][0], &tzz[0][0] + sizeof(tzz) / sizeof(int), 0);
-    std::fill(&txz[0][0], &txz[0][0] + sizeof(txz) / sizeof(int), 0);
+    std::fill(*vx, &vx[nx - 1][nz - 1] + 1, 0.0);
+    std::fill(*vz, &vz[nx - 1][nz - 1] + 1, 0.0);
+    std::fill(*txx, &txx[nx - 1][nz - 1] + 1, 0.0);
+    std::fill(*tzz, &tzz[nx - 1][nz - 1] + 1, 0.0);
+    std::fill(*txz, &txz[nx - 1][nz - 1] + 1, 0.0);
 
     // If verbose, count time
     double startTime = 0, stopTime = 0, secsElapsed = 0;
     if (verbose) { startTime = real_simulation(omp_get_wtime()); }
 
     for (int it = 0; it < nt; ++it) {
-
         // Take wavefield snapshot
         if (it % snapshot_interval == 0 and store_fields) {
             #pragma omp parallel for collapse(2)
@@ -262,11 +340,11 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose) 
 
 void fdWaveModel::adjoint_simulate(int i_shot, bool verbose) {
     // Reset dynamical fields
-    std::fill(&vx[0][0], &vx[0][0] + sizeof(vx) / sizeof(int), 0);
-    std::fill(&vz[0][0], &vz[0][0] + sizeof(vz) / sizeof(int), 0);
-    std::fill(&txx[0][0], &txx[0][0] + sizeof(txx) / sizeof(int), 0);
-    std::fill(&tzz[0][0], &tzz[0][0] + sizeof(tzz) / sizeof(int), 0);
-    std::fill(&txz[0][0], &txz[0][0] + sizeof(txz) / sizeof(int), 0);
+    std::fill(*vx, &vx[nx - 1][nz - 1] + 1, 0.0);
+    std::fill(*vz, &vz[nx - 1][nz - 1] + 1, 0.0);
+    std::fill(*txx, &txx[nx - 1][nz - 1] + 1, 0.0);
+    std::fill(*tzz, &tzz[nx - 1][nz - 1] + 1, 0.0);
+    std::fill(*txz, &txz[nx - 1][nz - 1] + 1, 0.0);
 
     // If verbose, count time
     double startTime = 0, stopTime = 0, secsElapsed = 0;
@@ -544,8 +622,8 @@ void fdWaveModel::map_kernels_to_velocity() {
     }
 }
 
-void fdWaveModel::load_target(std::string de_target_relative_path, std::string vp_target_relative_path, std::string vs_target_relative_path,
-                              bool verbose) {
+void fdWaveModel::load_target(const std::string &de_target_relative_path, const std::string &vp_target_relative_path,
+                              const std::string &vs_target_relative_path, bool verbose) {
     std::ifstream de_target_file;
     std::ifstream vp_target_file;
     std::ifstream vs_target_file;
@@ -634,8 +712,8 @@ void fdWaveModel::reset_velocity_fields(bool reset_de, bool reset_vp, bool reset
     update_from_velocity();
 }
 
-void fdWaveModel::load_starting(std::string de_starting_relative_path, std::string vp_starting_relative_path, std::string vs_starting_relative_path,
-                                bool verbose) {
+void fdWaveModel::load_starting(const std::string &de_starting_relative_path, const std::string &vp_starting_relative_path,
+                                const std::string &vs_starting_relative_path, bool verbose) {
     std::ifstream de_starting_file;
     std::ifstream vp_starting_file;
     std::ifstream vs_starting_file;
@@ -723,7 +801,64 @@ void fdWaveModel::run_model(bool verbose, bool simulate_adjoint) {
 }
 
 void fdWaveModel::reset_kernels() {
-    std::fill(&lambda_kernel[0][0], &lambda_kernel[0][0] + sizeof(lambda_kernel) / sizeof(real_simulation), 0);
-    std::fill(&mu_kernel[0][0], &mu_kernel[0][0] + sizeof(mu_kernel) / sizeof(real_simulation), 0);
-    std::fill(&density_l_kernel[0][0], &density_l_kernel[0][0] + sizeof(density_l_kernel) / sizeof(real_simulation), 0);
+    std::fill(*lambda_kernel, &lambda_kernel[nx - 1][nz - 1] + 1, 0.0);
+    std::fill(*mu_kernel, &mu_kernel[nx - 1][nz - 1] + 1, 0.0);
+    std::fill(*density_l_kernel, &density_l_kernel[nx - 1][nz - 1] + 1, 0.0);
+}
+
+void fdWaveModel::set_2d_array_to_zero(real_simulation **pDouble) {
+//    std::fill(&pDouble[0][0], &pDouble[0][0] + sizeof(pDouble) / sizeof(int), 0);
+}
+
+// Allocation and deallocation
+
+void fdWaveModel::allocate_1d_array(real_simulation *&pDouble, int dim1) {
+    pDouble = new real_simulation[dim1];
+}
+
+void fdWaveModel::allocate_2d_array(real_simulation **&pDouble, const int dim1, const int dim2) {
+    pDouble = new real_simulation *[dim1];
+    for (int i = 0; i < dim1; ++i)
+        allocate_1d_array(pDouble[i], dim2);
+}
+
+void fdWaveModel::allocate_3d_array(real_simulation ***&pDouble, int dim1, int dim2, int dim3) {
+    pDouble = new real_simulation **[dim1];
+    for (int i = 0; i < dim1; ++i)
+        allocate_2d_array(pDouble[i], dim2, dim3);
+}
+
+void fdWaveModel::allocate_4d_array(real_simulation ****&pDouble, int dim1, int dim2, int dim3, int dim4) {
+    pDouble = new real_simulation ***[dim1];
+    for (int i = 0; i < dim1; ++i)
+        allocate_3d_array(pDouble[i], dim2, dim3, dim4);
+}
+
+void fdWaveModel::deallocate_1d_array(real_simulation *&pDouble) {
+    delete[] pDouble;
+    pDouble = nullptr;
+}
+
+void fdWaveModel::deallocate_2d_array(real_simulation **&pDouble, const int dim1) {
+    for (int i = 0; i < dim1; i++) {
+        deallocate_1d_array(pDouble[i]);
+    }
+    delete[] pDouble;
+    pDouble = nullptr;
+}
+
+void fdWaveModel::deallocate_3d_array(real_simulation ***&pDouble, const int dim1, const int dim2) {
+    for (int i = 0; i < dim1; i++) {
+        deallocate_2d_array(pDouble[i], dim2);
+    }
+    delete[] pDouble;
+    pDouble = nullptr;
+}
+
+void fdWaveModel::deallocate_4d_array(real_simulation ****&pDouble, const int dim1, const int dim2, const int dim3) {
+    for (int i = 0; i < dim1; i++) {
+        deallocate_3d_array(pDouble[i], dim2, dim3);
+    }
+    delete[] pDouble;
+    pDouble = nullptr;
 }
