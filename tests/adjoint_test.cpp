@@ -42,7 +42,6 @@ int main() {
         model->map_kernels_to_velocity();
 
         deterministic_sum[i_test] = 0;
-        #pragma omp parallel for collapse(2)
         for (int ix = 0; ix < model->nx; ++ix) {
             for (int iz = 0; iz < model->nz; ++iz) {
                 deterministic_sum[i_test] += model->density_v_kernel[ix][iz];
@@ -50,6 +49,7 @@ int main() {
                 deterministic_sum[i_test] += model->vs_kernel[ix][iz];
             }
         }
+        std::cout << deterministic_sum[i_test] << std::endl;
     }
 
     endTime = omp_get_wtime();
