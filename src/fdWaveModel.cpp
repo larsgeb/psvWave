@@ -110,13 +110,14 @@ fdWaveModel::fdWaveModel() {
         // Initialize
         std::fill(*taper, &taper[nx - 1][nz - 1] + 1, 0.0);
         for (int id = 0; id < np_boundary; ++id) {
+            #pragma omp parallel for collapse(2)
             for (int ix = id; ix < nx - id; ++ix) {
                 for (int iz = id; iz < nz; ++iz) {
                     taper[ix][iz]++;
                 }
             }
         }
-
+        #pragma omp parallel for collapse(2)
         for (int ix = 0; ix < nx; ++ix) {
             for (int iz = 0; iz < nz; ++iz) {
                 taper[ix][iz] = static_cast<real_simulation>(exp(-pow(np_factor * (np_boundary - taper[ix][iz]), 2)));
@@ -622,26 +623,25 @@ void fdWaveModel::map_kernels_to_velocity() {
     }
 }
 
-void fdWaveModel::load_target(const std::string &de_target_relative_path, const std::string &vp_target_relative_path,
-                              const std::string &vs_target_relative_path, bool verbose) {
-    std::ifstream de_target_file;
-    std::ifstream vp_target_file;
-    std::ifstream vs_target_file;
+void fdWaveModel::load_model(const std::string &de_path, const std::string &vp_path, const std::string &vs_path, bool verbose) {
+    std::ifstream de_file;
+    std::ifstream vp_file;
+    std::ifstream vs_file;
 
-    de_target_file.open(de_target_relative_path);
-    vp_target_file.open(vp_target_relative_path);
-    vs_target_file.open(vs_target_relative_path);
+    de_file.open(de_path);
+    vp_file.open(vp_path);
+    vs_file.open(vs_path);
 
     // Check if the file actually exists
     if (verbose) {
-        std::cout << "File: " << de_target_relative_path << std::endl;
-        std::cout << "File for de_target is " << (de_target_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
-        std::cout << "File: " << vp_target_relative_path << std::endl;
-        std::cout << "File for vp_target is " << (vp_target_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
-        std::cout << "File: " << vs_target_relative_path << std::endl;
-        std::cout << "File for vs_target is " << (vs_target_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
+        std::cout << "File: " << de_path << std::endl;
+        std::cout << "File for density is " << (de_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
+        std::cout << "File: " << vp_path << std::endl;
+        std::cout << "File for P-wave velocity is " << (vp_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
+        std::cout << "File: " << vs_path << std::endl;
+        std::cout << "File for S-wave velocity is " << (vs_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
     }
-    if (!de_target_file.good() or !vp_target_file.good() or !vs_target_file.good()) {
+    if (!de_file.good() or !vp_file.good() or !vs_file.good()) {
         throw std::invalid_argument("Not all data for target models is present!");
     }
 
@@ -651,9 +651,9 @@ void fdWaveModel::load_target(const std::string &de_target_relative_path, const 
     for (int ix = 0; ix < nx; ++ix) {
         for (int iz = 0; iz < nz; ++iz) {
 
-            de_target_file >> placeholder_de;
-            vp_target_file >> placeholder_vp;
-            vs_target_file >> placeholder_vs;
+            de_file >> placeholder_de;
+            vp_file >> placeholder_vp;
+            vs_file >> placeholder_vs;
 
             rho[ix][iz] = placeholder_de;
             vp[ix][iz] = placeholder_vp;
@@ -662,112 +662,23 @@ void fdWaveModel::load_target(const std::string &de_target_relative_path, const 
     }
 
     // Check data was large enough for set up
-    if (!de_target_file.good() or !vp_target_file.good() or !vs_target_file.good()) {
+    if (!de_file.good() or !vp_file.good() or !vs_file.good()) {
         std::cout << "Received bad state of file at end of reading. Does the data match the domain?" << std::endl;
         throw std::invalid_argument("Not enough data is present!");
     }
     // Try to load more data ...
-    de_target_file >> placeholder_de;
-    vp_target_file >> placeholder_vp;
-    vs_target_file >> placeholder_vs;
+    de_file >> placeholder_de;
+    vp_file >> placeholder_vp;
+    vs_file >> placeholder_vs;
     // ... which shouldn't be possible
-    if (de_target_file.good() or vp_target_file.good() or vs_target_file.good()) {
+    if (de_file.good() or vp_file.good() or vs_file.good()) {
         std::cout << "Received good state of file past reading. Does the data match the domain?" << std::endl;
         throw std::invalid_argument("Too much data is present!");
     }
 
-    de_target_file.close();
-    vp_target_file.close();
-    vs_target_file.close();
-
-    update_from_velocity();
-}
-
-void fdWaveModel::reset_velocity_fields() {
-    reset_velocity_fields(true, true, true);
-}
-
-void fdWaveModel::reset_velocity_fields(bool reset_de, bool reset_vp, bool reset_vs) {
-    if (reset_de) {
-        for (int ix = 0; ix < nx; ++ix) {
-            for (int iz = 0; iz < nz; ++iz) {
-                rho[ix][iz] = starting_rho[ix][iz];
-            }
-        }
-    }
-    if (reset_vp) {
-        for (int ix = 0; ix < nx; ++ix) {
-            for (int iz = 0; iz < nz; ++iz) {
-                vp[ix][iz] = starting_vp[ix][iz];
-            }
-        }
-    }
-    if (reset_vs) {
-        for (int ix = 0; ix < nx; ++ix) {
-            for (int iz = 0; iz < nz; ++iz) {
-                vs[ix][iz] = starting_vs[ix][iz];
-            }
-        }
-    }
-    update_from_velocity();
-}
-
-void fdWaveModel::load_starting(const std::string &de_starting_relative_path, const std::string &vp_starting_relative_path,
-                                const std::string &vs_starting_relative_path, bool verbose) {
-    std::ifstream de_starting_file;
-    std::ifstream vp_starting_file;
-    std::ifstream vs_starting_file;
-
-    de_starting_file.open(de_starting_relative_path);
-    vp_starting_file.open(vp_starting_relative_path);
-    vs_starting_file.open(vs_starting_relative_path);
-
-    // Check if the file actually exists
-    if (verbose) {
-        std::cout << "File for de_starting is " << (de_starting_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
-        std::cout << "File for vp_starting is " << (vp_starting_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
-        std::cout << "File for vs_starting is " << (vs_starting_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
-    }
-    if (!de_starting_file.good() or !vp_starting_file.good() or !vs_starting_file.good()) {
-        throw std::invalid_argument("Not all data is present!");
-    }
-
-    real_simulation placeholder_de;
-    real_simulation placeholder_vp;
-    real_simulation placeholder_vs;
-    for (int ix = 0; ix < nx; ++ix) {
-        for (int iz = 0; iz < nz; ++iz) {
-
-            de_starting_file >> placeholder_de;
-            vp_starting_file >> placeholder_vp;
-            vs_starting_file >> placeholder_vs;
-
-            starting_rho[ix][iz] = placeholder_de;
-            starting_vp[ix][iz] = placeholder_vp;
-            starting_vs[ix][iz] = placeholder_vs;
-        }
-    }
-
-    // Check data was large enough for set up
-    if (!de_starting_file.good() or !vp_starting_file.good() or !vs_starting_file.good()) {
-        std::cout << "Received bad state of file at end of reading. Does the data match the domain?" << std::endl;
-        throw std::invalid_argument("Not enough data is present!");
-    }
-    // Try to load more data ...
-    de_starting_file >> placeholder_de;
-    vp_starting_file >> placeholder_vp;
-    vs_starting_file >> placeholder_vs;
-    // ... which shouldn't be possible
-    if (de_starting_file.good() or vp_starting_file.good() or vs_starting_file.good()) {
-        std::cout << "Received good state of file past reading. Does the data match the domain?" << std::endl;
-        throw std::invalid_argument("Too much data is present!");
-    }
-
-    de_starting_file.close();
-    vp_starting_file.close();
-    vs_starting_file.close();
-
-    reset_velocity_fields();
+    de_file.close();
+    vp_file.close();
+    vs_file.close();
 
     update_from_velocity();
 }
@@ -804,10 +715,6 @@ void fdWaveModel::reset_kernels() {
     std::fill(*lambda_kernel, &lambda_kernel[nx - 1][nz - 1] + 1, 0.0);
     std::fill(*mu_kernel, &mu_kernel[nx - 1][nz - 1] + 1, 0.0);
     std::fill(*density_l_kernel, &density_l_kernel[nx - 1][nz - 1] + 1, 0.0);
-}
-
-void fdWaveModel::set_2d_array_to_zero(real_simulation **pDouble) {
-//    std::fill(&pDouble[0][0], &pDouble[0][0] + sizeof(pDouble) / sizeof(int), 0);
 }
 
 // Allocation and deallocation

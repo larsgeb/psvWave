@@ -50,15 +50,8 @@ public:
 
     void calculate_adjoint_sources();
 
-    void load_target(const std::string &de_target_relative_path, const std::string &vp_target_relative_path,
-                     const std::string &vs_target_relative_path, bool verbose);
-
-    void load_starting(const std::string &de_starting_relative_path, const std::string &vp_starting_relative_path,
-                       const std::string &vs_starting_relative_path, bool verbose);
-
-    void reset_velocity_fields();
-
-    void reset_velocity_fields(bool reset_de, bool reset_vp, bool reset_vs);
+    void load_model(const std::string &de_path, const std::string &vp_path,
+                    const std::string &vs_path, bool verbose);
 
     void run_model(bool verbose);
 
@@ -81,8 +74,6 @@ public:
     void deallocate_3d_array(real_simulation ***&pDouble, int dim1, int dim2);
 
     void deallocate_4d_array(real_simulation ****&pDouble, int dim1, int dim2, int dim3);
-
-    void set_2d_array_to_zero(real_simulation **pDouble);
 
     // ----  FIELDS ----
 
@@ -180,8 +171,8 @@ public:
     //real_simulation data_variance_uz[n_shots][nr][nt];
 
     real_simulation misfit;
-    std::string observed_data_folder = "observed_data";
-    std::string stf_folder = "sources";
+    std::string observed_data_folder = ".";
+    std::string stf_folder = ".";
 
 };
 

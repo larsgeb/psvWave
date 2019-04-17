@@ -11,19 +11,15 @@
 #include "../src/fdWaveModel.h"
 
 int main() {
+    std::cout << "Maximum amount of OpenMP threads:" << omp_get_max_threads() << std::endl;
 
     auto *model = new fdWaveModel();
 
-    model->load_target("../tests/test_setup/de_target.txt", "../tests/test_setup/vp_target.txt", "../tests/test_setup/vs_target.txt", false);
-    model->load_starting("../tests/test_setup/de_starting.txt", "../tests/test_setup/vp_starting.txt", "../tests/test_setup/vs_starting.txt", false);
+    model->load_model("../tests/test_setup/de_target.txt", "../tests/test_setup/vp_target.txt", "../tests/test_setup/vs_target.txt", true);
 
-    std::cout << "Maximum amount of OpenMP threads:" << omp_get_max_threads() << std::endl;
-
-    std::cout << std::endl << "Creating true data" << std::endl;
     auto startTime = omp_get_wtime();
-
-    // Prepare for test
     int n_tests = 3;
+    std::cout << "Running forward simulation " << n_tests << " times." << std::endl;
     auto deterministic_sum = new real_simulation[n_tests];
 
     for (int i_test = 0; i_test < n_tests; ++i_test) {
@@ -42,7 +38,7 @@ int main() {
         }
     }
     auto endTime = omp_get_wtime();
-    std::cout << "elapsed time: " << endTime - startTime << std::endl;
+    std::cout << "Elapsed time for all forward wave simulations: " << endTime - startTime << std::endl;
 
     model->write_receivers();
     model->write_sources();
@@ -53,6 +49,7 @@ int main() {
             exit(1);
         }
     }
+    std::cout << "All simulations produced the same seismograms. The test succeeded." << std::endl;
     exit(0);
 }
 
