@@ -15,4 +15,6 @@ script:
   - cd build
   - CXX=/usr/bin/g++-7 CC=/usr/bin/gcc-7 cmake ..
   - make forward_test
+  - make adjoint_test
   - ./forward_test
+  - ./adjoint_test

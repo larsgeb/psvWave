@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.10)
 project(forward-virieux)
 
 add_executable(forward_test tests/forward_test.cpp src/fdWaveModel.cpp src/fdWaveModel.h)
+add_executable(adjoint_test tests/adjoint_test.cpp src/fdWaveModel.cpp src/fdWaveModel.h)
 
-add_executable(cpuWaveOOP src/deterministicTest.cpp src/fdWaveModel.cpp src/fdWaveModel.h)
 
 find_package(OpenMP)
 if (OPENMP_FOUND)
