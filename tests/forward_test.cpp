@@ -10,10 +10,12 @@
 #include <omp.h>
 #include "../src/fdWaveModel.h"
 
-int main() {
-    std::cout << "Maximum amount of OpenMP threads:" << omp_get_max_threads() << std::endl;
+int main(int argc, char **argv) {
+    std::cout << "Maximum amount of OpenMP threads:" << omp_get_max_threads() << std::endl << std::endl;
 
-    auto *model = new fdWaveModel();
+    auto configuration_file = argv[1];
+
+    auto *model = new fdWaveModel(configuration_file);
 
     model->load_model("../tests/test_setup/de_target.txt", "../tests/test_setup/vp_target.txt", "../tests/test_setup/vs_target.txt", true);
 
@@ -23,7 +25,7 @@ int main() {
     auto deterministic_sum = new real_simulation[n_tests];
 
     for (int i_test = 0; i_test < n_tests; ++i_test) {
-        for (int is = 0; is < fdWaveModel::n_shots; ++is) {
+        for (int is = 0; is < model->n_shots; ++is) {
             model->forward_simulate(is, true, true);
         }
 

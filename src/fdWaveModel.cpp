@@ -9,11 +9,15 @@
 #include <limits>
 #include <iomanip>
 #include "fdWaveModel.h"
+#include "../ext/inih/INIReader.h"
+
 
 #define PI 3.14159265
 
-fdWaveModel::fdWaveModel() {
+fdWaveModel::fdWaveModel(const char *configuration_file) {
     // --- Initialization section ---
+
+    parse_configuration(configuration_file);
 
     // Allocate fields
     allocate_2d_array(vx, nx, nz);
@@ -45,7 +49,6 @@ fdWaveModel::fdWaveModel() {
 
     allocate_2d_array(taper, nx, nz);
 
-    //
     allocate_1d_array(t, nt);
     allocate_2d_array(stf, n_sources, nt);
     allocate_3d_array(moment, n_sources, 2, 2);
@@ -85,7 +88,7 @@ fdWaveModel::fdWaveModel() {
             for (unsigned int it = 0; it < nt; ++it) {
                 t[it] = it * dt;
                 auto f = static_cast<real_simulation>(1.0 / alpha);
-                auto shiftedTime = static_cast<real_simulation>(t[it] - 1.4 / f - delay_per_shot * i_source / f);
+                auto shiftedTime = static_cast<real_simulation>(t[it] - 1.4 / f - delay_cycles_per_shot * i_source / f);
                 stf[which_source_to_fire_in_which_shot[i_shot][i_source]][it] = real_simulation(
                         (1 - 2 * pow(M_PI * f * shiftedTime, 2)) * exp(-pow(M_PI * f * shiftedTime, 2)));
             }
@@ -100,15 +103,23 @@ fdWaveModel::fdWaveModel() {
     }
 
     // Setting all fields.
-    std::fill(*vp, &vp[nx - 1][nz - 1] + 1, scalar_vp);
-    std::fill(*vs, &vs[nx - 1][nz - 1] + 1, scalar_vs);
-    std::fill(*rho, &rho[nx - 1][nz - 1] + 1, scalar_rho);
+    for (int ix = 0; ix < nx; ++ix) {
+        for (int iz = 0; iz < nz; ++iz) {
+            vp[ix][iz] = scalar_vp;
+            vs[ix][iz] = scalar_vs;
+            rho[ix][iz] = scalar_rho;
+        }
+    }
 
     update_from_velocity();
 
     {
         // Initialize
-        std::fill(*taper, &taper[nx - 1][nz - 1] + 1, 0.0);
+        for (int ix = 0; ix < nx; ++ix) {
+            for (int iz = 0; iz < nz; ++iz) {
+                taper[ix][iz] = 0.0;
+            }
+        }
         for (int id = 0; id < np_boundary; ++id) {
             #pragma omp parallel for collapse(2)
             for (int ix = id; ix < nx - id; ++ix) {
@@ -178,12 +189,15 @@ fdWaveModel::~fdWaveModel() {
 
 // Forward modeller
 void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose) {
-
-    std::fill(*vx, &vx[nx - 1][nz - 1] + 1, 0.0);
-    std::fill(*vz, &vz[nx - 1][nz - 1] + 1, 0.0);
-    std::fill(*txx, &txx[nx - 1][nz - 1] + 1, 0.0);
-    std::fill(*tzz, &tzz[nx - 1][nz - 1] + 1, 0.0);
-    std::fill(*txz, &txz[nx - 1][nz - 1] + 1, 0.0);
+    for (int ix = 0; ix < nx; ++ix) {
+        for (int iz = 0; iz < nz; ++iz) {
+            vx[ix][iz] = 0.0;
+            vz[ix][iz] = 0.0;
+            txx[ix][iz] = 0.0;
+            tzz[ix][iz] = 0.0;
+            txz[ix][iz] = 0.0;
+        }
+    }
 
     // If verbose, count time
     double startTime = 0, stopTime = 0, secsElapsed = 0;
@@ -341,11 +355,15 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose) 
 
 void fdWaveModel::adjoint_simulate(int i_shot, bool verbose) {
     // Reset dynamical fields
-    std::fill(*vx, &vx[nx - 1][nz - 1] + 1, 0.0);
-    std::fill(*vz, &vz[nx - 1][nz - 1] + 1, 0.0);
-    std::fill(*txx, &txx[nx - 1][nz - 1] + 1, 0.0);
-    std::fill(*tzz, &tzz[nx - 1][nz - 1] + 1, 0.0);
-    std::fill(*txz, &txz[nx - 1][nz - 1] + 1, 0.0);
+    for (int ix = 0; ix < nx; ++ix) {
+        for (int iz = 0; iz < nz; ++iz) {
+            vx[ix][iz] = 0.0;
+            vz[ix][iz] = 0.0;
+            txx[ix][iz] = 0.0;
+            tzz[ix][iz] = 0.0;
+            txz[ix][iz] = 0.0;
+        }
+    }
 
     // If verbose, count time
     double startTime = 0, stopTime = 0, secsElapsed = 0;
@@ -357,7 +375,9 @@ void fdWaveModel::adjoint_simulate(int i_shot, bool verbose) {
         if (it % snapshot_interval == 0) { // Todo, [X] rewrite for only relevant parameters [ ] Check if done properly
             #pragma omp parallel for collapse(2)
             for (int ix = np_boundary + nx_inner_boundary; ix < np_boundary + nx_inner - nx_inner_boundary; ++ix) {
+                // todo probably the np_boundary in the terminal statement is superfluous.
                 for (int iz = np_boundary + nz_inner_boundary; iz < np_boundary + nz_inner - nz_inner_boundary; ++iz) {
+                    // todo probably the np_boundary in the terminal statement is superfluous.
                     density_l_kernel[ix][iz] -= snapshot_interval * dt * (accu_vx[i_shot][it / snapshot_interval][ix][iz] * vx[ix][iz] +
                                                                           accu_vz[i_shot][it / snapshot_interval][ix][iz] * vz[ix][iz]);
 
@@ -458,7 +478,7 @@ void fdWaveModel::adjoint_simulate(int i_shot, bool verbose) {
 
 }
 
-void fdWaveModel::write_receivers() { // todo rewrite to require filename manual specification
+void fdWaveModel::write_receivers() {
     std::string filename_ux;
     std::string filename_uz;
 
@@ -634,6 +654,7 @@ void fdWaveModel::load_model(const std::string &de_path, const std::string &vp_p
 
     // Check if the file actually exists
     if (verbose) {
+        std::cout << "Loading models." << std::endl;
         std::cout << "File: " << de_path << std::endl;
         std::cout << "File for density is " << (de_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
         std::cout << "File: " << vp_path << std::endl;
@@ -663,7 +684,7 @@ void fdWaveModel::load_model(const std::string &de_path, const std::string &vp_p
 
     // Check data was large enough for set up
     if (!de_file.good() or !vp_file.good() or !vs_file.good()) {
-        std::cout << "Received bad state of file at end of reading. Does the data match the domain?" << std::endl;
+        std::cout << "Received bad state of one of the files at end of reading. Does the data match the domain?" << std::endl;
         throw std::invalid_argument("Not enough data is present!");
     }
     // Try to load more data ...
@@ -681,19 +702,11 @@ void fdWaveModel::load_model(const std::string &de_path, const std::string &vp_p
     vs_file.close();
 
     update_from_velocity();
+    if (verbose) std::cout << std::endl;
 }
 
-void fdWaveModel::run_model(bool verbose) {
-    for (int i_shot = 0; i_shot < n_shots; ++i_shot) {
-        forward_simulate(i_shot, true, verbose);
-    }
-    calculate_misfit();
-    calculate_adjoint_sources();
-    reset_kernels();
-    for (int is = 0; is < n_shots; ++is) {
-        adjoint_simulate(is, verbose);
-    }
-    map_kernels_to_velocity();
+void fdWaveModel::run_model(bool verbose) { // Legacy reasons, should be reformatted in HMC sampler at some point.
+    run_model(verbose, true);
 }
 
 void fdWaveModel::run_model(bool verbose, bool simulate_adjoint) {
@@ -712,9 +725,13 @@ void fdWaveModel::run_model(bool verbose, bool simulate_adjoint) {
 }
 
 void fdWaveModel::reset_kernels() {
-    std::fill(*lambda_kernel, &lambda_kernel[nx - 1][nz - 1] + 1, 0.0);
-    std::fill(*mu_kernel, &mu_kernel[nx - 1][nz - 1] + 1, 0.0);
-    std::fill(*density_l_kernel, &density_l_kernel[nx - 1][nz - 1] + 1, 0.0);
+    for (int ix = 0; ix < nx; ++ix) {
+        for (int iz = 0; iz < nz; ++iz) {
+            lambda_kernel[ix][iz] = 0.0;
+            mu_kernel[ix][iz] = 0.0;
+            density_l_kernel[ix][iz] = 0.0;
+        }
+    }
 }
 
 // Allocation and deallocation
@@ -769,3 +786,195 @@ void fdWaveModel::deallocate_4d_array(real_simulation ****&pDouble, const int di
     delete[] pDouble;
     pDouble = nullptr;
 }
+
+void fdWaveModel::parse_configuration(const char *config_file) {
+
+    std::cout << "Loading configuration file: '" << config_file << "'." << std::endl;
+
+    INIReader reader(config_file);
+    if (reader.ParseError() < 0) {
+        std::cout << "Can't load 'test.ini'\n";
+        exit(1);
+    }
+
+    // Domain
+    nt = reader.GetInteger("domain", "nt", 1000);
+    nx_inner = reader.GetInteger("domain", "nx_inner", 200);
+    nz_inner = reader.GetInteger("domain", "nz_inner", 100);
+    nx_inner_boundary = reader.GetInteger("domain", "nx_inner_boundary", 10);
+    nz_inner_boundary = reader.GetInteger("domain", "nz_inner_boundary", 20);
+    dx = reader.GetReal("domain", "dx", 1.249);
+    dz = reader.GetReal("domain", "dz", 1.249);
+    dt = reader.GetReal("domain", "dt", 0.00025);
+
+    // Boundary
+    np_boundary = reader.GetInteger("boundary", "np_boundary", 10);
+    np_factor = reader.GetReal("boundary", "np_factor", 0.075);
+
+    // Default medium
+    scalar_rho = reader.GetReal("medium", "scalar_rho", 1500.0);
+    scalar_vp = reader.GetReal("medium", "scalar_vp", 2000.0);
+    scalar_vs = reader.GetReal("medium", "scalar_vs", 800.0);
+
+    // Sources
+    peak_frequency = reader.GetReal("sources", "peak_frequency", 50.0);
+    t0 = reader.GetReal("sources", "source_timeshift", 0.005);
+    delay_cycles_per_shot = reader.GetReal("sources", "delay_cycles_per_shot", 12);
+    n_sources = reader.GetInteger("sources", "n_sources", 7);
+    n_shots = reader.GetInteger("sources", "n_shots", 1);
+    // Parse source setup.
+    ix_sources = new int[n_sources];
+    iz_sources = new int[n_sources];
+    moment_angles = new real_simulation[n_sources];
+    std::vector<int> ix_sources_vector;
+    std::vector<int> iz_sources_vector;
+    std::vector<real_simulation> moment_angles_vector;
+    parse_string_to_vector(reader.Get("sources", "ix_sources", "{25, 50, 75, 100, 125, 150, 175};"), &ix_sources_vector);
+    parse_string_to_vector(reader.Get("sources", "iz_sources", "{10, 10, 10, 10, 10, 10, 10};"), &iz_sources_vector);
+    parse_string_to_vector(reader.Get("sources", "moment_angles", "{90, 81, 41, 300, 147, 252, 327};"), &moment_angles_vector);
+    if (ix_sources_vector.size() != n_sources or
+        iz_sources_vector.size() != n_sources or
+        moment_angles_vector.size() != n_sources) {
+        std::cout << "Dimension mismatch between n_sources and sources.ix_sources, sources.iz_sources or sources.moment_angles" << std::endl;
+        exit(1);
+    }
+    for (int i_source = 0; i_source < n_sources; ++i_source) {
+        ix_sources[i_source] = ix_sources_vector[i_source];
+        iz_sources[i_source] = iz_sources_vector[i_source];
+        moment_angles[i_source] = moment_angles_vector[i_source];
+    }
+    // Parse source stacking
+    parse_string_to_nested_vector(
+            reader.Get("sources", "which_source_to_fire_in_which_shot", "{{0, 1, 2, 3, 4, 5, 6}};"),
+            &which_source_to_fire_in_which_shot);
+    if (which_source_to_fire_in_which_shot.size() != n_shots) {
+        std::cout << "Mismatch between n_shots and sources.which_source_to_fire_in_which_shot" << std::endl;
+        exit(1);
+    }
+    int total_sources = 0;
+    for (const auto &shot_sources : which_source_to_fire_in_which_shot) {
+        total_sources += shot_sources.size();
+    }
+    if (total_sources != n_sources) {
+        std::cout << "Mismatch between n_sources and sources.which_source_to_fire_in_which_shot" << std::endl;
+        exit(1);
+    }
+
+    // Receivers
+    nr = reader.GetInteger("receivers", "nr", 19);
+    ix_receivers = new int[nr];
+    iz_receivers = new int[nr];
+    std::vector<int> ix_receivers_vector;
+    std::vector<int> iz_receivers_vector;
+    parse_string_to_vector(
+            reader.Get("receivers", "ix_receivers", "{10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180}; !!"),
+            &ix_receivers_vector);
+    parse_string_to_vector(
+            reader.Get("receivers", "iz_receivers", "{90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90}; !!"),
+            &iz_receivers_vector);
+
+    if (ix_receivers_vector.size() != nr or
+        iz_receivers_vector.size() != nr) {
+        std::cout << "Mismatch between nr and receivers.ix_receivers or receivers.iz_receivers" << std::endl;
+        exit(1);
+    }
+    for (int i_receiver = 0; i_receiver < nr; ++i_receiver) {
+        ix_receivers[i_receiver] = ix_receivers_vector[i_receiver];
+        iz_receivers[i_receiver] = iz_receivers_vector[i_receiver];
+    }
+
+    // Inversion
+    snapshot_interval = reader.GetInteger("inversion", "snapshot_interval", 10);
+
+    // Final calculations
+    snapshots = 800; // todo calc!
+    nx = nx_inner + np_boundary * 2;
+    nz = nz_inner + np_boundary;
+    nx_free_parameters = nx_inner - nx_inner_boundary * 2;
+    nz_free_parameters = nz_inner - nz_inner_boundary * 2;
+    alpha = static_cast<real_simulation>(1.0 / peak_frequency);
+    snapshots = ceil(nt / snapshot_interval);
+
+    std::cout << "Done parsing settings." << std::endl << std::endl;
+
+}
+
+template<class T>
+void parse_string_to_vector(std::basic_string<char> string_to_parse, std::vector<T> *destination_vector) {
+    // Erase all spaces
+    string_to_parse.erase(remove_if(string_to_parse.begin(), string_to_parse.end(), isspace), string_to_parse.end());
+    // Find end of data and cut afterwards
+    size_t pos = string_to_parse.find("}");
+    string_to_parse.erase(pos, string_to_parse.length());
+    // Cut leading curly brace
+    string_to_parse.erase(0, 1);
+    // Split up string
+    std::string delimiter = ",";
+    pos = 0;
+    std::string token;
+    while ((pos = string_to_parse.find(delimiter)) != std::string::npos) {
+        token = string_to_parse.substr(0, pos);
+        destination_vector->emplace_back(atof(token.c_str()));
+        string_to_parse.erase(0, pos + delimiter.length());
+    }
+    token = string_to_parse.substr(0, pos);
+    destination_vector->emplace_back(atof(token.c_str()));
+}
+
+void parse_string_to_nested_vector(std::basic_string<char> string_to_parse, std::vector<std::vector<int>> *destination_vector) { // todo clean up
+    // Erase all spaces
+    string_to_parse.erase(remove_if(string_to_parse.begin(), string_to_parse.end(), isspace), string_to_parse.end());
+
+    std::string delimiter_outer = "},{";
+    string_to_parse.erase(0, 2);
+
+    size_t pos_outer = 0;
+    std::string token_outer;
+
+    while ((pos_outer = string_to_parse.find(delimiter_outer)) != std::string::npos) {
+        std::vector<int> sub_vec;
+
+        token_outer = string_to_parse.substr(0, pos_outer);
+
+        std::string delimiter_inner = ",";
+        size_t pos_inner = 0;
+        std::string token_inner;
+        while ((pos_inner = token_outer.find(delimiter_inner)) != std::string::npos) {
+            token_inner = token_outer.substr(0, pos_inner);
+            sub_vec.emplace_back(atof(token_inner.c_str()));
+            token_outer.erase(0, pos_inner + delimiter_inner.length());
+        }
+        token_inner = token_outer.substr(0, pos_inner);
+        sub_vec.emplace_back(atof(token_inner.c_str()));
+
+        destination_vector->emplace_back(sub_vec);
+
+        string_to_parse.erase(0, pos_outer + delimiter_outer.length());
+    }
+
+    // Process last vector
+    std::vector<int> sub_vec;
+    pos_outer = string_to_parse.find("}};");
+    token_outer = string_to_parse.substr(0, pos_outer);
+//    std::cout << token_outer << std::endl;
+    std::string delimiter_inner = ",";
+    size_t pos_inner = 0;
+    std::string token_inner;
+    while ((pos_inner = token_outer.find(delimiter_inner)) != std::string::npos) {
+        token_inner = token_outer.substr(0, pos_inner);
+        sub_vec.emplace_back(atof(token_inner.c_str()));
+//        std::cout << token_inner << std::endl;
+        token_outer.erase(0, pos_inner + delimiter_inner.length());
+    }
+    token_inner = token_outer.substr(0, pos_inner);
+    sub_vec.emplace_back(atof(token_inner.c_str()));
+//    std::cout << token_inner << std::endl;
+    destination_vector->emplace_back(sub_vec);
+//    destination_vector->emplace_back(atof(token_outer.c_str()));
+}
+
+
+
+
+
+

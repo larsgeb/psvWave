@@ -13,7 +13,7 @@
 int main() {
     std::cout << "Maximum amount of OpenMP threads:" << omp_get_max_threads() << std::endl;
 
-    auto *model = new fdWaveModel();
+    auto *model = new fdWaveModel(nullptr);
     model->load_model("../tests/test_setup/de_starting.txt", "../tests/test_setup/vp_starting.txt", "../tests/test_setup/vs_starting.txt", true);
 
     auto startTime = omp_get_wtime();

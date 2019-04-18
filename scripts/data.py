@@ -1,10 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-rtf_ux0 = np.loadtxt("/home/lars/Documents/PhD/forward-virieux/build/observed_data/rtf_ux0.txt")
-rtf_uz0 = np.loadtxt("/home/lars/Documents/PhD/forward-virieux/build/observed_data/rtf_uz0.txt")
+rtf_ux0 = np.loadtxt("/home/lars/Documents/PhD/forward-virieux/build/rtf_ux0.txt")
+rtf_uz0 = np.loadtxt("/home/lars/Documents/PhD/forward-virieux/build/rtf_uz0.txt")
 
-sources = np.loadtxt("/home/lars/Documents/PhD/forward-virieux/build/sources/sources_shot_0.txt")
+sources = np.loadtxt("/home/lars/Documents/PhD/forward-virieux/build/sources_shot_0.txt")
 
 t = np.linspace(0, rtf_ux0.shape[1] / 4000., rtf_ux0.shape[1])
 

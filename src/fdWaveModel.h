@@ -23,11 +23,13 @@ using real_simulation = float;
 class fdWaveModel { // TODO restructure public vs private methods and fields
 public:
     // ---- CONSTRUCTORS AND DESTRUCTORS ----
-    fdWaveModel();
+    fdWaveModel(const char *configuration_file);
 
     ~fdWaveModel();
 
     // ---- METHODS ----
+
+    void parse_configuration(const char config_file[]);
 
     void forward_simulate(int i_shot, bool store_fields, bool verbose);
 
@@ -76,7 +78,6 @@ public:
     void deallocate_4d_array(real_simulation ****&pDouble, int dim1, int dim2, int dim3);
 
     // ----  FIELDS ----
-
     // |--< Utility fields >--
     // | Finite difference coefficients
     real_simulation c1 = real_simulation(9.0 / 8.0);
@@ -125,46 +126,50 @@ public:
     real_simulation ***rtf_uz_true;
     real_simulation ***a_stf_ux;
     real_simulation ***a_stf_uz;
-    real_simulation ****accu_vx;
-    real_simulation ****accu_vz;
-    real_simulation ****accu_txx;
-    real_simulation ****accu_tzz;
-    real_simulation ****accu_txz;
+    real_simulation ****accu_vx; // Todo there is some ram usage to be optimized here as not the full wavefields have to be stored.
+    real_simulation ****accu_vz; // Todo there is some ram usage to be optimized here as not the full wavefields have to be stored.
+    real_simulation ****accu_txx; // Todo there is some ram usage to be optimized here as not the full wavefields have to be stored.
+    real_simulation ****accu_tzz; // Todo there is some ram usage to be optimized here as not the full wavefields have to be stored.
+    real_simulation ****accu_txz; // Todo there is some ram usage to be optimized here as not the full wavefields have to be stored.
 
     // -- Definition of simulation --
-    // | Input parameters
-    const static int np_boundary = 10;
-    real_simulation np_factor = 0.075;
-    const static int nt = 8000;
-    const static int nx_inner = 200;
-    const static int nz_inner = 100;
-    const static int nx_inner_boundary = 10;
-    const static int nz_inner_boundary = 20;
-    real_simulation dx = 1.249;
-    real_simulation dz = 1.249;
-    real_simulation dt = 0.00025;
-    real_simulation scalar_rho = 1500;
-    real_simulation scalar_vp = 2000;
-    real_simulation scalar_vs = 800;
-    const static int n_sources = 7;
-    const static int n_shots = 1;
-    std::vector<std::vector<int>> which_source_to_fire_in_which_shot = {{0, 1, 2, 3, 4, 5, 6}};
-    real_simulation delay_per_shot = 12; // over f
-    int ix_sources[n_sources] = {25, 50, 75, 100, 125, 150, 175};
-    int iz_sources[n_sources] = {10, 10, 10, 10, 10, 10, 10};
-    real_simulation moment_angles[n_sources] = {90, 81, 41, 300, 147, 252, 327};
-    real_simulation alpha = static_cast<real_simulation>(1.0 / 50.0);
-    real_simulation t0 = 0.005;
-    const static int nr = 19;
-    int ix_receivers[nr] = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190,};
-    int iz_receivers[nr] = {90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90,};
-    int snapshot_interval = 10;
+    // | Domain
+    int nt;
+    int nx_inner;
+    int nz_inner;
+    int nx_inner_boundary;
+    int nz_inner_boundary;
+    real_simulation dx;
+    real_simulation dz;
+    real_simulation dt;
+    // | Boundary
+    int np_boundary;
+    real_simulation np_factor;
+    // | Medium
+    real_simulation scalar_rho;
+    real_simulation scalar_vp;
+    real_simulation scalar_vs;
+    // | Sources
+    int n_sources;
+    int n_shots;
+    std::vector<std::vector<int>> which_source_to_fire_in_which_shot;
+    real_simulation delay_cycles_per_shot; // over f
+    int *ix_sources;
+    int *iz_sources;
+    real_simulation *moment_angles;
+    real_simulation peak_frequency;
+    real_simulation alpha;
+    real_simulation t0;
+    int nr;
+    int* ix_receivers;
+    int* iz_receivers;
+    int snapshot_interval;
 
-    const static int snapshots = 800;
-    const static int nx = nx_inner + np_boundary * 2;
-    const static int nz = nz_inner + np_boundary;
-    const static int nx_free_parameters = nx_inner - nx_inner_boundary * 2;
-    const static int nz_free_parameters = nz_inner - nz_inner_boundary * 2;
+    int snapshots;
+    int nx;
+    int nz;
+    int nx_free_parameters;
+    int nz_free_parameters;
 
     // -- Helper stuff for inverse problems --
     //real_simulation data_variance_ux[n_shots][nr][nt];
@@ -173,8 +178,11 @@ public:
     real_simulation misfit;
     std::string observed_data_folder = ".";
     std::string stf_folder = ".";
-
 };
 
+template<class T>
+void parse_string_to_vector(std::basic_string<char> string_to_parse, std::vector<T> *destination_vector);
+
+void parse_string_to_nested_vector(std::basic_string<char> string_to_parse, std::vector<std::vector<int>> *destination_vector);
 
 #endif //FDWAVEMODEL_H
