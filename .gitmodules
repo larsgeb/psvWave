@@ -1,0 +1,6 @@
+[submodule "ext/inih"]
+	path = ext/inih
+	url = https://github.com/jtilly/inih.git
+[submodule "ext/breathe"]
+	path = ext/breathe
+	url = https://github.com/michaeljones/breathe.git
