@@ -43,8 +43,11 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
+    'sphinx.ext.mathjax',
     'breathe'
 ]
+
+breathe_domain_by_extension = {"h": "cpp"}
 
 breathe_projects = { "forward-virieux": "../../docs-source/source/doxygen/xml" }
 
