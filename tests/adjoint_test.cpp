@@ -10,23 +10,25 @@
 #include <omp.h>
 #include "../src/fdWaveModel.h"
 
-int main() {
-    std::cout << "Maximum amount of OpenMP threads:" << omp_get_max_threads() << std::endl;
+int main(int argc, char **argv) {
+    std::cout << "Maximum amount of OpenMP threads:" << omp_get_max_threads() << std::endl << std::endl;
 
-    auto *model = new fdWaveModel(nullptr);
+    auto configuration_file = argv[1];
+
+    auto *model = new fdWaveModel(configuration_file);
     model->load_model("../tests/test_setup/de_starting.txt", "../tests/test_setup/vp_starting.txt", "../tests/test_setup/vs_starting.txt", true);
 
     auto startTime = omp_get_wtime();
-    std::cout << "Running forward simulation once." << std::endl;
     model->load_receivers(true);
-    for (int is = 0; is < fdWaveModel::n_shots; ++is) {
+    std::cout << "Running forward simulation once." << std::endl;
+    for (int is = 0; is < model->n_shots; ++is) {
         model->forward_simulate(is, true, true);
     }
     model->calculate_misfit();
     model->calculate_adjoint_sources();
     auto endTime = omp_get_wtime();
     std::cout << "Elapsed time for one forward simulation: " << endTime - startTime << std::endl
-              << "Misfit: " << model->misfit << std::endl;
+              << "Misfit: " << model->misfit << std::endl << std::endl;
 
 
     // Prepare for test
@@ -36,7 +38,7 @@ int main() {
 
     for (int i_test = 0; i_test < n_tests; ++i_test) {
         model->reset_kernels();
-        for (int is = 0; is < fdWaveModel::n_shots; ++is) {
+        for (int is = 0; is < model->n_shots; ++is) {
             model->adjoint_simulate(is, true);
         }
         model->map_kernels_to_velocity();

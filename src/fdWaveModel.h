@@ -61,22 +61,6 @@ public:
 
     void reset_kernels();
 
-    void allocate_1d_array(real_simulation *&pDouble, int dim1);
-
-    void allocate_2d_array(real_simulation **&pDouble, int dim1, int dim2);
-
-    void allocate_3d_array(real_simulation ***&pDouble, int dim1, int dim2, int dim3);
-
-    void allocate_4d_array(real_simulation ****&pDouble, int dim1, int dim2, int dim3, int dim4);
-
-    void deallocate_1d_array(real_simulation *&pDouble);
-
-    void deallocate_2d_array(real_simulation **&pDouble, int dim1);
-
-    void deallocate_3d_array(real_simulation ***&pDouble, int dim1, int dim2);
-
-    void deallocate_4d_array(real_simulation ****&pDouble, int dim1, int dim2, int dim3);
-
     // ----  FIELDS ----
     // |--< Utility fields >--
     // | Finite difference coefficients
@@ -161,8 +145,8 @@ public:
     real_simulation alpha;
     real_simulation t0;
     int nr;
-    int* ix_receivers;
-    int* iz_receivers;
+    int *ix_receivers;
+    int *iz_receivers;
     int snapshot_interval;
 
     int snapshots;
@@ -179,6 +163,22 @@ public:
     std::string observed_data_folder = ".";
     std::string stf_folder = ".";
 };
+
+void allocate_1d_array(real_simulation *&pDouble, int dim1);
+
+void allocate_2d_array(real_simulation **&pDouble, int dim1, int dim2);
+
+void allocate_3d_array(real_simulation ***&pDouble, int dim1, int dim2, int dim3);
+
+void allocate_4d_array(real_simulation ****&pDouble, int dim1, int dim2, int dim3, int dim4);
+
+void deallocate_1d_array(real_simulation *&pDouble);
+
+void deallocate_2d_array(real_simulation **&pDouble, int dim1);
+
+void deallocate_3d_array(real_simulation ***&pDouble, int dim1, int dim2);
+
+void deallocate_4d_array(real_simulation ****&pDouble, int dim1, int dim2, int dim3);
 
 template<class T>
 void parse_string_to_vector(std::basic_string<char> string_to_parse, std::vector<T> *destination_vector);

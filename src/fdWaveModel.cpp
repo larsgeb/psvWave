@@ -187,6 +187,118 @@ fdWaveModel::~fdWaveModel() {
     deallocate_4d_array(accu_txz, n_shots, snapshots, nx);
 }
 
+void fdWaveModel::parse_configuration(const char *config_file) {
+
+    std::cout << "Loading configuration file: '" << config_file << "'." << std::endl;
+
+    INIReader reader(config_file);
+    if (reader.ParseError() < 0) {
+        std::cout << "Can't load 'test.ini'\n";
+        exit(1);
+    }
+
+    // Domain
+    nt = reader.GetInteger("domain", "nt", 1000);
+    nx_inner = reader.GetInteger("domain", "nx_inner", 200);
+    nz_inner = reader.GetInteger("domain", "nz_inner", 100);
+    nx_inner_boundary = reader.GetInteger("domain", "nx_inner_boundary", 10);
+    nz_inner_boundary = reader.GetInteger("domain", "nz_inner_boundary", 20);
+    dx = reader.GetReal("domain", "dx", 1.249);
+    dz = reader.GetReal("domain", "dz", 1.249);
+    dt = reader.GetReal("domain", "dt", 0.00025);
+
+    // Boundary
+    np_boundary = reader.GetInteger("boundary", "np_boundary", 10);
+    np_factor = reader.GetReal("boundary", "np_factor", 0.075);
+
+    // Default medium
+    scalar_rho = reader.GetReal("medium", "scalar_rho", 1500.0);
+    scalar_vp = reader.GetReal("medium", "scalar_vp", 2000.0);
+    scalar_vs = reader.GetReal("medium", "scalar_vs", 800.0);
+
+    // Sources
+    peak_frequency = reader.GetReal("sources", "peak_frequency", 50.0);
+    t0 = reader.GetReal("sources", "source_timeshift", 0.005);
+    delay_cycles_per_shot = reader.GetReal("sources", "delay_cycles_per_shot", 12);
+    n_sources = reader.GetInteger("sources", "n_sources", 7);
+    n_shots = reader.GetInteger("sources", "n_shots", 1);
+    // Parse source setup.
+    ix_sources = new int[n_sources];
+    iz_sources = new int[n_sources];
+    moment_angles = new real_simulation[n_sources];
+    std::vector<int> ix_sources_vector;
+    std::vector<int> iz_sources_vector;
+    std::vector<real_simulation> moment_angles_vector;
+    parse_string_to_vector(reader.Get("sources", "ix_sources", "{25, 50, 75, 100, 125, 150, 175};"), &ix_sources_vector);
+    parse_string_to_vector(reader.Get("sources", "iz_sources", "{10, 10, 10, 10, 10, 10, 10};"), &iz_sources_vector);
+    parse_string_to_vector(reader.Get("sources", "moment_angles", "{90, 81, 41, 300, 147, 252, 327};"), &moment_angles_vector);
+    if (ix_sources_vector.size() != n_sources or
+        iz_sources_vector.size() != n_sources or
+        moment_angles_vector.size() != n_sources) {
+        std::cout << "Dimension mismatch between n_sources and sources.ix_sources, sources.iz_sources or sources.moment_angles" << std::endl;
+        exit(1);
+    }
+    for (int i_source = 0; i_source < n_sources; ++i_source) {
+        ix_sources[i_source] = ix_sources_vector[i_source];
+        iz_sources[i_source] = iz_sources_vector[i_source];
+        moment_angles[i_source] = moment_angles_vector[i_source];
+    }
+    // Parse source stacking
+    parse_string_to_nested_vector(
+            reader.Get("sources", "which_source_to_fire_in_which_shot", "{{0, 1, 2, 3, 4, 5, 6}};"),
+            &which_source_to_fire_in_which_shot);
+    if (which_source_to_fire_in_which_shot.size() != n_shots) {
+        std::cout << "Mismatch between n_shots and sources.which_source_to_fire_in_which_shot" << std::endl;
+        exit(1);
+    }
+    int total_sources = 0;
+    for (const auto &shot_sources : which_source_to_fire_in_which_shot) {
+        total_sources += shot_sources.size();
+    }
+    if (total_sources != n_sources) {
+        std::cout << "Mismatch between n_sources and sources.which_source_to_fire_in_which_shot" << std::endl;
+        exit(1);
+    }
+
+    // Receivers
+    nr = reader.GetInteger("receivers", "nr", 19);
+    ix_receivers = new int[nr];
+    iz_receivers = new int[nr];
+    std::vector<int> ix_receivers_vector;
+    std::vector<int> iz_receivers_vector;
+    parse_string_to_vector(
+            reader.Get("receivers", "ix_receivers", "{10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180}; !!"),
+            &ix_receivers_vector);
+    parse_string_to_vector(
+            reader.Get("receivers", "iz_receivers", "{90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90}; !!"),
+            &iz_receivers_vector);
+
+    if (ix_receivers_vector.size() != nr or
+        iz_receivers_vector.size() != nr) {
+        std::cout << "Mismatch between nr and receivers.ix_receivers or receivers.iz_receivers" << std::endl;
+        exit(1);
+    }
+    for (int i_receiver = 0; i_receiver < nr; ++i_receiver) {
+        ix_receivers[i_receiver] = ix_receivers_vector[i_receiver];
+        iz_receivers[i_receiver] = iz_receivers_vector[i_receiver];
+    }
+
+    // Inversion
+    snapshot_interval = reader.GetInteger("inversion", "snapshot_interval", 10);
+
+    // Final calculations
+    snapshots = 800; // todo calc!
+    nx = nx_inner + np_boundary * 2;
+    nz = nz_inner + np_boundary;
+    nx_free_parameters = nx_inner - nx_inner_boundary * 2;
+    nz_free_parameters = nz_inner - nz_inner_boundary * 2;
+    alpha = static_cast<real_simulation>(1.0 / peak_frequency);
+    snapshots = ceil(nt / snapshot_interval);
+
+    std::cout << "Done parsing settings." << std::endl << std::endl;
+
+}
+
 // Forward modeller
 void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose) {
     for (int ix = 0; ix < nx; ++ix) {
@@ -736,34 +848,34 @@ void fdWaveModel::reset_kernels() {
 
 // Allocation and deallocation
 
-void fdWaveModel::allocate_1d_array(real_simulation *&pDouble, int dim1) {
+void allocate_1d_array(real_simulation *&pDouble, int dim1) {
     pDouble = new real_simulation[dim1];
 }
 
-void fdWaveModel::allocate_2d_array(real_simulation **&pDouble, const int dim1, const int dim2) {
+void allocate_2d_array(real_simulation **&pDouble, const int dim1, const int dim2) {
     pDouble = new real_simulation *[dim1];
     for (int i = 0; i < dim1; ++i)
         allocate_1d_array(pDouble[i], dim2);
 }
 
-void fdWaveModel::allocate_3d_array(real_simulation ***&pDouble, int dim1, int dim2, int dim3) {
+void allocate_3d_array(real_simulation ***&pDouble, int dim1, int dim2, int dim3) {
     pDouble = new real_simulation **[dim1];
     for (int i = 0; i < dim1; ++i)
         allocate_2d_array(pDouble[i], dim2, dim3);
 }
 
-void fdWaveModel::allocate_4d_array(real_simulation ****&pDouble, int dim1, int dim2, int dim3, int dim4) {
+void allocate_4d_array(real_simulation ****&pDouble, int dim1, int dim2, int dim3, int dim4) {
     pDouble = new real_simulation ***[dim1];
     for (int i = 0; i < dim1; ++i)
         allocate_3d_array(pDouble[i], dim2, dim3, dim4);
 }
 
-void fdWaveModel::deallocate_1d_array(real_simulation *&pDouble) {
+void deallocate_1d_array(real_simulation *&pDouble) {
     delete[] pDouble;
     pDouble = nullptr;
 }
 
-void fdWaveModel::deallocate_2d_array(real_simulation **&pDouble, const int dim1) {
+void deallocate_2d_array(real_simulation **&pDouble, const int dim1) {
     for (int i = 0; i < dim1; i++) {
         deallocate_1d_array(pDouble[i]);
     }
@@ -771,7 +883,7 @@ void fdWaveModel::deallocate_2d_array(real_simulation **&pDouble, const int dim1
     pDouble = nullptr;
 }
 
-void fdWaveModel::deallocate_3d_array(real_simulation ***&pDouble, const int dim1, const int dim2) {
+void deallocate_3d_array(real_simulation ***&pDouble, const int dim1, const int dim2) {
     for (int i = 0; i < dim1; i++) {
         deallocate_2d_array(pDouble[i], dim2);
     }
@@ -779,124 +891,12 @@ void fdWaveModel::deallocate_3d_array(real_simulation ***&pDouble, const int dim
     pDouble = nullptr;
 }
 
-void fdWaveModel::deallocate_4d_array(real_simulation ****&pDouble, const int dim1, const int dim2, const int dim3) {
+void deallocate_4d_array(real_simulation ****&pDouble, const int dim1, const int dim2, const int dim3) {
     for (int i = 0; i < dim1; i++) {
         deallocate_3d_array(pDouble[i], dim2, dim3);
     }
     delete[] pDouble;
     pDouble = nullptr;
-}
-
-void fdWaveModel::parse_configuration(const char *config_file) {
-
-    std::cout << "Loading configuration file: '" << config_file << "'." << std::endl;
-
-    INIReader reader(config_file);
-    if (reader.ParseError() < 0) {
-        std::cout << "Can't load 'test.ini'\n";
-        exit(1);
-    }
-
-    // Domain
-    nt = reader.GetInteger("domain", "nt", 1000);
-    nx_inner = reader.GetInteger("domain", "nx_inner", 200);
-    nz_inner = reader.GetInteger("domain", "nz_inner", 100);
-    nx_inner_boundary = reader.GetInteger("domain", "nx_inner_boundary", 10);
-    nz_inner_boundary = reader.GetInteger("domain", "nz_inner_boundary", 20);
-    dx = reader.GetReal("domain", "dx", 1.249);
-    dz = reader.GetReal("domain", "dz", 1.249);
-    dt = reader.GetReal("domain", "dt", 0.00025);
-
-    // Boundary
-    np_boundary = reader.GetInteger("boundary", "np_boundary", 10);
-    np_factor = reader.GetReal("boundary", "np_factor", 0.075);
-
-    // Default medium
-    scalar_rho = reader.GetReal("medium", "scalar_rho", 1500.0);
-    scalar_vp = reader.GetReal("medium", "scalar_vp", 2000.0);
-    scalar_vs = reader.GetReal("medium", "scalar_vs", 800.0);
-
-    // Sources
-    peak_frequency = reader.GetReal("sources", "peak_frequency", 50.0);
-    t0 = reader.GetReal("sources", "source_timeshift", 0.005);
-    delay_cycles_per_shot = reader.GetReal("sources", "delay_cycles_per_shot", 12);
-    n_sources = reader.GetInteger("sources", "n_sources", 7);
-    n_shots = reader.GetInteger("sources", "n_shots", 1);
-    // Parse source setup.
-    ix_sources = new int[n_sources];
-    iz_sources = new int[n_sources];
-    moment_angles = new real_simulation[n_sources];
-    std::vector<int> ix_sources_vector;
-    std::vector<int> iz_sources_vector;
-    std::vector<real_simulation> moment_angles_vector;
-    parse_string_to_vector(reader.Get("sources", "ix_sources", "{25, 50, 75, 100, 125, 150, 175};"), &ix_sources_vector);
-    parse_string_to_vector(reader.Get("sources", "iz_sources", "{10, 10, 10, 10, 10, 10, 10};"), &iz_sources_vector);
-    parse_string_to_vector(reader.Get("sources", "moment_angles", "{90, 81, 41, 300, 147, 252, 327};"), &moment_angles_vector);
-    if (ix_sources_vector.size() != n_sources or
-        iz_sources_vector.size() != n_sources or
-        moment_angles_vector.size() != n_sources) {
-        std::cout << "Dimension mismatch between n_sources and sources.ix_sources, sources.iz_sources or sources.moment_angles" << std::endl;
-        exit(1);
-    }
-    for (int i_source = 0; i_source < n_sources; ++i_source) {
-        ix_sources[i_source] = ix_sources_vector[i_source];
-        iz_sources[i_source] = iz_sources_vector[i_source];
-        moment_angles[i_source] = moment_angles_vector[i_source];
-    }
-    // Parse source stacking
-    parse_string_to_nested_vector(
-            reader.Get("sources", "which_source_to_fire_in_which_shot", "{{0, 1, 2, 3, 4, 5, 6}};"),
-            &which_source_to_fire_in_which_shot);
-    if (which_source_to_fire_in_which_shot.size() != n_shots) {
-        std::cout << "Mismatch between n_shots and sources.which_source_to_fire_in_which_shot" << std::endl;
-        exit(1);
-    }
-    int total_sources = 0;
-    for (const auto &shot_sources : which_source_to_fire_in_which_shot) {
-        total_sources += shot_sources.size();
-    }
-    if (total_sources != n_sources) {
-        std::cout << "Mismatch between n_sources and sources.which_source_to_fire_in_which_shot" << std::endl;
-        exit(1);
-    }
-
-    // Receivers
-    nr = reader.GetInteger("receivers", "nr", 19);
-    ix_receivers = new int[nr];
-    iz_receivers = new int[nr];
-    std::vector<int> ix_receivers_vector;
-    std::vector<int> iz_receivers_vector;
-    parse_string_to_vector(
-            reader.Get("receivers", "ix_receivers", "{10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180}; !!"),
-            &ix_receivers_vector);
-    parse_string_to_vector(
-            reader.Get("receivers", "iz_receivers", "{90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90}; !!"),
-            &iz_receivers_vector);
-
-    if (ix_receivers_vector.size() != nr or
-        iz_receivers_vector.size() != nr) {
-        std::cout << "Mismatch between nr and receivers.ix_receivers or receivers.iz_receivers" << std::endl;
-        exit(1);
-    }
-    for (int i_receiver = 0; i_receiver < nr; ++i_receiver) {
-        ix_receivers[i_receiver] = ix_receivers_vector[i_receiver];
-        iz_receivers[i_receiver] = iz_receivers_vector[i_receiver];
-    }
-
-    // Inversion
-    snapshot_interval = reader.GetInteger("inversion", "snapshot_interval", 10);
-
-    // Final calculations
-    snapshots = 800; // todo calc!
-    nx = nx_inner + np_boundary * 2;
-    nz = nz_inner + np_boundary;
-    nx_free_parameters = nx_inner - nx_inner_boundary * 2;
-    nz_free_parameters = nz_inner - nz_inner_boundary * 2;
-    alpha = static_cast<real_simulation>(1.0 / peak_frequency);
-    snapshots = ceil(nt / snapshot_interval);
-
-    std::cout << "Done parsing settings." << std::endl << std::endl;
-
 }
 
 template<class T>
