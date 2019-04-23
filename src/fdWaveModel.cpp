@@ -973,6 +973,46 @@ void parse_string_to_nested_vector(std::basic_string<char> string_to_parse, std:
 //    destination_vector->emplace_back(atof(token_outer.c_str()));
 }
 
+void cross_correlate(const real_simulation *signal1, const real_simulation *signal2, real_simulation *r, int signal_length, int max_delay) {
+    // Calculate means
+    real_simulation mean1 = 0;
+    real_simulation mean2 = 0;
+    #pragma omp parallel for reduction(+: mean1, mean2)
+    for (int i = 0; i < signal_length; i++) {
+        mean1 += signal1[i];
+        mean2 += signal2[i];
+    }
+    mean1 /= signal_length;
+    mean2 /= signal_length;
+
+//    std::cout << "mean1: " << mean1 << " mean2: " << mean2 << std::endl;
+
+    // Calculate the denominator from standard deviations.
+    real_simulation std1 = 0;
+    real_simulation std2 = 0;
+    #pragma omp parallel for reduction(+: std1, std2)
+    for (int i = 0; i < signal_length; i++) {
+        std1 += (signal1[i] - mean1) * (signal1[i] - mean1);
+        std2 += (signal2[i] - mean2) * (signal2[i] - mean2);
+    }
+    real_simulation denominator = sqrt(std1 * std2);
+
+    // Calculate cross-correlation
+    #pragma omp parallel for
+    for (int delay = -max_delay; delay < max_delay; delay++) {
+        real_simulation sxy = 0;
+        //#pragma omp parallel for reduction(+: sxy) // not really needed if more delays are present than physical cores (pretty much always).
+        for (int i = 0; i < signal_length; i++) {
+            int j = i + delay;
+            if (j < 0 || j >= signal_length)
+                continue;
+            else
+                sxy += (signal1[i] - mean1) * (signal2[j] - mean2);
+        }
+        r[delay + max_delay] = sxy / denominator;
+    }
+}
+
 
 
 
