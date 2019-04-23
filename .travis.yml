@@ -16,5 +16,5 @@ script:
   - CXX=/usr/bin/g++-7 CC=/usr/bin/gcc-7 cmake .. -DCMAKE_BUILD_TYPE=Debug
   - make forward_test
   - make adjoint_test
-  - ./forward_test
-  - ./adjoint_test
+  - ./forward_test ../tests/test_setup/forward_configuration.ini
+  - ./adjoint_test ../tests/test_setup/adjoint_configuration.ini
