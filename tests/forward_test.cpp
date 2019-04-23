@@ -20,13 +20,13 @@ int main(int argc, char **argv) {
     model->load_model("../tests/test_setup/de_target.txt", "../tests/test_setup/vp_target.txt", "../tests/test_setup/vs_target.txt", true);
 
     auto startTime = omp_get_wtime();
-    int n_tests = 3;
+    int n_tests = 5;
     std::cout << "Running forward simulation " << n_tests << " times." << std::endl;
     auto deterministic_sum = new real_simulation[n_tests];
 
     for (int i_test = 0; i_test < n_tests; ++i_test) {
         for (int is = 0; is < model->n_shots; ++is) {
-            model->forward_simulate(is, true, true);
+            model->forward_simulate(is, false, true);
         }
 
         deterministic_sum[i_test] = 0;

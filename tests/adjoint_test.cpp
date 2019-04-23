@@ -24,8 +24,10 @@ int main(int argc, char **argv) {
     for (int is = 0; is < model->n_shots; ++is) {
         model->forward_simulate(is, true, true);
     }
-    model->calculate_misfit();
-    model->calculate_adjoint_sources();
+
+    // Compute L2 misfits and adjoint sources.
+    model->calculate_l2_misfit();
+    model->calculate_l2_adjoint_sources();
     auto endTime = omp_get_wtime();
     std::cout << "Elapsed time for one forward simulation: " << endTime - startTime << std::endl
               << "Misfit: " << model->misfit << std::endl << std::endl;
