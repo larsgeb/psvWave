@@ -14,12 +14,13 @@
 
 #define PI 3.14159265
 
-fdWaveModel::fdWaveModel(const char *configuration_file) {
+fdWaveModel::fdWaveModel(const char *configuration_file_relative_path) {
     // --- Initialization section ---
 
-    parse_configuration(configuration_file);
+    // Parse configuration from supplied file
+    parse_configuration(configuration_file_relative_path);
 
-    // Allocate fields
+    // Allocate all fields dynamically (grouped by type)
     allocate_2d_array(vx, nx, nz);
     allocate_2d_array(vz, nx, nz);
     allocate_2d_array(txx, nx, nz);
@@ -64,7 +65,7 @@ fdWaveModel::fdWaveModel(const char *configuration_file) {
     allocate_4d_array(accu_tzz, n_shots, snapshots, nx, nz);
     allocate_4d_array(accu_txz, n_shots, snapshots, nx, nz);
 
-    // Place sources/receivers inside the domain
+    // Place sources/receivers inside the domain if required
     if (add_np_to_receiver_location) {
         for (int ir = 0; ir < nr; ++ir) {
             ix_receivers[ir] += np_boundary;
@@ -79,10 +80,10 @@ fdWaveModel::fdWaveModel(const char *configuration_file) {
     }
 
     // Initialize data variance to one (should for now be taken care of it outside of the code)
-//    std::fill(&data_variance_ux[0][0][0], &data_variance_ux[0][0][0] + sizeof(data_variance_ux) / sizeof(real_simulation), 1);
-//    std::fill(&data_variance_uz[0][0][0], &data_variance_uz[0][0][0] + sizeof(data_variance_uz) / sizeof(real_simulation), 1);
+    //std::fill(&data_variance_ux[0][0][0], &data_variance_ux[0][0][0] + sizeof(data_variance_ux) / sizeof(real_simulation), 1);
+    //std::fill(&data_variance_uz[0][0][0], &data_variance_uz[0][0][0] + sizeof(data_variance_uz) / sizeof(real_simulation), 1);
 
-    // Assign stf/rtf_ux
+    // Assign source time function and time axis based on set-up
     for (int i_shot = 0; i_shot < n_shots; ++i_shot) {
         for (int i_source = 0; i_source < which_source_to_fire_in_which_shot[i_shot].size(); ++i_source) {
             for (unsigned int it = 0; it < nt; ++it) {
@@ -95,14 +96,16 @@ fdWaveModel::fdWaveModel(const char *configuration_file) {
         }
     }
 
-    for (int i_source = 0; i_source < n_sources; ++i_source) {
+    // Assign moment tensors based on rotation.
+    for (int i_source = 0; i_source < n_sources; ++i_source) { // todo allow for more complex moment tensors
         moment[i_source][0][0] = static_cast<real_simulation>(cos(moment_angles[i_source] * PI / 180.0) * 1e15);
         moment[i_source][0][1] = static_cast<real_simulation>(-sin(moment_angles[i_source] * PI / 180.0) * 1e15);
         moment[i_source][1][0] = static_cast<real_simulation>(-sin(moment_angles[i_source] * PI / 180.0) * 1e15);
         moment[i_source][1][1] = static_cast<real_simulation>(-cos(moment_angles[i_source] * PI / 180.0) * 1e15);
     }
 
-    // Setting all fields.
+    // Set all fields to background value so as to at least initialize.
+    #pragma omp parallel for collapse(2)
     for (int ix = 0; ix < nx; ++ix) {
         for (int iz = 0; iz < nz; ++iz) {
             vp[ix][iz] = scalar_vp;
@@ -111,31 +114,33 @@ fdWaveModel::fdWaveModel(const char *configuration_file) {
         }
     }
 
+    // Update Lamé's fields from velocity fields.
     update_from_velocity();
 
-    {
-        // Initialize
-        for (int ix = 0; ix < nx; ++ix) {
-            for (int iz = 0; iz < nz; ++iz) {
-                taper[ix][iz] = 0.0;
-            }
+
+    // Initialize Gaussian taper by ...
+    #pragma omp parallel for collapse(2)
+    for (int ix = 0; ix < nx; ++ix) { // ... starting with zero taper in every point, ...
+        for (int iz = 0; iz < nz; ++iz) {
+            taper[ix][iz] = 0.0;
         }
-        for (int id = 0; id < np_boundary; ++id) {
-            #pragma omp parallel for collapse(2)
-            for (int ix = id; ix < nx - id; ++ix) {
-                for (int iz = id; iz < nz; ++iz) {
-                    taper[ix][iz]++;
-                }
-            }
-        }
+    }
+    for (int id = 0; id < np_boundary; ++id) { // ... subsequently, move from outside inwards over the np, adding one to every point ...
         #pragma omp parallel for collapse(2)
-        for (int ix = 0; ix < nx; ++ix) {
-            for (int iz = 0; iz < nz; ++iz) {
-                taper[ix][iz] = static_cast<real_simulation>(exp(-pow(np_factor * (np_boundary - taper[ix][iz]), 2)));
+        for (int ix = id; ix < nx - id; ++ix) {
+            for (int iz = id; iz < nz; ++iz) { // (hardcoded free surface boundaries by not moving iz < nz)
+                taper[ix][iz]++;
             }
         }
     }
+    #pragma omp parallel for collapse(2)
+    for (int ix = 0; ix < nx; ++ix) { // ... and finally setting the maximum taper value to taper 1 using exponential function, decaying outwards.
+        for (int iz = 0; iz < nz; ++iz) {
+            taper[ix][iz] = static_cast<real_simulation>(exp(-pow(np_factor * (np_boundary - taper[ix][iz]), 2)));
+        }
+    }
 
+    // Check if the amount of snapshots satisfies the other parameters.
     if (floor(double(nt) / snapshot_interval) != snapshots) {
         throw std::length_error("Snapshot interval and size of accumulator don't match!");
     }
@@ -187,11 +192,11 @@ fdWaveModel::~fdWaveModel() {
     deallocate_4d_array(accu_txz, n_shots, snapshots, nx);
 }
 
-void fdWaveModel::parse_configuration(const char *config_file) {
+void fdWaveModel::parse_configuration(const char *configuration_file_relative_path) {
 
-    std::cout << "Loading configuration file: '" << config_file << "'." << std::endl;
+    std::cout << "Loading configuration file: '" << configuration_file_relative_path << "'." << std::endl;
 
-    INIReader reader(config_file);
+    INIReader reader(configuration_file_relative_path);
     if (reader.ParseError() < 0) {
         std::cout << "Can't load 'test.ini'\n";
         exit(1);
@@ -244,7 +249,7 @@ void fdWaveModel::parse_configuration(const char *config_file) {
         moment_angles[i_source] = moment_angles_vector[i_source];
     }
     // Parse source stacking
-    parse_string_to_nested_vector(
+    parse_string_to_nested_int_vector(
             reader.Get("sources", "which_source_to_fire_in_which_shot", "{{0, 1, 2, 3, 4, 5, 6}};"),
             &which_source_to_fire_in_which_shot);
     if (which_source_to_fire_in_which_shot.size() != n_shots) {
@@ -286,6 +291,10 @@ void fdWaveModel::parse_configuration(const char *config_file) {
     // Inversion
     snapshot_interval = reader.GetInteger("inversion", "snapshot_interval", 10);
 
+    // Output
+    observed_data_folder = reader.Get("output", "observed_data_folder", ".");
+    stf_folder = reader.Get("output", "stf_folder", ".");
+
     // Final calculations
     snapshots = 800; // todo calc!
     nx = nx_inner + np_boundary * 2;
@@ -301,6 +310,8 @@ void fdWaveModel::parse_configuration(const char *config_file) {
 
 // Forward modeller
 void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose) {
+    // Set dynamic physical fields to zero to reflect initial conditions.
+    #pragma omp parallel for collapse(2)
     for (int ix = 0; ix < nx; ++ix) {
         for (int iz = 0; iz < nz; ++iz) {
             vx[ix][iz] = 0.0;
@@ -311,12 +322,13 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose) 
         }
     }
 
-    // If verbose, count time
+    // If verbose, clock time of modelling.
     double startTime = 0, stopTime = 0, secsElapsed = 0;
     if (verbose) { startTime = real_simulation(omp_get_wtime()); }
 
+    // Time-loop starts here
     for (int it = 0; it < nt; ++it) {
-        // Take wavefield snapshot
+        // Take wavefield snapshot at required intervals.
         if (it % snapshot_interval == 0 and store_fields) {
             #pragma omp parallel for collapse(2)
             for (int ix = np_boundary; ix < nx_inner + np_boundary; ++ix) {
@@ -330,7 +342,7 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose) 
             }
         }
 
-        // Record seismograms by integrating velocity into displacement
+        // Record seismograms by integrating velocity into displacement for every time-step.
         #pragma omp parallel for collapse(1)
         for (int i_receiver = 0; i_receiver < nr; ++i_receiver) {
             if (it == 0) {
@@ -344,7 +356,7 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose) 
             }
         }
 
-        // Time integrate dynamic fields for stress
+        // Time integrate dynamic fields for stress ...
         #pragma omp parallel for collapse(2)
         for (int ix = 2; ix < nx - 2; ++ix) {
             for (int iz = 2; iz < nz - 2; ++iz) {
@@ -375,7 +387,7 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose) 
 
             }
         }
-        // Time integrate dynamic fields for velocity
+        // ... and time integrate dynamic fields for velocity.
         #pragma omp parallel for collapse(2)
         for (int ix = 2; ix < nx - 2; ++ix) {
             for (int iz = 2; iz < nz - 2; ++iz) {
@@ -399,7 +411,8 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose) 
             }
         }
 
-        for (const auto &i_source : which_source_to_fire_in_which_shot[i_shot]) {
+        // Inject sources at appropriate location and times.
+        for (const auto &i_source : which_source_to_fire_in_which_shot[i_shot]) { // Don't parallelize in assignment!
             if (it < 1 and verbose) { std::cout << "Firing source " << i_source << " in shot " << i_shot << std::endl; }
             // |-inject source
             // | (x,x)-couple
@@ -457,7 +470,7 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose) 
         }
     }
 
-    // Output timing
+    // Output timing if verbose.
     if (verbose) {
         stopTime = omp_get_wtime();
         secsElapsed = stopTime - startTime;
@@ -665,9 +678,11 @@ void fdWaveModel::load_receivers(bool verbose) {
     std::ifstream receiver_file_uz;
 
     for (int i_shot = 0; i_shot < n_shots; ++i_shot) {
+        // Create filename from folder and shot.
         filename_ux = observed_data_folder + "/rtf_ux" + std::to_string(i_shot) + ".txt";
         filename_uz = observed_data_folder + "/rtf_uz" + std::to_string(i_shot) + ".txt";
 
+        // Attempt to open the file by its filename.
         receiver_file_ux.open(filename_ux);
         receiver_file_uz.open(filename_uz);
 
@@ -716,7 +731,7 @@ void fdWaveModel::load_receivers(bool verbose) {
 
 }
 
-void fdWaveModel::calculate_misfit() {
+void fdWaveModel::calculate_l2_misfit() {
     misfit = 0;
     for (int i_shot = 0; i_shot < n_shots; ++i_shot) {
         for (int i_receiver = 0; i_receiver < nr; ++i_receiver) {
@@ -730,7 +745,7 @@ void fdWaveModel::calculate_misfit() {
     }
 }
 
-void fdWaveModel::calculate_adjoint_sources() {
+void fdWaveModel::calculate_l2_adjoint_sources() {
     #pragma omp parallel for collapse(3)
     for (int is = 0; is < n_shots; ++is) {
         for (int ir = 0; ir < nr; ++ir) {
@@ -825,9 +840,9 @@ void fdWaveModel::run_model(bool verbose, bool simulate_adjoint) {
     for (int i_shot = 0; i_shot < n_shots; ++i_shot) {
         forward_simulate(i_shot, true, verbose);
     }
-    calculate_misfit();
+    calculate_l2_misfit();
     if (simulate_adjoint) {
-        calculate_adjoint_sources();
+        calculate_l2_adjoint_sources();
         reset_kernels();
         for (int is = 0; is < n_shots; ++is) {
             adjoint_simulate(is, verbose);
@@ -921,7 +936,7 @@ void parse_string_to_vector(std::basic_string<char> string_to_parse, std::vector
     destination_vector->emplace_back(atof(token.c_str()));
 }
 
-void parse_string_to_nested_vector(std::basic_string<char> string_to_parse, std::vector<std::vector<int>> *destination_vector) { // todo clean up
+void parse_string_to_nested_int_vector(std::basic_string<char> string_to_parse, std::vector<std::vector<int>> *destination_vector) { // todo clean up
     // Erase all spaces
     string_to_parse.erase(remove_if(string_to_parse.begin(), string_to_parse.end(), isspace), string_to_parse.end());
 
