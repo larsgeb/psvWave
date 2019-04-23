@@ -1,4 +1,370 @@
-<!DOCTYPE html><!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]--><!--[if gt IE 8]><!--><html class=no-js lang=en> <!--<![endif]--> <head><meta charset=utf-8><meta name=viewport content="width=device-width, initial-scale=1.0"><title>fdWaveModel simulation methods &mdash; forward-virieux documentation</title><script type=text/javascript src=_static/js/modernizr.min.js></script><script type=text/javascript id=documentation_options data-url_root=./ src=_static/documentation_options.js></script><script type=text/javascript src=_static/jquery.js></script><script type=text/javascript src=_static/underscore.js></script><script type=text/javascript src=_static/doctools.js></script><script type=text/javascript src=_static/language_data.js></script><script type=text/javascript src=_static/js/theme.js></script><link rel=stylesheet href=_static/css/theme.css type=text/css><link rel=stylesheet href=_static/pygments.css type=text/css><link rel=index title=Index href=genindex.html><link rel=search title=Search href=search.html><link rel=prev title="fdWaveModel class" href=fdwavemodel.class.html></head> <body class=wy-body-for-nav> <div class=wy-grid-for-nav> <nav data-toggle=wy-nav-shift class=wy-nav-side> <div class=wy-side-scroll> <div class=wy-side-nav-search> <a href=index.html class="icon icon-home"> forward-virieux </a> <div role=search> <form id=rtd-search-form class=wy-form action=search.html method=get> <input type=text name=q placeholder="Search docs"> <input type=hidden name=check_keywords value=yes> <input type=hidden name=area value=default> </form> </div> </div> <div class="wy-menu wy-menu-vertical" data-spy=affix role=navigation aria-label="main navigation"> <p class=caption><span class=caption-text>Contents:</span></p> <ul class=current> <li class="toctree-l1 current"><a class="reference internal" href=fdwavemodel.class.html>fdWaveModel class</a><ul class=current> <li class="toctree-l2 current"><a class="current reference internal" href=#>fdWaveModel simulation methods</a></li> </ul> </li> </ul> </div> </div> </nav> <section data-toggle=wy-nav-shift class=wy-nav-content-wrap> <nav class=wy-nav-top aria-label="top navigation"> <i data-toggle=wy-nav-top class="fa fa-bars"></i> <a href=index.html>forward-virieux</a> </nav> <div class=wy-nav-content> <div class=rst-content> <div role=navigation aria-label="breadcrumbs navigation"> <ul class=wy-breadcrumbs> <li><a href=index.html>Docs</a> &raquo;</li> <li><a href=fdwavemodel.class.html>fdWaveModel class</a> &raquo;</li> <li>fdWaveModel simulation methods</li> <li class=wy-breadcrumbs-aside> <a href=_sources/fdwavemodel.class.simulation_methods.rst.txt rel=nofollow> View page source</a> </li> </ul> <hr> </div> <div role=main class=document itemscope=itemscope itemtype=http://schema.org/Article> <div itemprop=articleBody> <div class=section id=fdwavemodel-simulation-methods> <h1>fdWaveModel simulation methods<a class=headerlink href=#fdwavemodel-simulation-methods title="Permalink to this headline">¶</a></h1> <dl class=function> <dt id=_CPPv4N11fdWaveModel16forward_simulateEibb> <span id=_CPPv3N11fdWaveModel16forward_simulateEibb></span><span id=_CPPv2N11fdWaveModel16forward_simulateEibb></span><span id=fdWaveModel::forward_simulate__i.b.b></span><span class=target id=classfdWaveModel_1a59899da1979d17635c8aaea1a4044448></span>void <code class=descclassname><a class="reference internal" href=fdwavemodel.class.html#_CPPv411fdWaveModel title=fdWaveModel>fdWaveModel</a><code class=descclassname>::</code></code><code class=descname>forward_simulate</code><span class=sig-paren>(</span>int <em>i_shot</em>, bool <em>store_fields</em>, bool <em>verbose</em><span class=sig-paren>)</span><a class=headerlink href=#_CPPv4N11fdWaveModel16forward_simulateEibb title="Permalink to this definition">¶</a><br></dt> <dd></dd></dl> </div> </div> </div> <footer> <div class=rst-footer-buttons role=navigation aria-label="footer navigation"> <a href=fdwavemodel.class.html class="btn btn-neutral float-left" title="fdWaveModel class" accesskey=p rel=prev><span class="fa fa-arrow-circle-left"></span> Previous</a> </div> <hr> <div role=contentinfo> <p> &copy; Copyright 2019, Lars Gebraad </p> </div> Built with <a href=http://sphinx-doc.org/ >Sphinx</a> using a <a href=https://github.com/rtfd/sphinx_rtd_theme>theme</a> provided by <a href=https://readthedocs.org>Read the Docs</a>. </footer> </div> </div> </section> </div> <script type=text/javascript>
+<!DOCTYPE html><!--[if IE 8]>
+<html class="no-js lt-ie9" lang="en"> <![endif]--><!--[if gt IE 8]><!-->
+<html class=no-js lang=en> <!--<![endif]-->
+<head>
+    <meta charset=utf-8>
+    <meta content="width=device-width, initial-scale=1.0" name=viewport>
+    <title>fdWaveModel simulation methods &mdash; forward-virieux documentation</title>
+    <script src=_static/js/modernizr.min.js type=text/javascript></script>
+    <script data-url_root=./ src=_static/documentation_options.js id=documentation_options type=text/javascript></script>
+    <script src=_static/jquery.js type=text/javascript></script>
+    <script src=_static/underscore.js type=text/javascript></script>
+    <script src=_static/doctools.js type=text/javascript></script>
+    <script src=_static/language_data.js type=text/javascript></script>
+    <script src=_static/js/theme.js type=text/javascript></script>
+    <link href=_static/css/theme.css rel=stylesheet type=text/css>
+    <link href=_static/pygments.css rel=stylesheet type=text/css>
+    <link href=genindex.html rel=index title=Index>
+    <link href=search.html rel=search title=Search>
+    <link href=miscellaneous.methods.html rel=next title="Miscellaneous methods">
+    <link href=fdwavemodel.class.configuration-file.html rel=prev title="Configuration files for fdWaveModel">
+</head>
+<body class=wy-body-for-nav>
+<div class=wy-grid-for-nav>
+    <nav class=wy-nav-side data-toggle=wy-nav-shift>
+        <div class=wy-side-scroll>
+            <div class=wy-side-nav-search><a class="icon icon-home" href=index.html> forward-virieux </a>
+                <div role=search>
+                    <form action=search.html class=wy-form id=rtd-search-form method=get><input name=q placeholder="Search docs" type=text> <input
+                            name=check_keywords type=hidden value=yes> <input name=area type=hidden value=default></form>
+                </div>
+            </div>
+            <div aria-label="main navigation" class="wy-menu wy-menu-vertical" data-spy=affix role=navigation><p class=caption><span
+                    class=caption-text>Contents:</span></p>
+                <ul class=current>
+                    <li class=toctree-l1><a class="reference internal" href=typical-workflow.html>Typical workflow</a></li>
+                    <li class="toctree-l1 current"><a class="reference internal" href=fdwavemodel.class.html>fdWaveModel class</a>
+                        <ul class=current>
+                            <li class=toctree-l2><a class="reference internal" href=fdwavemodel.class.configuration-file.html>Configuration files for
+                                fdWaveModel</a></li>
+                            <li class="toctree-l2 current"><a class="current reference internal" href=#>fdWaveModel simulation methods</a></li>
+                        </ul>
+                    </li>
+                    <li class=toctree-l1><a class="reference internal" href=miscellaneous.methods.html>Miscellaneous methods</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <section class=wy-nav-content-wrap data-toggle=wy-nav-shift>
+        <nav aria-label="top navigation" class=wy-nav-top><i class="fa fa-bars" data-toggle=wy-nav-top></i> <a href=index.html>forward-virieux</a>
+        </nav>
+        <div class=wy-nav-content>
+            <div class=rst-content>
+                <div aria-label="breadcrumbs navigation" role=navigation>
+                    <ul class=wy-breadcrumbs>
+                        <li><a href=index.html>Docs</a> &raquo;</li>
+                        <li><a href=fdwavemodel.class.html>fdWaveModel class</a> &raquo;</li>
+                        <li>fdWaveModel simulation methods</li>
+                        <li class=wy-breadcrumbs-aside><a href=_sources/fdwavemodel.class.simulation_methods.rst.txt rel=nofollow> View page
+                            source</a></li>
+                    </ul>
+                    <hr>
+                </div>
+                <div class=document itemscope=itemscope itemtype=http://schema.org/Article role=main>
+                    <div itemprop=articleBody>
+                        <div class=section id=fdwavemodel-simulation-methods><h1>fdWaveModel simulation methods<a class=headerlink
+                                                                                                                  href=#fdwavemodel-simulation-methods
+                                                                                                                  title="Permalink to this headline">¶</a>
+                        </h1>
+                            <dl class=function>
+                                <dt id=_CPPv4N11fdWaveModel16forward_simulateEibb><span id=_CPPv3N11fdWaveModel16forward_simulateEibb></span><span
+                                        id=_CPPv2N11fdWaveModel16forward_simulateEibb></span><span
+                                        id=fdWaveModel::forward_simulate__i.b.b></span><span class=target
+                                                                                             id=classfdWaveModel_1a59899da1979d17635c8aaea1a4044448></span>void
+                                    <code class=descclassname><a class="reference internal" href=fdwavemodel.class.html#_CPPv411fdWaveModel
+                                                                 title=fdWaveModel>fdWaveModel</a><code class=descclassname>::</code></code><code
+                                            class=descname>forward_simulate</code><span class=sig-paren>(</span>int <em>i_shot</em>, bool <em>store_fields</em>,
+                                    bool <em>verbose</em><span class=sig-paren>)</span><a class=headerlink
+                                                                                          href=#_CPPv4N11fdWaveModel16forward_simulateEibb
+                                                                                          title="Permalink to this definition">¶</a><br></dt>
+                                <dd><p>Method to forward simulate wavefields for a specific shot. </p>
+                                    <p>Forward simulate wavefields of shot i_shot based on currently loaded models. Storage of wavefields and
+                                        verbosity of run can be toggled.</p>
+                                    <p>
+                                    <dl class=docutils>
+                                        <dt><strong>Parameters</strong></dt>
+                                        <dd>
+                                            <ul class="breatheparameterlist first last simple">
+                                                <li><code class="docutils literal notranslate"><span class=pre>i_shot</span></code>: Integer
+                                                    controlling which shot to simulate.
+                                                </li>
+                                                <li><code class="docutils literal notranslate"><span class=pre>store_fields</span></code>: Boolean to
+                                                    control storage of wavefields. If storage is not required (i.e. no adjoint modeling), forward
+                                                    simulation should be faster without storage.
+                                                </li>
+                                                <li><code class="docutils literal notranslate"><span class=pre>verbose</span></code>: Boolean
+                                                    controlling if modelling should be verbose.
+                                                </li>
+                                            </ul>
+                                        </dd>
+                                    </dl>
+                                    </p> </dd>
+                            </dl>
+                            <dl class=function>
+                                <dt id=_CPPv4N11fdWaveModel16adjoint_simulateEib><span id=_CPPv3N11fdWaveModel16adjoint_simulateEib></span><span
+                                        id=_CPPv2N11fdWaveModel16adjoint_simulateEib></span><span id=fdWaveModel::adjoint_simulate__i.b></span><span
+                                        class=target id=classfdWaveModel_1ae26e2631262b4341f188c099076d4bfe></span>void <code class=descclassname><a
+                                        class="reference internal" href=fdwavemodel.class.html#_CPPv411fdWaveModel
+                                        title=fdWaveModel>fdWaveModel</a><code class=descclassname>::</code></code><code class=descname>adjoint_simulate</code><span
+                                        class=sig-paren>(</span>int <em>i_shot</em>, bool <em>verbose</em><span class=sig-paren>)</span><a
+                                        class=headerlink href=#_CPPv4N11fdWaveModel16adjoint_simulateEib
+                                        title="Permalink to this definition">¶</a><br></dt>
+                                <dd><p>Method to adjoint simulate wavefields for a specific shot. </p>
+                                    <p>Adjoint simulate wavefields of shot i_shot based on currently loaded models and calculate adjoint sources.
+                                        Verbosity of run can be toggled.</p>
+                                    <p>
+                                    <dl class=docutils>
+                                        <dt><strong>Parameters</strong></dt>
+                                        <dd>
+                                            <ul class="breatheparameterlist first last simple">
+                                                <li><code class="docutils literal notranslate"><span class=pre>i_shot</span></code>: Integer
+                                                    controlling which shot to simulate.
+                                                </li>
+                                                <li><code class="docutils literal notranslate"><span class=pre>verbose</span></code>: Boolean
+                                                    controlling if modelling should be verbose.
+                                                </li>
+                                            </ul>
+                                        </dd>
+                                    </dl>
+                                    </p> </dd>
+                            </dl>
+                            <dl class=function>
+                                <dt id=_CPPv4N11fdWaveModel15write_receiversEv><span id=_CPPv3N11fdWaveModel15write_receiversEv></span><span
+                                        id=_CPPv2N11fdWaveModel15write_receiversEv></span><span id=fdWaveModel::write_receivers></span><span
+                                        class=target id=classfdWaveModel_1ab3f0aee79fb92a51964117d10b0e6feb></span>void <code class=descclassname><a
+                                        class="reference internal" href=fdwavemodel.class.html#_CPPv411fdWaveModel
+                                        title=fdWaveModel>fdWaveModel</a><code class=descclassname>::</code></code><code class=descname>write_receivers</code><span
+                                        class=sig-paren>(</span><span class=sig-paren>)</span><a class=headerlink
+                                                                                                 href=#_CPPv4N11fdWaveModel15write_receiversEv
+                                                                                                 title="Permalink to this definition">¶</a><br></dt>
+                                <dd><p>Method to write out synthetic seismograms to plaintext. </p>
+                                    <p>This method writes out the synthetic seismograms to a plaintext file. Allows one to e.g. subsequently import
+                                        these files as observed seismograms later using <a class="reference internal"
+                                                                                           href=#classfdWaveModel_1a8e473d08e6ba5458bb36afe02b78c0c0><span
+                                                class="std std-ref">load_receivers()</span></a>. Every shot generates a separate ux and uz receiver
+                                        file (rtf_ux/rtf_uz), with every receiver being a single line in these files. </p></dd>
+                            </dl>
+                            <dl class=function>
+                                <dt id=_CPPv4N11fdWaveModel13write_sourcesEv><span id=_CPPv3N11fdWaveModel13write_sourcesEv></span><span
+                                        id=_CPPv2N11fdWaveModel13write_sourcesEv></span><span id=fdWaveModel::write_sources></span><span class=target
+                                                                                                                                         id=classfdWaveModel_1a30a5fa217b25743674c500c87697030a></span>void
+                                    <code class=descclassname><a class="reference internal" href=fdwavemodel.class.html#_CPPv411fdWaveModel
+                                                                 title=fdWaveModel>fdWaveModel</a><code class=descclassname>::</code></code><code
+                                            class=descname>write_sources</code><span class=sig-paren>(</span><span class=sig-paren>)</span><a
+                                            class=headerlink href=#_CPPv4N11fdWaveModel13write_sourcesEv
+                                            title="Permalink to this definition">¶</a><br></dt>
+                                <dd><p>Method to write out source signals to plaintext. </p>
+                                    <p>This method writes out the source time function (without moment tensor) to plaintext file. Useful for e.g.
+                                        visualizing the source staggering. </p></dd>
+                            </dl>
+                            <dl class=function>
+                                <dt id=_CPPv4N11fdWaveModel14load_receiversEb><span id=_CPPv3N11fdWaveModel14load_receiversEb></span><span
+                                        id=_CPPv2N11fdWaveModel14load_receiversEb></span><span id=fdWaveModel::load_receivers__b></span><span
+                                        class=target id=classfdWaveModel_1a8e473d08e6ba5458bb36afe02b78c0c0></span>void <code class=descclassname><a
+                                        class="reference internal" href=fdwavemodel.class.html#_CPPv411fdWaveModel
+                                        title=fdWaveModel>fdWaveModel</a><code class=descclassname>::</code></code><code
+                                        class=descname>load_receivers</code><span class=sig-paren>(</span>bool <em>verbose</em><span
+                                        class=sig-paren>)</span><a class=headerlink href=#_CPPv4N11fdWaveModel14load_receiversEb
+                                                                   title="Permalink to this definition">¶</a><br></dt>
+                                <dd><p>Method to load receiver files. </p>
+                                    <p>This method loads receiver data from observed_data_folder folder into the object. The data has to exactly match
+                                        the set-up, and be named according to component and shot (as generated by <a class="reference internal"
+                                                                                                                     href=#classfdWaveModel_1ab3f0aee79fb92a51964117d10b0e6feb><span
+                                                class="std std-ref">write_receivers()</span></a> ).</p>
+                                    <p>
+                                    <dl class=docutils>
+                                        <dt><strong>Parameters</strong></dt>
+                                        <dd>
+                                            <ul class="breatheparameterlist first last simple">
+                                                <li><code class="docutils literal notranslate"><span class=pre>verbose</span></code>: Controls the
+                                                    verbosity of the method during loading.
+                                                </li>
+                                            </ul>
+                                        </dd>
+                                    </dl>
+                                    </p> </dd>
+                            </dl>
+                            <dl class=function>
+                                <dt id=_CPPv4N11fdWaveModel10load_modelERKNSt6stringERKNSt6stringERKNSt6stringEb><span
+                                        id=_CPPv3N11fdWaveModel10load_modelERKNSt6stringERKNSt6stringERKNSt6stringEb></span><span
+                                        id=_CPPv2N11fdWaveModel10load_modelERKNSt6stringERKNSt6stringERKNSt6stringEb></span><span
+                                        id=fdWaveModel::load_model__ssCR.ssCR.ssCR.b></span><span class=target
+                                                                                                  id=classfdWaveModel_1a002be9879a78fb8030f362707eb2461a></span>void
+                                    <code class=descclassname><a class="reference internal" href=fdwavemodel.class.html#_CPPv411fdWaveModel
+                                                                 title=fdWaveModel>fdWaveModel</a><code class=descclassname>::</code></code><code
+                                            class=descname>load_model</code><span class=sig-paren>(</span><em class=property>const</em> std::string
+                                    &amp;<em>de_path</em>, <em class=property>const</em> std::string &amp;<em>vp_path</em>, <em
+                                            class=property>const</em> std::string &amp;<em>vs_path</em>, bool <em>verbose</em><span
+                                            class=sig-paren>)</span><a class=headerlink
+                                                                       href=#_CPPv4N11fdWaveModel10load_modelERKNSt6stringERKNSt6stringERKNSt6stringEb
+                                                                       title="Permalink to this definition">¶</a><br></dt>
+                                <dd><p>Method to load models from plaintext into the model. </p>
+                                    <p>This methods loads any appropriate model (expressed in density, P-wave velocity, and S-wave velocity) into the
+                                        class and updates the Lamé fields accordingly.</p>
+                                    <p>
+                                    <dl class=docutils>
+                                        <dt><strong>Parameters</strong></dt>
+                                        <dd>
+                                            <ul class="breatheparameterlist first last simple">
+                                                <li><code class="docutils literal notranslate"><span class=pre>de_path</span></code>: Relative path to
+                                                    plaintext de file.
+                                                </li>
+                                                <li><code class="docutils literal notranslate"><span class=pre>vp_path</span></code>: Relative path to
+                                                    plaintext vp file.
+                                                </li>
+                                                <li><code class="docutils literal notranslate"><span class=pre>vs_path</span></code>: Relative path to
+                                                    plaintext vs file.
+                                                </li>
+                                                <li><code class="docutils literal notranslate"><span class=pre>verbose</span></code>: Boolean
+                                                    controlling the verbosity of the method.
+                                                </li>
+                                            </ul>
+                                        </dd>
+                                    </dl>
+                                    </p> </dd>
+                            </dl>
+                            <dl class=function>
+                                <dt id=_CPPv4N11fdWaveModel23map_kernels_to_velocityEv><span
+                                        id=_CPPv3N11fdWaveModel23map_kernels_to_velocityEv></span><span
+                                        id=_CPPv2N11fdWaveModel23map_kernels_to_velocityEv></span><span
+                                        id=fdWaveModel::map_kernels_to_velocity></span><span class=target
+                                                                                             id=classfdWaveModel_1ae6d5bf504c58fe1d25e839af5293ae72></span>void
+                                    <code class=descclassname><a class="reference internal" href=fdwavemodel.class.html#_CPPv411fdWaveModel
+                                                                 title=fdWaveModel>fdWaveModel</a><code class=descclassname>::</code></code><code
+                                            class=descname>map_kernels_to_velocity</code><span class=sig-paren>(</span><span
+                                            class=sig-paren>)</span><a class=headerlink href=#_CPPv4N11fdWaveModel23map_kernels_to_velocityEv
+                                                                       title="Permalink to this definition">¶</a><br></dt>
+                                <dd><p>Method to map kernels to velocity parameter set. </p>
+                                    <p>This method takes the kernels (lambda, mu, rho) as originally calculated on the Lamé’s parameter set and maps
+                                        them to the velocity parameter set (vp, vs, rho). </p></dd>
+                            </dl>
+                            <dl class=function>
+                                <dt id=_CPPv4N11fdWaveModel13reset_kernelsEv><span id=_CPPv3N11fdWaveModel13reset_kernelsEv></span><span
+                                        id=_CPPv2N11fdWaveModel13reset_kernelsEv></span><span id=fdWaveModel::reset_kernels></span><span class=target
+                                                                                                                                         id=classfdWaveModel_1adef37da9eadb8a8de939a218ffc6f70c></span>void
+                                    <code class=descclassname><a class="reference internal" href=fdwavemodel.class.html#_CPPv411fdWaveModel
+                                                                 title=fdWaveModel>fdWaveModel</a><code class=descclassname>::</code></code><code
+                                            class=descname>reset_kernels</code><span class=sig-paren>(</span><span class=sig-paren>)</span><a
+                                            class=headerlink href=#_CPPv4N11fdWaveModel13reset_kernelsEv
+                                            title="Permalink to this definition">¶</a><br></dt>
+                                <dd><p>Method to reset all Lamé sensitivity kernels to zero. </p>
+                                    <p>This method resets all sensitivity kernels to zero. Essential before performing new adjoint simulations, as
+                                        otherwise the kernels of subsequent simulations would stack. </p></dd>
+                            </dl>
+                            <dl class=function>
+                                <dt id=_CPPv4N11fdWaveModel20update_from_velocityEv><span id=_CPPv3N11fdWaveModel20update_from_velocityEv></span><span
+                                        id=_CPPv2N11fdWaveModel20update_from_velocityEv></span><span id=fdWaveModel::update_from_velocity></span><span
+                                        class=target id=classfdWaveModel_1a72451695f482b1728650aadf410b29cf></span>void <code class=descclassname><a
+                                        class="reference internal" href=fdwavemodel.class.html#_CPPv411fdWaveModel
+                                        title=fdWaveModel>fdWaveModel</a><code class=descclassname>::</code></code><code class=descname>update_from_velocity</code><span
+                                        class=sig-paren>(</span><span class=sig-paren>)</span><a class=headerlink
+                                                                                                 href=#_CPPv4N11fdWaveModel20update_from_velocityEv
+                                                                                                 title="Permalink to this definition">¶</a><br></dt>
+                                <dd><p>Method to map velocities into Lamé’s parameter set. </p>
+                                    <p>This method updates Lamé’s parameters of the current model based on the velocity parameters of the current
+                                        model. Typically has to be done every time after updating velocity. </p></dd>
+                            </dl>
+                            <dl class=function>
+                                <dt id=_CPPv4N11fdWaveModel19calculate_l2_misfitEv><span id=_CPPv3N11fdWaveModel19calculate_l2_misfitEv></span><span
+                                        id=_CPPv2N11fdWaveModel19calculate_l2_misfitEv></span><span id=fdWaveModel::calculate_l2_misfit></span><span
+                                        class=target id=classfdWaveModel_1ada1958e4cd674808680b844d8049a4ea></span>void <code class=descclassname><a
+                                        class="reference internal" href=fdwavemodel.class.html#_CPPv411fdWaveModel
+                                        title=fdWaveModel>fdWaveModel</a><code class=descclassname>::</code></code><code class=descname>calculate_l2_misfit</code><span
+                                        class=sig-paren>(</span><span class=sig-paren>)</span><a class=headerlink
+                                                                                                 href=#_CPPv4N11fdWaveModel19calculate_l2_misfitEv
+                                                                                                 title="Permalink to this definition">¶</a><br></dt>
+                                <dd><p>Method to calculate L2 misfit. </p>
+                                    <p>This method calculates L2 misfit between observed seismograms and synthetic seismograms and stores it in the
+                                        misfit field. </p></dd>
+                            </dl>
+                            <dl class=function>
+                                <dt id=_CPPv4N11fdWaveModel28calculate_l2_adjoint_sourcesEv><span
+                                        id=_CPPv3N11fdWaveModel28calculate_l2_adjoint_sourcesEv></span><span
+                                        id=_CPPv2N11fdWaveModel28calculate_l2_adjoint_sourcesEv></span><span
+                                        id=fdWaveModel::calculate_l2_adjoint_sources></span><span class=target
+                                                                                                  id=classfdWaveModel_1a165e5cddb04d2bc3ee3fcfe1b4a31a14></span>void
+                                    <code class=descclassname><a class="reference internal" href=fdwavemodel.class.html#_CPPv411fdWaveModel
+                                                                 title=fdWaveModel>fdWaveModel</a><code class=descclassname>::</code></code><code
+                                            class=descname>calculate_l2_adjoint_sources</code><span class=sig-paren>(</span><span
+                                            class=sig-paren>)</span><a class=headerlink href=#_CPPv4N11fdWaveModel28calculate_l2_adjoint_sourcesEv
+                                                                       title="Permalink to this definition">¶</a><br></dt>
+                                <dd><p>Method to calculate L2 adjoint sources This method calculates L2 misfit between observed seismograms and
+                                    synthetic seismograms and stores it in the misfit field. </p></dd>
+                            </dl>
+                            <dl class=function>
+                                <dt id=_CPPv4N11fdWaveModel9run_modelEb><span id=_CPPv3N11fdWaveModel9run_modelEb></span><span
+                                        id=_CPPv2N11fdWaveModel9run_modelEb></span><span id=fdWaveModel::run_model__b></span><span class=target
+                                                                                                                                   id=classfdWaveModel_1ad7451b08f8a581a477856c3ea3fec5d2></span>void
+                                    <code class=descclassname><a class="reference internal" href=fdwavemodel.class.html#_CPPv411fdWaveModel
+                                                                 title=fdWaveModel>fdWaveModel</a><code class=descclassname>::</code></code><code
+                                            class=descname>run_model</code><span class=sig-paren>(</span>bool <em>verbose</em><span
+                                            class=sig-paren>)</span><br></dt>
+                                <dd><p>Method to perform all steps necessary for FWI. </p>
+                                    <p>This method performs all necessary steps in FWI; forward modelling, misfit calculation adjoint source
+                                        calculation, adjoint modelling and kernel projection. Delegates to <a class="reference internal"
+                                                                                                              href=#classfdWaveModel_1a65eef518ac5243cbb3aa88f76ac73934><span
+                                                class="std std-ref">run_model(bool verbose, bool simulate_adjoint)</span></a>.</p>
+                                    <p>
+                                    <dl class=docutils>
+                                        <dt><strong>Parameters</strong></dt>
+                                        <dd>
+                                            <ul class="breatheparameterlist first last simple">
+                                                <li><code class="docutils literal notranslate"><span class=pre>verbose</span></code>: Boolean
+                                                    controlling the verbosity of the method.
+                                                </li>
+                                            </ul>
+                                        </dd>
+                                    </dl>
+                                    </p> </dd>
+                            </dl>
+                            <dl class=function>
+                                <dt id=_CPPv4N11fdWaveModel9run_modelEbb><span id=_CPPv3N11fdWaveModel9run_modelEbb></span><span
+                                        id=_CPPv2N11fdWaveModel9run_modelEbb></span><span id=fdWaveModel::run_model__b.b></span><span class=target
+                                                                                                                                      id=classfdWaveModel_1a65eef518ac5243cbb3aa88f76ac73934></span>void
+                                    <code class=descclassname><a class="reference internal" href=fdwavemodel.class.html#_CPPv411fdWaveModel
+                                                                 title=fdWaveModel>fdWaveModel</a><code class=descclassname>::</code></code><code
+                                            class=descname>run_model</code><span class=sig-paren>(</span>bool <em>verbose</em>, bool <em>simulate_adjoint</em><span
+                                            class=sig-paren>)</span><br></dt>
+                                <dd><p>Method to perform all steps necessary for FWI, with additional control over adjoint simulation. </p>
+                                    <p>This method performs all necessary steps in FWI; forward modelling, misfit calculation and optionally adjoint
+                                        source calculation, adjoint modelling and kernel projection.</p>
+                                    <p>
+                                    <dl class=docutils>
+                                        <dt><strong>Parameters</strong></dt>
+                                        <dd>
+                                            <ul class="breatheparameterlist first last simple">
+                                                <li><code class="docutils literal notranslate"><span class=pre>verbose</span></code>: Boolean
+                                                    controlling the verbosity of the method.
+                                                </li>
+                                                <li><code class="docutils literal notranslate"><span class=pre>simulate_adjoint</span></code>: Boolean
+                                                    controlling the execution of the adjoint simulation and kernel computation.
+                                                </li>
+                                            </ul>
+                                        </dd>
+                                    </dl>
+                                    </p> </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+                <footer>
+                    <div aria-label="footer navigation" class=rst-footer-buttons role=navigation><a accesskey=n class="btn btn-neutral float-right"
+                                                                                                    href=miscellaneous.methods.html rel=next
+                                                                                                    title="Miscellaneous methods">Next <span
+                            class="fa fa-arrow-circle-right"></span></a> <a accesskey=p class="btn btn-neutral float-left"
+                                                                            href=fdwavemodel.class.configuration-file.html rel=prev
+                                                                            title="Configuration files for fdWaveModel"><span
+                            class="fa fa-arrow-circle-left"></span> Previous</a></div>
+                    <hr>
+                    <div role=contentinfo><p> &copy; Copyright 2019, Lars Gebraad </p></div>
+                    Built with <a href=http://sphinx-doc.org/ >Sphinx</a> using a <a href=https://github.com/rtfd/sphinx_rtd_theme>theme</a> provided
+                    by <a href=https://readthedocs.org>Read the Docs</a>.
+                </footer>
+            </div>
+        </div>
+    </section>
+</div>
+<script type=text/javascript>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });

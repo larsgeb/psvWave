@@ -1,0 +1,458 @@
+<!DOCTYPE html><!--[if IE 8]>
+<html class="no-js lt-ie9" lang="en"> <![endif]--><!--[if gt IE 8]><!-->
+<html class=no-js lang=en> <!--<![endif]-->
+<head>
+    <meta charset=utf-8>
+    <meta content="width=device-width, initial-scale=1.0" name=viewport>
+    <title>Miscellaneous methods &mdash; forward-virieux documentation</title>
+    <script src=_static/js/modernizr.min.js type=text/javascript></script>
+    <script data-url_root=./ src=_static/documentation_options.js id=documentation_options type=text/javascript></script>
+    <script src=_static/jquery.js type=text/javascript></script>
+    <script src=_static/underscore.js type=text/javascript></script>
+    <script src=_static/doctools.js type=text/javascript></script>
+    <script src=_static/language_data.js type=text/javascript></script>
+    <script src=_static/js/theme.js type=text/javascript></script>
+    <link href=_static/css/theme.css rel=stylesheet type=text/css>
+    <link href=_static/pygments.css rel=stylesheet type=text/css>
+    <link href=genindex.html rel=index title=Index>
+    <link href=search.html rel=search title=Search>
+    <link href=fdwavemodel.class.simulation_methods.html rel=prev title="fdWaveModel simulation methods">
+</head>
+<body class=wy-body-for-nav>
+<div class=wy-grid-for-nav>
+    <nav class=wy-nav-side data-toggle=wy-nav-shift>
+        <div class=wy-side-scroll>
+            <div class=wy-side-nav-search><a class="icon icon-home" href=index.html> forward-virieux </a>
+                <div role=search>
+                    <form action=search.html class=wy-form id=rtd-search-form method=get><input name=q placeholder="Search docs" type=text> <input
+                            name=check_keywords type=hidden value=yes> <input name=area type=hidden value=default></form>
+                </div>
+            </div>
+            <div aria-label="main navigation" class="wy-menu wy-menu-vertical" data-spy=affix role=navigation><p class=caption><span
+                    class=caption-text>Contents:</span></p>
+                <ul class=current>
+                    <li class=toctree-l1><a class="reference internal" href=typical-workflow.html>Typical workflow</a></li>
+                    <li class=toctree-l1><a class="reference internal" href=fdwavemodel.class.html>fdWaveModel class</a></li>
+                    <li class="toctree-l1 current"><a class="current reference internal" href=#>Miscellaneous methods</a>
+                        <ul>
+                            <li class=toctree-l2><a class="reference internal" href=#allocation-and-de-allocation-functions>Allocation and
+                                de-allocation functions</a></li>
+                            <li class=toctree-l2><a class="reference internal" href=#parse-functions>Parse functions</a></li>
+                            <li class=toctree-l2><a class="reference internal" href=#signal-processing-functions>Signal processing functions</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <section class=wy-nav-content-wrap data-toggle=wy-nav-shift>
+        <nav aria-label="top navigation" class=wy-nav-top><i class="fa fa-bars" data-toggle=wy-nav-top></i> <a href=index.html>forward-virieux</a>
+        </nav>
+        <div class=wy-nav-content>
+            <div class=rst-content>
+                <div aria-label="breadcrumbs navigation" role=navigation>
+                    <ul class=wy-breadcrumbs>
+                        <li><a href=index.html>Docs</a> &raquo;</li>
+                        <li>Miscellaneous methods</li>
+                        <li class=wy-breadcrumbs-aside><a href=_sources/miscellaneous.methods.rst.txt rel=nofollow> View page source</a></li>
+                    </ul>
+                    <hr>
+                </div>
+                <div class=document itemscope=itemscope itemtype=http://schema.org/Article role=main>
+                    <div itemprop=articleBody>
+                        <div class=section id=miscellaneous-methods><h1>Miscellaneous methods<a class=headerlink href=#miscellaneous-methods
+                                                                                                title="Permalink to this headline">¶</a></h1>
+                            <div class=section id=allocation-and-de-allocation-functions><h2>Allocation and de-allocation functions<a class=headerlink
+                                                                                                                                      href=#allocation-and-de-allocation-functions
+                                                                                                                                      title="Permalink to this headline">¶</a>
+                            </h2>
+                                <p>In general, allocating arrays requires one to know the size of all dimensions of the array, whereas de-allocating
+                                    requires you to know the all but the inner dimension size.</p>
+                                <dl class=function>
+                                    <dt id=_CPPv417allocate_1d_arrayRP15real_simulationi><span
+                                            id=_CPPv317allocate_1d_arrayRP15real_simulationi></span><span
+                                            id=_CPPv217allocate_1d_arrayRP15real_simulationi></span><span
+                                            id=allocate_1d_array__real_simulationPR.i></span><span class=target
+                                                                                                   id=fdWaveModel_8h_1a1b4bf4a91f915b855b4705a2a173b08a></span>void
+                                        <code class=descname>allocate_1d_array</code><span class=sig-paren>(</span>real_simulation
+                                        *&amp;<em>pDouble</em>, int <em>dim1</em><span class=sig-paren>)</span><a class=headerlink
+                                                                                                                  href=#_CPPv417allocate_1d_arrayRP15real_simulationi
+                                                                                                                  title="Permalink to this definition">¶</a><br>
+                                    </dt>
+                                    <dd><p>Function to allocate 1d dynamic arrays. </p>
+                                        <p>
+                                        <dl class=docutils>
+                                            <dt><strong>Parameters</strong></dt>
+                                            <dd>
+                                                <ul class="breatheparameterlist first last simple">
+                                                    <li><code class="docutils literal notranslate"><span class=pre>pDouble</span></code>: rvalue to
+                                                        pointer of 1d array.
+                                                    </li>
+                                                    <li><code class="docutils literal notranslate"><span class=pre>dim1</span></code>: First dimension
+                                                        of 1d array.
+                                                    </li>
+                                                </ul>
+                                            </dd>
+                                        </dl>
+                                        </p> </dd>
+                                </dl>
+                                <dl class=function>
+                                    <dt id=_CPPv419deallocate_1d_arrayRP15real_simulation><span
+                                            id=_CPPv319deallocate_1d_arrayRP15real_simulation></span><span
+                                            id=_CPPv219deallocate_1d_arrayRP15real_simulation></span><span
+                                            id=deallocate_1d_array__real_simulationPR></span><span class=target
+                                                                                                   id=fdWaveModel_8h_1a83a352903be0e75c5f4cec83a7c6b97e></span>void
+                                        <code class=descname>deallocate_1d_array</code><span class=sig-paren>(</span>real_simulation
+                                        *&amp;<em>pDouble</em><span class=sig-paren>)</span><a class=headerlink
+                                                                                               href=#_CPPv419deallocate_1d_arrayRP15real_simulation
+                                                                                               title="Permalink to this definition">¶</a><br></dt>
+                                    <dd><p>Function to de-allocate 1d dynamic arrays. </p>
+                                        <p>
+                                        <dl class=docutils>
+                                            <dt><strong>Parameters</strong></dt>
+                                            <dd>
+                                                <ul class="breatheparameterlist first last simple">
+                                                    <li><code class="docutils literal notranslate"><span class=pre>pDouble</span></code>: rvalue to
+                                                        pointer of 1d array.
+                                                    </li>
+                                                </ul>
+                                            </dd>
+                                        </dl>
+                                        </p> </dd>
+                                </dl>
+                                <dl class=function>
+                                    <dt id=_CPPv417allocate_2d_arrayRPP15real_simulationii><span
+                                            id=_CPPv317allocate_2d_arrayRPP15real_simulationii></span><span
+                                            id=_CPPv217allocate_2d_arrayRPP15real_simulationii></span><span
+                                            id=allocate_2d_array__real_simulationPPR.i.i></span><span class=target
+                                                                                                      id=fdWaveModel_8h_1a12e37fbe1361db8eb7f1a19c22ebc018></span>void
+                                        <code class=descname>allocate_2d_array</code><span class=sig-paren>(</span>real_simulation
+                                        **&amp;<em>pDouble</em>, int <em>dim1</em>, int <em>dim2</em><span class=sig-paren>)</span><a class=headerlink
+                                                                                                                                      href=#_CPPv417allocate_2d_arrayRPP15real_simulationii
+                                                                                                                                      title="Permalink to this definition">¶</a><br>
+                                    </dt>
+                                    <dd><p>Function to allocate 2d dynamic arrays. </p>
+                                        <p>
+                                        <dl class=docutils>
+                                            <dt><strong>Parameters</strong></dt>
+                                            <dd>
+                                                <ul class="breatheparameterlist first last simple">
+                                                    <li><code class="docutils literal notranslate"><span class=pre>pDouble</span></code>: rvalue to
+                                                        pointer of 2d array.
+                                                    </li>
+                                                    <li><code class="docutils literal notranslate"><span class=pre>dim1</span></code>: First dimension
+                                                        of 2d array.
+                                                    </li>
+                                                    <li><code class="docutils literal notranslate"><span class=pre>dim2</span></code>: Second
+                                                        dimension of 2d array.
+                                                    </li>
+                                                </ul>
+                                            </dd>
+                                        </dl>
+                                        </p> </dd>
+                                </dl>
+                                <dl class=function>
+                                    <dt id=_CPPv419deallocate_2d_arrayRPP15real_simulationi><span
+                                            id=_CPPv319deallocate_2d_arrayRPP15real_simulationi></span><span
+                                            id=_CPPv219deallocate_2d_arrayRPP15real_simulationi></span><span
+                                            id=deallocate_2d_array__real_simulationPPR.i></span><span class=target
+                                                                                                      id=fdWaveModel_8h_1a9399c0ec5e7f52b6f464abe5830577a6></span>void
+                                        <code class=descname>deallocate_2d_array</code><span class=sig-paren>(</span>real_simulation **&amp;<em>pDouble</em>,
+                                        int <em>dim1</em><span class=sig-paren>)</span><a class=headerlink
+                                                                                          href=#_CPPv419deallocate_2d_arrayRPP15real_simulationi
+                                                                                          title="Permalink to this definition">¶</a><br></dt>
+                                    <dd><p>Function to de-allocate 2d dynamic arrays. </p>
+                                        <p>
+                                        <dl class=docutils>
+                                            <dt><strong>Parameters</strong></dt>
+                                            <dd>
+                                                <ul class="breatheparameterlist first last simple">
+                                                    <li><code class="docutils literal notranslate"><span class=pre>pDouble</span></code>: rvalue to
+                                                        pointer of 2d array.
+                                                    </li>
+                                                    <li><code class="docutils literal notranslate"><span class=pre>dim1</span></code>: First dimension
+                                                        of 2d array.
+                                                    </li>
+                                                </ul>
+                                            </dd>
+                                        </dl>
+                                        </p> </dd>
+                                </dl>
+                                <dl class=function>
+                                    <dt id=_CPPv417allocate_3d_arrayRPPP15real_simulationiii><span
+                                            id=_CPPv317allocate_3d_arrayRPPP15real_simulationiii></span><span
+                                            id=_CPPv217allocate_3d_arrayRPPP15real_simulationiii></span><span
+                                            id=allocate_3d_array__real_simulationPPPR.i.i.i></span><span class=target
+                                                                                                         id=fdWaveModel_8h_1aeca93ca8e2333052d75ee6c9b4b92834></span>void
+                                        <code class=descname>allocate_3d_array</code><span class=sig-paren>(</span>real_simulation
+                                        ***&amp;<em>pDouble</em>, int <em>dim1</em>, int <em>dim2</em>, int <em>dim3</em><span
+                                                class=sig-paren>)</span><a class=headerlink href=#_CPPv417allocate_3d_arrayRPPP15real_simulationiii
+                                                                           title="Permalink to this definition">¶</a><br></dt>
+                                    <dd><p>Function to allocate 4d dynamic arrays. </p>
+                                        <p>
+                                        <dl class=docutils>
+                                            <dt><strong>Parameters</strong></dt>
+                                            <dd>
+                                                <ul class="breatheparameterlist first last simple">
+                                                    <li><code class="docutils literal notranslate"><span class=pre>pDouble</span></code>: rvalue to
+                                                        pointer of 3d array.
+                                                    </li>
+                                                    <li><code class="docutils literal notranslate"><span class=pre>dim1</span></code>: First dimension
+                                                        of 3d array.
+                                                    </li>
+                                                    <li><code class="docutils literal notranslate"><span class=pre>dim2</span></code>: Second
+                                                        dimension of 3d array.
+                                                    </li>
+                                                    <li><code class="docutils literal notranslate"><span class=pre>dim3</span></code>: Third dimension
+                                                        of 3d array.
+                                                    </li>
+                                                </ul>
+                                            </dd>
+                                        </dl>
+                                        </p> </dd>
+                                </dl>
+                                <dl class=function>
+                                    <dt id=_CPPv419deallocate_3d_arrayRPPP15real_simulationii><span
+                                            id=_CPPv319deallocate_3d_arrayRPPP15real_simulationii></span><span
+                                            id=_CPPv219deallocate_3d_arrayRPPP15real_simulationii></span><span
+                                            id=deallocate_3d_array__real_simulationPPPR.i.i></span><span class=target
+                                                                                                         id=fdWaveModel_8h_1a491902c835d23640e6ff0364c55d49fd></span>void
+                                        <code class=descname>deallocate_3d_array</code><span class=sig-paren>(</span>real_simulation ***&amp;<em>pDouble</em>,
+                                        int <em>dim1</em>, int <em>dim2</em><span class=sig-paren>)</span><a class=headerlink
+                                                                                                             href=#_CPPv419deallocate_3d_arrayRPPP15real_simulationii
+                                                                                                             title="Permalink to this definition">¶</a><br>
+                                    </dt>
+                                    <dd><p>Function to de-allocate 3d dynamic arrays. </p>
+                                        <p>
+                                        <dl class=docutils>
+                                            <dt><strong>Parameters</strong></dt>
+                                            <dd>
+                                                <ul class="breatheparameterlist first last simple">
+                                                    <li><code class="docutils literal notranslate"><span class=pre>pDouble</span></code>: rvalue to
+                                                        pointer of 3d array.
+                                                    </li>
+                                                    <li><code class="docutils literal notranslate"><span class=pre>dim1</span></code>: First dimension
+                                                        of 3d array.
+                                                    </li>
+                                                    <li><code class="docutils literal notranslate"><span class=pre>dim2</span></code>: Second
+                                                        dimension of 3d array.
+                                                    </li>
+                                                </ul>
+                                            </dd>
+                                        </dl>
+                                        </p> </dd>
+                                </dl>
+                                <dl class=function>
+                                    <dt id=_CPPv417allocate_4d_arrayRPPPP15real_simulationiiii><span
+                                            id=_CPPv317allocate_4d_arrayRPPPP15real_simulationiiii></span><span
+                                            id=_CPPv217allocate_4d_arrayRPPPP15real_simulationiiii></span><span
+                                            id=allocate_4d_array__real_simulationPPPPR.i.i.i.i></span><span class=target
+                                                                                                            id=fdWaveModel_8h_1a3c7d12bfe6f8a099f41809a907e40a7f></span>void
+                                        <code class=descname>allocate_4d_array</code><span class=sig-paren>(</span>real_simulation ****&amp;<em>pDouble</em>,
+                                        int <em>dim1</em>, int <em>dim2</em>, int <em>dim3</em>, int <em>dim4</em><span class=sig-paren>)</span><a
+                                                class=headerlink href=#_CPPv417allocate_4d_arrayRPPPP15real_simulationiiii
+                                                title="Permalink to this definition">¶</a><br></dt>
+                                    <dd><p>Function to allocate 4d dynamic arrays. </p>
+                                        <p>
+                                        <dl class=docutils>
+                                            <dt><strong>Parameters</strong></dt>
+                                            <dd>
+                                                <ul class="breatheparameterlist first last simple">
+                                                    <li><code class="docutils literal notranslate"><span class=pre>pDouble</span></code>: rvalue to
+                                                        pointer of 4d array.
+                                                    </li>
+                                                    <li><code class="docutils literal notranslate"><span class=pre>dim1</span></code>: First dimension
+                                                        of 4d array.
+                                                    </li>
+                                                    <li><code class="docutils literal notranslate"><span class=pre>dim2</span></code>: Second
+                                                        dimension of 4d array.
+                                                    </li>
+                                                    <li><code class="docutils literal notranslate"><span class=pre>dim3</span></code>: Third dimension
+                                                        of 4d array.
+                                                    </li>
+                                                    <li><code class="docutils literal notranslate"><span class=pre>dim4</span></code>: Fourth
+                                                        dimension of 4d array.
+                                                    </li>
+                                                </ul>
+                                            </dd>
+                                        </dl>
+                                        </p> </dd>
+                                </dl>
+                                <dl class=function>
+                                    <dt id=_CPPv419deallocate_4d_arrayRPPPP15real_simulationiii><span
+                                            id=_CPPv319deallocate_4d_arrayRPPPP15real_simulationiii></span><span
+                                            id=_CPPv219deallocate_4d_arrayRPPPP15real_simulationiii></span><span
+                                            id=deallocate_4d_array__real_simulationPPPPR.i.i.i></span><span class=target
+                                                                                                            id=fdWaveModel_8h_1a7b4f349b385c1f13692134096d4338fc></span>void
+                                        <code class=descname>deallocate_4d_array</code><span class=sig-paren>(</span>real_simulation ****&amp;<em>pDouble</em>,
+                                        int <em>dim1</em>, int <em>dim2</em>, int <em>dim3</em><span class=sig-paren>)</span><a class=headerlink
+                                                                                                                                href=#_CPPv419deallocate_4d_arrayRPPPP15real_simulationiii
+                                                                                                                                title="Permalink to this definition">¶</a><br>
+                                    </dt>
+                                    <dd><p>Function to de-allocate 4d dynamic arrays. </p>
+                                        <p>
+                                        <dl class=docutils>
+                                            <dt><strong>Parameters</strong></dt>
+                                            <dd>
+                                                <ul class="breatheparameterlist first last simple">
+                                                    <li><code class="docutils literal notranslate"><span class=pre>pDouble</span></code>: rvalue to
+                                                        pointer of 4d array.
+                                                    </li>
+                                                    <li><code class="docutils literal notranslate"><span class=pre>dim1</span></code>: First dimension
+                                                        of 4d array.
+                                                    </li>
+                                                    <li><code class="docutils literal notranslate"><span class=pre>dim2</span></code>: Second
+                                                        dimension of 4d array.
+                                                    </li>
+                                                    <li><code class="docutils literal notranslate"><span class=pre>dim3</span></code>: Third dimension
+                                                        of 4d array.
+                                                    </li>
+                                                </ul>
+                                            </dd>
+                                        </dl>
+                                        </p> </dd>
+                                </dl>
+                            </div>
+                            <div class=section id=parse-functions><h2>Parse functions<a class=headerlink href=#parse-functions
+                                                                                        title="Permalink to this headline">¶</a></h2>
+                                <dl class=function>
+                                    <dt id=_CPPv4I0E22parse_string_to_vectorvNSt12basic_stringIcEEPNSt6vectorI1TEE><span
+                                            id=_CPPv3I0E22parse_string_to_vectorNSt12basic_stringIcEEPNSt6vectorI1TEE></span><span
+                                            id=_CPPv2I0E22parse_string_to_vectorNSt12basic_stringIcEEPNSt6vectorI1TEE></span><span class=target
+                                                                                                                                   id=fdWaveModel_8h_1ae256dbb0fb73e80a6458da0b3db12562></span>template&lt;class
+                                        <code class=descname>T</code>&gt;<br>void <code class=descname>parse_string_to_vector</code><span
+                                                class=sig-paren>(</span>std::basic_string&lt;char&gt; <em>string_to_parse</em>, std::vector&lt;<a
+                                                class="reference internal"
+                                                href=#_CPPv4I0E22parse_string_to_vectorvNSt12basic_stringIcEEPNSt6vectorI1TEE
+                                                title=parse_string_to_vector::T>T</a>&gt; *<em>destination_vector</em><span class=sig-paren>)</span><a
+                                                class=headerlink href=#_CPPv4I0E22parse_string_to_vectorvNSt12basic_stringIcEEPNSt6vectorI1TEE
+                                                title="Permalink to this definition">¶</a><br></dt>
+                                    <dd><p>Function to parse strings containing lists to std::vectors. </p>
+                                        <p>Parses any string in the format {a, b, c, d, …} to a vector of int, float, double. Only types that can be
+                                            cast to floats are supported for now. This is due to the usage of strtof(); no template variant is used as
+                                            of yet. The input string is allowed to be trailed by a comment leading with a semicolon. Items are
+                                            appended to the passed vector.</p>
+                                        <p>
+                                        <dl class=docutils>
+                                            <dt><strong>Template Parameters</strong></dt>
+                                            <dd>
+                                                <ul class="breatheparameterlist first last simple">
+                                                    <li><code class="docutils literal notranslate"><span class=pre>T</span></code>: Arbitrary numeric
+                                                        type that has a cast to and from float.
+                                                    </li>
+                                                </ul>
+                                            </dd>
+                                            <dt><strong>Parameters</strong></dt>
+                                            <dd>
+                                                <ul class="breatheparameterlist first last simple">
+                                                    <li><code class="docutils literal notranslate"><span class=pre>string_to_parse</span></code>:
+                                                        Input string of the form “{&lt;item1&gt;, &lt;item2&gt;, &lt;item3&gt;, … } ; comment “.
+                                                    </li>
+                                                    <li><code class="docutils literal notranslate"><span class=pre>destination_vector</span></code>:
+                                                        Pointer to an (not necessarily empty) vector of suitable type.
+                                                    </li>
+                                                </ul>
+                                            </dd>
+                                        </dl>
+                                        </p> </dd>
+                                </dl>
+                                <dl class=function>
+                                    <dt id=_CPPv433parse_string_to_nested_int_vectorNSt12basic_stringIcEEPNSt6vectorINSt6vectorIiEEEE><span
+                                            id=_CPPv333parse_string_to_nested_int_vectorNSt12basic_stringIcEEPNSt6vectorINSt6vectorIiEEEE></span><span
+                                            id=_CPPv233parse_string_to_nested_int_vectorNSt12basic_stringIcEEPNSt6vectorINSt6vectorIiEEEE></span><span
+                                            id=parse_string_to_nested_int_vector__std::basic_string:c:.std::vector:std::vector:i::P></span><span
+                                            class=target id=fdWaveModel_8h_1a9370bc40f1a6cd81d1b2fb95b95d7508></span>void <code class=descname>parse_string_to_nested_int_vector</code><span
+                                            class=sig-paren>(</span>std::basic_string&lt;char&gt; <em>string_to_parse</em>, std::vector&lt;std::vector&lt;int&gt;&gt;
+                                        *<em>destination_vector</em><span class=sig-paren>)</span><a class=headerlink
+                                                                                                     href=#_CPPv433parse_string_to_nested_int_vectorNSt12basic_stringIcEEPNSt6vectorINSt6vectorIiEEEE
+                                                                                                     title="Permalink to this definition">¶</a><br>
+                                    </dt>
+                                    <dd><p>Function to parse strings containing 2d integer lists to std::vector&lt;std::vector&lt;int&gt;&gt;.
+                                        Sublists do not need to be of the same length. </p>
+                                        <p>
+                                        <dl class=docutils>
+                                            <dt><strong>Parameters</strong></dt>
+                                            <dd>
+                                                <ul class="breatheparameterlist first last simple">
+                                                    <li><code class="docutils literal notranslate"><span class=pre>string_to_parse</span></code>:
+                                                        Input string of the form “{{&lt;item1.1&gt;, &lt;item1.2&gt;, &lt;item1.3&gt;, …}, {&lt;item2.1&gt;,
+                                                        &lt;item2.2&gt;, …}, … } ; comment “.
+                                                    </li>
+                                                    <li><code class="docutils literal notranslate"><span class=pre>destination_vector</span></code>:
+                                                        Pointer to an (not necessarily empty) std::vector&lt;std::vector&lt;int&gt;&gt;.
+                                                    </li>
+                                                </ul>
+                                            </dd>
+                                        </dl>
+                                        </p> </dd>
+                                </dl>
+                            </div>
+                            <div class=section id=signal-processing-functions><h2>Signal processing functions<a class=headerlink
+                                                                                                                href=#signal-processing-functions
+                                                                                                                title="Permalink to this headline">¶</a>
+                            </h2>
+                                <dl class=function>
+                                    <dt id=_CPPv415cross_correlatePK15real_simulationPK15real_simulationP15real_simulationii><span
+                                            id=_CPPv315cross_correlatePK15real_simulationPK15real_simulationP15real_simulationii></span><span
+                                            id=_CPPv215cross_correlatePK15real_simulationPK15real_simulationP15real_simulationii></span><span
+                                            id=cross_correlate__real_simulationCP.real_simulationCP.real_simulationP.i.i></span><span class=target
+                                                                                                                                      id=fdWaveModel_8h_1ab7ea7063e57b7d6af09376a38e002317></span>void
+                                        <code class=descname>cross_correlate</code><span class=sig-paren>(</span><em class=property>const</em>
+                                        real_simulation *<em>signal1</em>, <em class=property>const</em> real_simulation *<em>signal2</em>,
+                                        real_simulation *<em>r</em>, int <em>length</em>, int <em>max_delay</em> = 1000<span
+                                                class=sig-paren>)</span><a class=headerlink
+                                                                           href=#_CPPv415cross_correlatePK15real_simulationPK15real_simulationP15real_simulationii
+                                                                           title="Permalink to this definition">¶</a><br></dt>
+                                    <dd><p>Method to the compute cross correlation between two signals up to a maximum delay. </p>
+                                        <p>
+                                        <dl class=docutils>
+                                            <dt><strong>Parameters</strong></dt>
+                                            <dd>
+                                                <ul class="breatheparameterlist first last simple">
+                                                    <li><code class="docutils literal notranslate"><span class=pre>signal1</span></code>: Pointer to
+                                                        first signal.
+                                                    </li>
+                                                    <li><code class="docutils literal notranslate"><span class=pre>signal2</span></code>: Pointer to
+                                                        second signal.
+                                                    </li>
+                                                    <li><code class="docutils literal notranslate"><span class=pre>r</span></code>: Pointer to
+                                                        cross-correlation array. Should be have memory allocated twice the max_delay size.
+                                                    </li>
+                                                    <li><code class="docutils literal notranslate"><span class=pre>length</span></code>: Size of both
+                                                        signal1 and signal2.
+                                                    </li>
+                                                    <li><code class="docutils literal notranslate"><span class=pre>max_delay</span></code>: Maximum
+                                                        delay for which to compute the cross correlation.
+                                                    </li>
+                                                </ul>
+                                            </dd>
+                                        </dl>
+                                        </p> </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <footer>
+                    <div aria-label="footer navigation" class=rst-footer-buttons role=navigation><a accesskey=p class="btn btn-neutral float-left"
+                                                                                                    href=fdwavemodel.class.simulation_methods.html
+                                                                                                    rel=prev
+                                                                                                    title="fdWaveModel simulation methods"><span
+                            class="fa fa-arrow-circle-left"></span> Previous</a></div>
+                    <hr>
+                    <div role=contentinfo><p> &copy; Copyright 2019, Lars Gebraad </p></div>
+                    Built with <a href=http://sphinx-doc.org/ >Sphinx</a> using a <a href=https://github.com/rtfd/sphinx_rtd_theme>theme</a> provided
+                    by <a href=https://readthedocs.org>Read the Docs</a>.
+                </footer>
+            </div>
+        </div>
+    </section>
+</div>
+<script type=text/javascript>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+
+</script>
+</body>
+</html>

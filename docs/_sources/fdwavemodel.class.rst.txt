@@ -3,12 +3,12 @@ fdWaveModel class
 
 .. doxygenclass:: fdWaveModel
     :project: forward-virieux
-    :members: fdWaveModel
+    :members: fdWaveModel, parse_configuration
     :undoc-members:
-    :no-link:
 
 .. toctree::
    :maxdepth: 2
-   :caption: Methods:
+   :caption: Method groups:
 
+   fdwavemodel.class.configuration-file.rst
    fdwavemodel.class.simulation_methods.rst
