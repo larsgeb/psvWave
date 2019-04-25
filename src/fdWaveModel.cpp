@@ -296,7 +296,6 @@ void fdWaveModel::parse_configuration(const char *configuration_file_relative_pa
     stf_folder = reader.Get("output", "stf_folder", ".");
 
     // Final calculations
-    snapshots = 800; // todo calc!
     nx = nx_inner + np_boundary * 2;
     nz = nz_inner + np_boundary;
     nx_free_parameters = nx_inner - nx_inner_boundary * 2;
@@ -500,9 +499,7 @@ void fdWaveModel::adjoint_simulate(int i_shot, bool verbose) {
         if (it % snapshot_interval == 0) { // Todo, [X] rewrite for only relevant parameters [ ] Check if done properly
             #pragma omp parallel for collapse(2)
             for (int ix = np_boundary + nx_inner_boundary; ix < np_boundary + nx_inner - nx_inner_boundary; ++ix) {
-                // todo probably the np_boundary in the terminal statement is superfluous.
                 for (int iz = np_boundary + nz_inner_boundary; iz < np_boundary + nz_inner - nz_inner_boundary; ++iz) {
-                    // todo probably the np_boundary in the terminal statement is superfluous.
                     density_l_kernel[ix][iz] -= snapshot_interval * dt * (accu_vx[i_shot][it / snapshot_interval][ix][iz] * vx[ix][iz] +
                                                                           accu_vz[i_shot][it / snapshot_interval][ix][iz] * vz[ix][iz]);
 
@@ -859,6 +856,30 @@ void fdWaveModel::reset_kernels() {
             density_l_kernel[ix][iz] = 0.0;
         }
     }
+}
+
+void fdWaveModel::write_kernels() {
+    std::string filename_kernel_vp = "kernel_vp.txt";;
+    std::string filename_kernel_vs = "kernel_vs.txt";;
+    std::string filename_kernel_density = "kernel_density.txt";;
+
+    std::ofstream file_kernel_vp(filename_kernel_vp);
+    std::ofstream file_kernel_vs(filename_kernel_vs);
+    std::ofstream file_kernel_density(filename_kernel_density);
+
+    for (int ix = 0; ix < nx; ++ix) {
+        for (int iz = 0; iz < nz; ++iz) {
+            file_kernel_vp << vp_kernel[ix][iz] << " ";
+            file_kernel_vs << vs_kernel[ix][iz] << " ";
+            file_kernel_density << density_v_kernel[ix][iz] << " ";
+        }
+        file_kernel_vp << std::endl;
+        file_kernel_vs << std::endl;
+        file_kernel_density << std::endl;
+    }
+    file_kernel_vp.close();
+    file_kernel_vs.close();
+    file_kernel_density.close();
 }
 
 // Allocation and deallocation

@@ -16,7 +16,7 @@
  * tested on Ubuntu 18.04 x86_64.
  *
  */
-using real_simulation = double;
+using real_simulation = float;
 
 /** \brief Finite difference wave modelling class.
  *
@@ -268,6 +268,8 @@ public:
     real_simulation misfit;
     std::string observed_data_folder;
     std::string stf_folder;
+
+    void write_kernels();
 };
 
 // Miscellaneous functions

@@ -56,6 +56,8 @@ int main(int argc, char **argv) {
         std::cout << deterministic_sum[i_test] << std::endl;
     }
 
+    model->write_kernels();
+
     endTime = omp_get_wtime();
     std::cout << "Elapsed time for all adjoint simulations: " << endTime - startTime << std::endl;
 
