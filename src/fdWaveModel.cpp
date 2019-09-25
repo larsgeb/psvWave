@@ -9,7 +9,7 @@
 #include <limits>
 #include <iomanip>
 #include "fdWaveModel.h"
-#include "../ext/inih/INIReader.h"
+#include "../../../ext/inih/INIReader.h"
 
 
 #define PI 3.14159265
@@ -198,7 +198,7 @@ void fdWaveModel::parse_configuration(const char *configuration_file_relative_pa
 
     INIReader reader(configuration_file_relative_path);
     if (reader.ParseError() < 0) {
-        std::cout << "Can't load 'test.ini'\n";
+        std::cout << "Can't load .ini file\n";
         exit(1);
     }
 
@@ -302,9 +302,6 @@ void fdWaveModel::parse_configuration(const char *configuration_file_relative_pa
     nz_free_parameters = nz_inner - nz_inner_boundary * 2;
     alpha = static_cast<real_simulation>(1.0 / peak_frequency);
     snapshots = ceil(nt / snapshot_interval);
-
-    std::cout << "Done parsing settings." << std::endl << std::endl;
-
 }
 
 // Forward modeller
@@ -601,6 +598,10 @@ void fdWaveModel::adjoint_simulate(int i_shot, bool verbose) {
 }
 
 void fdWaveModel::write_receivers() {
+    write_receivers(std::string(""));
+}
+
+void fdWaveModel::write_receivers(const std::string prefix) {
     std::string filename_ux;
     std::string filename_uz;
 
@@ -787,7 +788,14 @@ void fdWaveModel::load_model(const std::string &de_path, const std::string &vp_p
         std::cout << "File for S-wave velocity is " << (vs_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
     }
     if (!de_file.good() or !vp_file.good() or !vs_file.good()) {
-        throw std::invalid_argument("Not all data for target models is present!");
+        throw std::invalid_argument(
+            "The files for target models don't seem to exist.\r\n"
+            "Paths:\r\n"
+            "\tDensity target: " + de_path + "\r\n"
+            "\tP-wave target : " + vp_path + "\r\n"
+            "\tS-wave target : " + vs_path + "\r\n"
+        );
+
     }
 
     real_simulation placeholder_de;

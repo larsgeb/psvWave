@@ -82,6 +82,8 @@ public:
      */
     void write_receivers();
 
+    void write_receivers(std::string prefix);
+
     /** \brief Method to write out source signals to plaintext.
      *
      * This method writes out the source time function (without moment tensor) to plaintext file. Useful for e.g. visualizing the source staggering.
