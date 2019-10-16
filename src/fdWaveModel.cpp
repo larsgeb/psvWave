@@ -982,8 +982,6 @@ void fdWaveModel::load_model(const std::string &de_path,
     std::cout << std::endl;
 }
 
-void fdWaveModel::run_model(bool verbose) { run_model(verbose, true); }
-
 void fdWaveModel::run_model(bool verbose, bool simulate_adjoint) {
   for (int i_shot = 0; i_shot < n_shots; ++i_shot) {
     forward_simulate(i_shot, true, verbose);

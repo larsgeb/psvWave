@@ -167,16 +167,6 @@ public:
   void load_model(const std::string &de_path, const std::string &vp_path,
                   const std::string &vs_path, bool verbose);
 
-  /** \brief Method to perform all steps necessary for FWI.
-   *
-   * This method performs all necessary steps in FWI; forward modelling, misfit
-   * calculation adjoint source calculation, adjoint modelling and kernel
-   * projection. Delegates to run_model(bool verbose, bool simulate_adjoint).
-   *
-   * @param verbose Boolean controlling the verbosity of the method.
-   */
-  void run_model(bool verbose) __attribute__((deprecated));
-
   /** \brief Method to perform all steps necessary for FWI, with additional
    * control over adjoint simulation.
    *
