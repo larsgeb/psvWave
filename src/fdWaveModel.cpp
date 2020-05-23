@@ -3,7 +3,7 @@
 //
 
 #include "fdWaveModel.h"
-#include "../../../ext/inih/INIReader.h"
+#include "INIReader.h"
 #include <cmath>
 #include <fstream>
 #include <iomanip>
@@ -470,10 +470,10 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
     for (const auto &i_source :
          which_source_to_fire_in_which_shot[i_shot]) { // Don't parallelize
                                                        // in assignment!
-      if (it < 1 and verbose) {
-        std::cout << "Firing source " << i_source << " in shot " << i_shot
-                  << std::endl;
-      }
+      // if (it < 1 and verbose) {
+      //   std::cout << "Firing source " << i_source << " in shot " << i_shot
+      //             << std::endl;
+      // }
       // |-inject source
       // | (x,x)-couple
       vx[ix_sources[i_source] - 1][iz_sources[i_source]] -=
@@ -942,15 +942,24 @@ void fdWaveModel::load_model(const std::string &de_path,
   real_simulation placeholder_de;
   real_simulation placeholder_vp;
   real_simulation placeholder_vs;
+
+  int iter = 0;
+
   for (int ix = 0; ix < nx; ++ix) {
     for (int iz = 0; iz < nz; ++iz) {
       de_file >> placeholder_de;
       vp_file >> placeholder_vp;
       vs_file >> placeholder_vs;
 
+      std::cout << iter << " " << ix << " " << iz << " " << de_file.good() << " " << std::endl;
+
       rho[ix][iz] = placeholder_de;
       vp[ix][iz] = placeholder_vp;
       vs[ix][iz] = placeholder_vs;
+      iter++;
+
+      if (!de_file.good() or !vp_file.good() or !vs_file.good()) {exit(0);}
+
     }
   }
 
@@ -958,7 +967,11 @@ void fdWaveModel::load_model(const std::string &de_path,
   if (!de_file.good() or !vp_file.good() or !vs_file.good()) {
     std::cout << "Received bad state of one of the files at end of "
                  "reading. Does the data match the domain?"
-              << std::endl;
+              << std::endl << 
+              "File states: " << std::endl << 
+              "Density:" << de_file.good() << std::endl <<
+              "P-wave: " << vp_file.good() << std::endl <<
+              "S-Wave: " << vs_file.good() << std::endl;
     throw std::invalid_argument("Not enough data is present!");
   }
   // Try to load more data ...

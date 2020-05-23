@@ -127,6 +127,12 @@ ENV/
 env.bak/
 venv.bak/
 
+CMakeFiles
+bin
+*.cmake
+CMakeCache.txt
+Makefile
+
 # Spyder project settings
 .spyderproject
 .spyproject
@@ -141,3 +147,5 @@ venv.bak/
 .mypy_cache/
 
 /docs-source/source/doxygen/xml/
+
+.vscode

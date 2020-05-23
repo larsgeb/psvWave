@@ -9,8 +9,8 @@
 
 #include <vector>
 
-#include "../../eigen/Eigen/Dense"
-#include "../../eigen/Eigen/Sparse"
+#include "Eigen/Dense"
+#include "Eigen/Sparse"
 
 /** \typedef
  * \brief Typedef that determines simulation precision.
