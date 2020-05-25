@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(forward-virieux)
 
 add_executable(forward_test tests/forward_test.cpp src/fdWaveModel.cpp src/fdWaveModel.h)
-add_library(pyWave SHARED src/pyWave.cpp src/fdWaveModel.cpp)
+add_library(pyWave SHARED src/pyWave.cpp src/fdWaveModel.cpp src/fdWaveModel.h)
 add_executable(adjoint_test tests/adjoint_test.cpp src/fdWaveModel.cpp src/fdWaveModel.h)
 add_executable(xcor_test tests/xcor_test.cpp src/fdWaveModel.cpp src/fdWaveModel.h)
 add_executable(kernel_test tests/kernel_on_background_test.cpp src/fdWaveModel.cpp src/fdWaveModel.h)
