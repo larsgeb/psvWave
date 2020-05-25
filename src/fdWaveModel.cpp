@@ -53,17 +53,17 @@ fdWaveModel::fdWaveModel(const char *configuration_file_relative_path) {
   allocate_1d_array(t, nt);
   allocate_2d_array(stf, n_sources, nt);
   allocate_3d_array(moment, n_sources, 2, 2);
-  allocate_3d_array(rtf_ux, n_shots, nr, nt);
-  allocate_3d_array(rtf_uz, n_shots, nr, nt);
-  allocate_3d_array(rtf_ux_true, n_shots, nr, nt);
-  allocate_3d_array(rtf_uz_true, n_shots, nr, nt);
-  allocate_3d_array(a_stf_ux, n_shots, nr, nt);
-  allocate_3d_array(a_stf_uz, n_shots, nr, nt);
-  allocate_4d_array(accu_vx, n_shots, snapshots, nx, nz);
-  allocate_4d_array(accu_vz, n_shots, snapshots, nx, nz);
-  allocate_4d_array(accu_txx, n_shots, snapshots, nx, nz);
-  allocate_4d_array(accu_tzz, n_shots, snapshots, nx, nz);
-  allocate_4d_array(accu_txz, n_shots, snapshots, nx, nz);
+  rtf_ux = new Arr3D(n_shots, nr, nt);
+  rtf_uz = new Arr3D(n_shots, nr, nt);
+  rtf_ux_true = new Arr3D(n_shots, nr, nt);
+  rtf_uz_true = new Arr3D(n_shots, nr, nt);
+  a_stf_ux = new Arr3D(n_shots, nr, nt);
+  a_stf_uz = new Arr3D(n_shots, nr, nt);
+  accu_vx = new Arr4D(n_shots, snapshots, nx, nz);
+  accu_vz = new Arr4D(n_shots, snapshots, nx, nz);
+  accu_txx = new Arr4D(n_shots, snapshots, nx, nz);
+  accu_tzz = new Arr4D(n_shots, snapshots, nx, nz);
+  accu_txz = new Arr4D(n_shots, snapshots, nx, nz);
 
   // Place sources/receivers inside the domain if required
   if (add_np_to_receiver_location) {
@@ -192,17 +192,9 @@ fdWaveModel::~fdWaveModel() {
   deallocate_1d_array(t);
   deallocate_2d_array(stf, n_sources);
   deallocate_3d_array(moment, n_sources, 2);
-  deallocate_3d_array(rtf_ux, n_shots, nr);
-  deallocate_3d_array(rtf_uz, n_shots, nr);
-  deallocate_3d_array(rtf_ux_true, n_shots, nr);
-  deallocate_3d_array(rtf_uz_true, n_shots, nr);
-  deallocate_3d_array(a_stf_ux, n_shots, nr);
-  deallocate_3d_array(a_stf_uz, n_shots, nr);
-  deallocate_4d_array(accu_vx, n_shots, snapshots, nx);
-  deallocate_4d_array(accu_vz, n_shots, snapshots, nx);
-  deallocate_4d_array(accu_txx, n_shots, snapshots, nx);
-  deallocate_4d_array(accu_tzz, n_shots, snapshots, nx);
-  deallocate_4d_array(accu_txz, n_shots, snapshots, nx);
+
+  delete rtf_ux, rtf_uz, rtf_ux_true, rtf_uz_true, a_stf_ux, a_stf_uz;
+  delete accu_vx, accu_vz, accu_txx, accu_tzz, accu_txz;
 }
 
 void fdWaveModel::parse_configuration(
@@ -348,7 +340,7 @@ void fdWaveModel::parse_configuration(
 
 // Forward modeller
 void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
-                                   bool output_wavefields /* = false   */) {
+                                   bool output_wavefields) {
 // Set dynamic physical fields to zero to reflect initial conditions.
 #pragma omp parallel for collapse(2)
   for (int ix = 0; ix < nx; ++ix) {
@@ -374,11 +366,11 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
 #pragma omp parallel for collapse(2)
       for (int ix = np_boundary; ix < nx_inner + np_boundary; ++ix) {
         for (int iz = np_boundary; iz < nz_inner + np_boundary; ++iz) {
-          accu_vx[i_shot][it / snapshot_interval][ix][iz] = vx[ix][iz];
-          accu_vz[i_shot][it / snapshot_interval][ix][iz] = vz[ix][iz];
-          accu_txx[i_shot][it / snapshot_interval][ix][iz] = txx[ix][iz];
-          accu_txz[i_shot][it / snapshot_interval][ix][iz] = txz[ix][iz];
-          accu_tzz[i_shot][it / snapshot_interval][ix][iz] = tzz[ix][iz];
+          (*accu_vx)(i_shot, it / snapshot_interval, ix, iz) = vx[ix][iz];
+          (*accu_vz)(i_shot, it / snapshot_interval, ix, iz) = vz[ix][iz];
+          (*accu_txx)(i_shot, it / snapshot_interval, ix, iz) = txx[ix][iz];
+          (*accu_txz)(i_shot, it / snapshot_interval, ix, iz) = txz[ix][iz];
+          (*accu_tzz)(i_shot, it / snapshot_interval, ix, iz) = tzz[ix][iz];
         }
       }
     }
@@ -388,19 +380,19 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
 #pragma omp parallel for collapse(1)
     for (int i_receiver = 0; i_receiver < nr; ++i_receiver) {
       if (it == 0) {
-        rtf_ux[i_shot][i_receiver][it] =
+        (*rtf_ux)(i_shot, i_receiver, it) =
             dt * vx[ix_receivers[i_receiver]][iz_receivers[i_receiver]] /
             (dx * dz);
-        rtf_uz[i_shot][i_receiver][it] =
+        (*rtf_uz)(i_shot, i_receiver, it) =
             dt * vz[ix_receivers[i_receiver]][iz_receivers[i_receiver]] /
             (dx * dz);
       } else {
-        rtf_ux[i_shot][i_receiver][it] =
-            rtf_ux[i_shot][i_receiver][it - 1] +
+        (*rtf_ux)(i_shot, i_receiver, it) =
+            (*rtf_ux)(i_shot, i_receiver, it - 1) +
             dt * vx[ix_receivers[i_receiver]][iz_receivers[i_receiver]] /
                 (dx * dz);
-        rtf_uz[i_shot][i_receiver][it] =
-            rtf_uz[i_shot][i_receiver][it - 1] +
+        (*rtf_uz)(i_shot, i_receiver, it) =
+            (*rtf_uz)(i_shot, i_receiver, it - 1) +
             dt * vz[ix_receivers[i_receiver]][iz_receivers[i_receiver]] /
                 (dx * dz);
       }
@@ -469,7 +461,8 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
     // Inject sources at appropriate location and times.
     for (const auto &i_source :
          which_source_to_fire_in_which_shot[i_shot]) { // Don't parallelize
-                                                       // in assignment!
+                                                       // in assignment! Creates
+                                                       // race condition
       // if (it < 1 and verbose) {
       //   std::cout << "Firing source " << i_source << " in shot " << i_shot
       //             << std::endl;
@@ -590,17 +583,17 @@ void fdWaveModel::adjoint_simulate(int i_shot, bool verbose) {
              iz < np_boundary + nz_inner - nz_inner_boundary; ++iz) {
           density_l_kernel[ix][iz] -=
               snapshot_interval * dt *
-              (accu_vx[i_shot][it / snapshot_interval][ix][iz] * vx[ix][iz] +
-               accu_vz[i_shot][it / snapshot_interval][ix][iz] * vz[ix][iz]);
+              ((*accu_vx)(i_shot, it / snapshot_interval, ix, iz) * vx[ix][iz] +
+               (*accu_vz)(i_shot, it / snapshot_interval, ix, iz) * vz[ix][iz]);
 
           lambda_kernel[ix][iz] +=
               snapshot_interval * dt *
-              (((accu_txx[i_shot][it / snapshot_interval][ix][iz] -
-                 (accu_tzz[i_shot][it / snapshot_interval][ix][iz] *
+              ((((*accu_txx)(i_shot, it / snapshot_interval, ix, iz) -
+                 ((*accu_tzz)(i_shot, it / snapshot_interval, ix, iz) *
                   la[ix][iz]) /
                      lm[ix][iz]) +
-                (accu_tzz[i_shot][it / snapshot_interval][ix][iz] -
-                 (accu_txx[i_shot][it / snapshot_interval][ix][iz] *
+                ((*accu_tzz)(i_shot, it / snapshot_interval, ix, iz) -
+                 ((*accu_txx)(i_shot, it / snapshot_interval, ix, iz) *
                   la[ix][iz]) /
                      lm[ix][iz])) *
                ((txx[ix][iz] - (tzz[ix][iz] * la[ix][iz]) / lm[ix][iz]) +
@@ -611,19 +604,19 @@ void fdWaveModel::adjoint_simulate(int i_shot, bool verbose) {
           mu_kernel[ix][iz] +=
               snapshot_interval * dt * 2 *
               ((((txx[ix][iz] - (tzz[ix][iz] * la[ix][iz]) / lm[ix][iz]) *
-                 (accu_txx[i_shot][it / snapshot_interval][ix][iz] -
-                  (accu_tzz[i_shot][it / snapshot_interval][ix][iz] *
+                 ((*accu_txx)(i_shot, it / snapshot_interval, ix, iz) -
+                  ((*accu_tzz)(i_shot, it / snapshot_interval, ix, iz) *
                    la[ix][iz]) /
                       lm[ix][iz])) +
                 ((tzz[ix][iz] - (txx[ix][iz] * la[ix][iz]) / lm[ix][iz]) *
-                 (accu_tzz[i_shot][it / snapshot_interval][ix][iz] -
-                  (accu_txx[i_shot][it / snapshot_interval][ix][iz] *
+                 ((*accu_tzz)(i_shot, it / snapshot_interval, ix, iz) -
+                  ((*accu_txx)(i_shot, it / snapshot_interval, ix, iz) *
                    la[ix][iz]) /
                       lm[ix][iz]))) /
                    ((lm[ix][iz] - ((la[ix][iz] * la[ix][iz]) / (lm[ix][iz]))) *
                     (lm[ix][iz] - ((la[ix][iz] * la[ix][iz]) / (lm[ix][iz])))) +
                2 * (txz[ix][iz] *
-                    accu_txz[i_shot][it / snapshot_interval][ix][iz] /
+                    (*accu_txz)(i_shot, it / snapshot_interval, ix, iz) /
                     (4 * mu[ix][iz] * mu[ix][iz])));
         }
       }
@@ -693,10 +686,10 @@ void fdWaveModel::adjoint_simulate(int i_shot, bool verbose) {
     for (int ir = 0; ir < nr; ++ir) {
       vx[ix_receivers[ir]][iz_receivers[ir]] +=
           dt * b_vx[ix_receivers[ir]][iz_receivers[ir]] *
-          a_stf_ux[i_shot][ir][it] / (dx * dz);
+          (*a_stf_ux)(i_shot, ir, it) / (dx * dz);
       vz[ix_receivers[ir]][iz_receivers[ir]] +=
           dt * b_vz[ix_receivers[ir]][iz_receivers[ir]] *
-          a_stf_uz[i_shot][ir][it] / (dx * dz);
+          (*a_stf_uz)(i_shot, ir, it) / (dx * dz);
     }
   }
 
@@ -736,8 +729,8 @@ void fdWaveModel::write_receivers(const std::string prefix) {
       receiver_file_ux << std::endl;
       receiver_file_uz << std::endl;
       for (int it = 0; it < nt; ++it) {
-        receiver_file_ux << rtf_ux[i_shot][i_receiver][it] << " ";
-        receiver_file_uz << rtf_uz[i_shot][i_receiver][it] << " ";
+        receiver_file_ux << (*rtf_ux)(i_shot, i_receiver, it) << " ";
+        receiver_file_uz << (*rtf_uz)(i_shot, i_receiver, it) << " ";
       }
     }
     receiver_file_ux.close();
@@ -821,8 +814,8 @@ void fdWaveModel::load_receivers(bool verbose) {
         receiver_file_ux >> placeholder_ux;
         receiver_file_uz >> placeholder_uz;
 
-        rtf_ux_true[i_shot][i_receiver][it] = placeholder_ux;
-        rtf_uz_true[i_shot][i_receiver][it] = placeholder_uz;
+        (*rtf_ux_true)(i_shot, i_receiver, it) = placeholder_ux;
+        (*rtf_uz_true)(i_shot, i_receiver, it) = placeholder_uz;
       }
     }
 
@@ -855,13 +848,13 @@ void fdWaveModel::calculate_l2_misfit() {
     for (int i_receiver = 0; i_receiver < nr; ++i_receiver) {
       for (int it = 0; it < nt; ++it) {
         misfit += 0.5 * dt *
-                  pow(rtf_ux_true[i_shot][i_receiver][it] -
-                          rtf_ux[i_shot][i_receiver][it],
+                  pow((*rtf_ux_true)(i_shot, i_receiver, it) -
+                          (*rtf_ux)(i_shot, i_receiver, it),
                       2); // /
         // data_variance_ux[i_shot][i_receiver][it];
         misfit += 0.5 * dt *
-                  pow(rtf_uz_true[i_shot][i_receiver][it] -
-                          rtf_uz[i_shot][i_receiver][it],
+                  pow((*rtf_uz_true)(i_shot, i_receiver, it) -
+                          (*rtf_uz)(i_shot, i_receiver, it),
                       2); // /
                           // data_variance_uz[i_shot][i_receiver][it];
       }
@@ -874,8 +867,10 @@ void fdWaveModel::calculate_l2_adjoint_sources() {
   for (int is = 0; is < n_shots; ++is) {
     for (int ir = 0; ir < nr; ++ir) {
       for (int it = 0; it < nt; ++it) {
-        a_stf_ux[is][ir][it] = rtf_ux[is][ir][it] - rtf_ux_true[is][ir][it];
-        a_stf_uz[is][ir][it] = rtf_uz[is][ir][it] - rtf_uz_true[is][ir][it];
+        (*a_stf_ux)(is, ir, it) =
+            (*rtf_ux)(is, ir, it) - (*rtf_ux_true)(is, ir, it);
+        (*a_stf_uz)(is, ir, it) =
+            (*rtf_uz)(is, ir, it) - (*rtf_uz_true)(is, ir, it);
       }
     }
   }
@@ -951,15 +946,17 @@ void fdWaveModel::load_model(const std::string &de_path,
       vp_file >> placeholder_vp;
       vs_file >> placeholder_vs;
 
-      std::cout << iter << " " << ix << " " << iz << " " << de_file.good() << " " << std::endl;
+      std::cout << iter << " " << ix << " " << iz << " " << de_file.good()
+                << " " << std::endl;
 
       rho[ix][iz] = placeholder_de;
       vp[ix][iz] = placeholder_vp;
       vs[ix][iz] = placeholder_vs;
       iter++;
 
-      if (!de_file.good() or !vp_file.good() or !vs_file.good()) {exit(0);}
-
+      if (!de_file.good() or !vp_file.good() or !vs_file.good()) {
+        exit(0);
+      }
     }
   }
 
@@ -967,11 +964,11 @@ void fdWaveModel::load_model(const std::string &de_path,
   if (!de_file.good() or !vp_file.good() or !vs_file.good()) {
     std::cout << "Received bad state of one of the files at end of "
                  "reading. Does the data match the domain?"
-              << std::endl << 
-              "File states: " << std::endl << 
-              "Density:" << de_file.good() << std::endl <<
-              "P-wave: " << vp_file.good() << std::endl <<
-              "S-Wave: " << vs_file.good() << std::endl;
+              << std::endl
+              << "File states: " << std::endl
+              << "Density:" << de_file.good() << std::endl
+              << "P-wave: " << vp_file.good() << std::endl
+              << "S-Wave: " << vs_file.good() << std::endl;
     throw std::invalid_argument("Not enough data is present!");
   }
   // Try to load more data ...

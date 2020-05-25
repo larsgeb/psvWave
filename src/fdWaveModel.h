@@ -23,6 +23,66 @@
 using real_simulation = double;
 typedef Eigen::Matrix<real_simulation, Eigen::Dynamic, 1> dynamic_vector;
 
+// Array implementations to ensure contiguous memory and still allow operator
+// access through bracket operators.
+
+struct Arr1D {
+  real_simulation *arr;
+  const size_t n;
+
+public:
+  Arr1D(size_t n) : n(n) { arr = new real_simulation[n]; }
+
+  ~Arr1D() { delete[] arr; }
+
+  real_simulation &operator()(size_t i) { return arr[i]; }
+};
+
+struct Arr2D {
+  real_simulation *arr;
+  const size_t n, m;
+
+public:
+  Arr2D(size_t n, size_t m) : n(n), m(m) { arr = new real_simulation[n * m]; }
+
+  ~Arr2D() { delete[] arr; }
+
+  real_simulation &operator()(size_t i, size_t j) { return arr[j + i * m]; }
+};
+
+struct Arr3D {
+  real_simulation *arr;
+  const size_t n, m, p;
+
+public:
+  Arr3D(size_t n, size_t m, size_t p) : n(n), m(m), p(p) {
+    arr = new real_simulation[n * m * p];
+  }
+
+  ~Arr3D() { delete[] arr; }
+
+  real_simulation &operator()(size_t i, size_t j, size_t k) {
+    return arr[k + p * (j + i * m)];
+  }
+};
+
+struct Arr4D {
+  real_simulation *arr;
+  const size_t n, m, p, q;
+
+public:
+  Arr4D(size_t n = 1, size_t m = 1, size_t p = 1, size_t q = 1)
+      : n(n), m(m), p(p), q(q) {
+    arr = new real_simulation[n * m * p * q];
+  }
+
+  ~Arr4D() { delete[] arr; }
+
+  real_simulation &operator()(size_t i, size_t j, size_t k, size_t l) {
+    return arr[l + q * (k + p * (j + i * m))];
+  }
+};
+
 /** \brief Finite difference wave modelling class.
  *
  * This class contains everything needed to do finite difference wave forward
@@ -233,27 +293,20 @@ public:
   real_simulation *t;
   real_simulation **stf;
   real_simulation ***moment;
-  real_simulation ***rtf_ux;
-  real_simulation ***rtf_uz;
-  real_simulation ***rtf_ux_true;
-  real_simulation ***rtf_uz_true;
-  real_simulation ***a_stf_ux;
-  real_simulation ***a_stf_uz;
-  real_simulation ***
-      *accu_vx; // Todo there is some ram usage to be optimized here as not the
-                // full wavefields have to be stored.
-  real_simulation ***
-      *accu_vz; // Todo there is some ram usage to be optimized here as not the
-                // full wavefields have to be stored.
-  real_simulation ***
-      *accu_txx; // Todo there is some ram usage to be optimized here as not the
-                 // full wavefields have to be stored.
-  real_simulation ***
-      *accu_tzz; // Todo there is some ram usage to be optimized here as not the
-                 // full wavefields have to be stored.
-  real_simulation ***
-      *accu_txz; // Todo there is some ram usage to be optimized here as not the
-                 // full wavefields have to be stored.
+  Arr3D *rtf_ux;
+  Arr3D *rtf_uz;
+  Arr3D *rtf_ux_true;
+  Arr3D *rtf_uz_true;
+  Arr3D *a_stf_ux;
+  Arr3D *a_stf_uz;
+  Arr4D *accu_vx;
+  Arr4D *accu_vz;
+  Arr4D *accu_txx; // Todo there is some ram usage to be optimized here as
+                   // not the full wavefields have to be stored.
+  Arr4D *accu_tzz; // Todo there is some ram usage to be optimized here as
+                   // not the full wavefields have to be stored.
+  Arr4D *accu_txz; // Todo there is some ram usage to be optimized here as
+                   // not the full wavefields have to be stored.
 
   // -- Definition of simulation --
   // | Domain
