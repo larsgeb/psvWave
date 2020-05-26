@@ -12,9 +12,8 @@ target_include_directories(forward_test PRIVATE ext/inih)
 target_include_directories(pyWave PRIVATE ext/eigen)
 target_include_directories(pyWave PRIVATE ext/inih)
 
-
-find_package(PythonLibs REQUIRED)
-target_include_directories(pyWave PRIVATE ${PYTHON_INCLUDE_DIRS})
+MESSAGE(STATUS $ENV{PYTHON_INCLUDES})
+target_include_directories(pyWave PRIVATE $ENV{PYTHON_INCLUDES})
 
 MESSAGE(STATUS "Suffix: $ENV{SUFFIX}")
 
