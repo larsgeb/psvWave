@@ -8,7 +8,7 @@ addons:
       - ubuntu-toolchain-r-test
     packages:
       - g++-7
-      - python3.6-dev
+      - python3-dev
 
 script:
   - ls
@@ -23,5 +23,5 @@ script:
   - ./forward_test ../tests/test_configurations/forward_configuration.ini
   - python --version
   - make pyWave
-  
+
   
