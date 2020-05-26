@@ -9,6 +9,18 @@
 
 namespace py = pybind11;
 
+#include <algorithm>
+#include <iterator>
+#include <vector>
+
+template <typename T>
+std::ostream &operator<<(std::ostream &os, std::vector<T> vec) {
+  os << "{ ";
+  std::copy(vec.begin(), vec.end(), std::ostream_iterator<T>(os, " "));
+  os << "}";
+  return os;
+}
+
 template <class T>
 py::array_t<T> array_to_numpy(T ****pointer, std::vector<ssize_t> shape) {
   return py::array_t<T>(py::buffer_info(
@@ -35,6 +47,21 @@ py::array_t<T> array_to_numpy(T *pointer, std::vector<ssize_t> shape) {
   return py::array_t<T>(py::buffer_info(pointer, sizeof(T),
                                         py::format_descriptor<T>::format(), 1,
                                         shape, std::vector<size_t>{sizeof(T)}));
+}
+
+template <class T> void copy_data(T *destination, T *source, int size) {
+#pragma omp parallel for collapse(1)
+  for (size_t i1 = 0; i1 < size; i1++) {
+    destination[i1] = source[i1];
+  }
+}
+
+template <class T1, class T2>
+void copy_data_cast(T1 *destination, T2 *source, int size) {
+#pragma omp parallel for collapse(1)
+  for (size_t i1 = 0; i1 < size; i1++) {
+    destination[i1] = (T1)source[i1];
+  }
 }
 
 class fdWaveModelExtended : public fdWaveModel {
@@ -120,6 +147,122 @@ public:
     }
     update_from_velocity();
   }
+
+  py::tuple get_synthetic_data() {
+    auto array_rtf_ux =
+        array_to_numpy(rtf_ux, std::vector<ssize_t>{n_shots, nr, nt});
+    auto array_rtf_uz =
+        array_to_numpy(rtf_uz, std::vector<ssize_t>{n_shots, nr, nt});
+    return py::make_tuple(array_rtf_ux, array_rtf_uz);
+  }
+
+  py::tuple get_observed_data() {
+    auto array_rtf_ux_true =
+        array_to_numpy(rtf_ux_true, std::vector<ssize_t>{n_shots, nr, nt});
+    auto array_rtf_uz_true =
+        array_to_numpy(rtf_uz_true, std::vector<ssize_t>{n_shots, nr, nt});
+    return py::make_tuple(array_rtf_ux_true, array_rtf_uz_true);
+  }
+
+  py::tuple get_receivers(bool in_units,
+                          bool include_absorbing_boundary_as_index) {
+
+    // Create new arrays
+    py::array_t<real_simulation> x_receivers(
+        py::buffer_info(nullptr, sizeof(real_simulation),
+                        py::format_descriptor<real_simulation>::format(), 1,
+                        std::vector<ssize_t>{nr},
+                        std::vector<size_t>{sizeof(real_simulation)}));
+    py::array_t<real_simulation> z_receivers(
+        py::buffer_info(nullptr, sizeof(real_simulation),
+                        py::format_descriptor<real_simulation>::format(), 1,
+                        std::vector<ssize_t>{nr},
+                        std::vector<size_t>{sizeof(real_simulation)}));
+
+    copy_data_cast((real_simulation *)x_receivers.request().ptr, ix_receivers,
+                   nr);
+
+    copy_data_cast((real_simulation *)z_receivers.request().ptr, iz_receivers,
+                   nr);
+
+    if (!include_absorbing_boundary_as_index || in_units) {
+      for (int ir = 0; ir < nr; ir++) {
+        ((real_simulation *)x_receivers.request().ptr)[ir] -= np_boundary;
+        ((real_simulation *)z_receivers.request().ptr)[ir] -= np_boundary;
+        if (in_units) {
+          ((real_simulation *)x_receivers.request().ptr)[ir] *= dx;
+          ((real_simulation *)z_receivers.request().ptr)[ir] *= dz;
+        }
+      }
+    }
+
+    return py::make_tuple(x_receivers, z_receivers);
+  }
+
+  void set_synthetic_data(py::array_t<real_simulation> ux,
+                          py::array_t<real_simulation> uz) {
+
+    // Get buffer information for the passed arrays
+    py::buffer_info ux_buffer = ux.request();
+    py::buffer_info uz_buffer = uz.request();
+
+    // Get the required size
+    std::vector<ssize_t> shape{n_shots, nr, nt};
+
+    // Verify the buffer shape
+    if (!(ux_buffer.shape == shape)) {
+      throw py::value_error(
+          "The input ndarray ux does not have the right shape.");
+    };
+    if (!(uz_buffer.shape == shape)) {
+      throw py::value_error(
+          "The input ndarray ux does not have the right shape.");
+    };
+
+    // Get the total size of the buffer
+    int buffer_size =
+        ux_buffer.shape[0] * ux_buffer.shape[1] * ux_buffer.shape[2];
+
+    // Get pointer to the start of the (contiguous) buffer
+    real_simulation *ptr_ux = (real_simulation *)ux_buffer.ptr;
+    real_simulation *ptr_uz = (real_simulation *)uz_buffer.ptr;
+
+    // Copy the data
+    copy_data(rtf_ux[0][0], ptr_ux, buffer_size);
+    copy_data(rtf_uz[0][0], ptr_uz, buffer_size);
+  }
+
+  void set_observed_data(py::array_t<real_simulation> ux,
+                         py::array_t<real_simulation> uz) {
+    // Get buffer information for the passed arrays
+    py::buffer_info ux_buffer = ux.request();
+    py::buffer_info uz_buffer = uz.request();
+
+    // Get the required size
+    std::vector<ssize_t> shape{n_shots, nr, nt};
+
+    // Verify the buffer shape
+    if (!(ux_buffer.shape == shape)) {
+      throw py::value_error(
+          "The input ndarray ux does not have the right shape.");
+    };
+    if (!(uz_buffer.shape == shape)) {
+      throw py::value_error(
+          "The input ndarray ux does not have the right shape.");
+    };
+
+    // Get the total size of the buffer
+    int buffer_size =
+        ux_buffer.shape[0] * ux_buffer.shape[1] * ux_buffer.shape[2];
+
+    // Get pointer to the start of the (contiguous) buffer
+    real_simulation *ptr_ux = (real_simulation *)ux_buffer.ptr;
+    real_simulation *ptr_uz = (real_simulation *)uz_buffer.ptr;
+
+    // Copy the data
+    copy_data(rtf_ux_true[0][0], ptr_ux, buffer_size);
+    copy_data(rtf_uz_true[0][0], ptr_uz, buffer_size);
+  }
 };
 
 PYBIND11_MODULE(pyWave, m) {
@@ -158,6 +301,14 @@ PYBIND11_MODULE(pyWave, m) {
       .def("get_extent", &fdWaveModelExtended::get_extent)
       .def("get_coordinates", &fdWaveModelExtended::get_coordinates)
       .def("get_parameter_fields", &fdWaveModelExtended::get_parameter_fields)
-      .def("set_parameter_fields", &fdWaveModelExtended::set_parameter_fields);
+      .def("set_parameter_fields", &fdWaveModelExtended::set_parameter_fields)
+      .def("get_synthetic_data", &fdWaveModelExtended::get_synthetic_data)
+      .def("get_observed_data", &fdWaveModelExtended::get_observed_data)
+      .def("set_synthetic_data", &fdWaveModelExtended::set_synthetic_data)
+      .def("set_observed_data", &fdWaveModelExtended::set_observed_data)
+      .def("get_receivers", &fdWaveModelExtended::get_receivers,
+           py::arg("in_units") = true,
+           py::arg("include_absorbing_boundary_as_index") = true);
+
   ;
 }
