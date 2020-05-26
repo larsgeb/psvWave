@@ -28,7 +28,7 @@ ENDIF()
 
 set_target_properties(pyWave PROPERTIES PREFIX "")
 set_target_properties(pyWave PROPERTIES OUTPUT_NAME "pyWave")
-set_target_properties(pyWave PROPERTIES SUFFIX $ENV{SUFFIX}")
+set_target_properties(pyWave PROPERTIES SUFFIX $ENV{SUFFIX})
 
 
 find_package(OpenMP)
