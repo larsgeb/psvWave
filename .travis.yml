@@ -2,7 +2,8 @@ dist: xenial
 sudo: false
 language: cpp
 dist: bionic
-
+python:
+  - 3.7
 
 addons:
   apt:
@@ -13,6 +14,7 @@ addons:
       - python3.7-dev
 
 script:
+  - python3 -m pip || wget -qO- https://bootstrap.pypa.io/get-pip.py | python
   - python3 --version
   - ls
   - python3 -m pip install --user -r requirements.txt
