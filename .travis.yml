@@ -27,5 +27,7 @@ script:
   - make forward_test
   - ./forward_test ../tests/test_configurations/forward_configuration.ini
   - make pyWave
+  - cp ../tests/pyWaveTest.py .
+  - python3 pyWaveTest.py
 
   
