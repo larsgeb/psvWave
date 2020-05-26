@@ -1,10 +1,10 @@
 dist: xenial
 sudo: false
 language: cpp
-
+dist: bionic
 python:
   - "3.7"
-  
+
 addons:
   apt:
     sources:
@@ -14,6 +14,7 @@ addons:
       - python3-dev
 
 script:
+  - python3 --version
   - ls
   - pip3 install --user -r requirements.txt
   - export PYBIND_INCLUDES=`python3 -c'import pybind11;print(pybind11.get_include())'`
@@ -24,7 +25,6 @@ script:
   - CXX=/usr/bin/g++-7 CC=/usr/bin/gcc-7 cmake .. -DCMAKE_BUILD_TYPE=Release
   - make forward_test
   - ./forward_test ../tests/test_configurations/forward_configuration.ini
-  - python3 --version
   - make pyWave
 
   
