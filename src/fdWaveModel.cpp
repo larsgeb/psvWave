@@ -327,15 +327,29 @@ void fdWaveModel::parse_configuration(
 // Forward modeller
 void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
                                    bool output_wavefields) {
+
+  // Let's deref the pointers to references, to avoid doing this in loops
+  Arr2D &vx_data = (*vx), &vz_data = (*vz), &txx_data = (*txx),
+        &tzz_data = (*tzz), &txz_data = (*txz);
+
+  Arr3D &rtf_ux_data = (*rtf_ux), &rtf_uz_data = (*rtf_uz);
+
+  Arr4D &accu_vx_data = (*accu_vx), &accu_vz_data = (*accu_vz),
+        &accu_txx_data = (*accu_txx), &accu_txz_data = (*accu_txz),
+        &accu_tzz_data = (*accu_tzz);
+
+  Arr2D &taper_data = (*taper), &lm_data = (*lm), &la_data = (*la),
+        &mu_data = (*mu), &b_vx_data = (*b_vx), &b_vz_data = (*b_vz);
+
 // Set dynamic physical fields to zero to reflect initial conditions.
 #pragma omp parallel for collapse(2)
   for (int ix = 0; ix < nx; ++ix) {
     for (int iz = 0; iz < nz; ++iz) {
-      (*vx)(ix, iz) = 0.0;
-      (*vz)(ix, iz) = 0.0;
-      (*txx)(ix, iz) = 0.0;
-      (*tzz)(ix, iz) = 0.0;
-      (*txz)(ix, iz) = 0.0;
+      vx_data(ix, iz) = 0.0;
+      vz_data(ix, iz) = 0.0;
+      txx_data(ix, iz) = 0.0;
+      tzz_data(ix, iz) = 0.0;
+      txz_data(ix, iz) = 0.0;
     }
   }
 
@@ -352,11 +366,16 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
 #pragma omp parallel for collapse(2)
       for (int ix = np_boundary; ix < nx_inner + np_boundary; ++ix) {
         for (int iz = np_boundary; iz < nz_inner + np_boundary; ++iz) {
-          (*accu_vx)(i_shot, it / snapshot_interval, ix, iz) = (*vx)(ix, iz);
-          (*accu_vz)(i_shot, it / snapshot_interval, ix, iz) = (*vz)(ix, iz);
-          (*accu_txx)(i_shot, it / snapshot_interval, ix, iz) = (*txx)(ix, iz);
-          (*accu_txz)(i_shot, it / snapshot_interval, ix, iz) = (*txz)(ix, iz);
-          (*accu_tzz)(i_shot, it / snapshot_interval, ix, iz) = (*tzz)(ix, iz);
+          accu_vx_data(i_shot, it / snapshot_interval, ix, iz) =
+              vx_data(ix, iz);
+          accu_vz_data(i_shot, it / snapshot_interval, ix, iz) =
+              vz_data(ix, iz);
+          accu_txx_data(i_shot, it / snapshot_interval, ix, iz) =
+              txx_data(ix, iz);
+          accu_txz_data(i_shot, it / snapshot_interval, ix, iz) =
+              txz_data(ix, iz);
+          accu_tzz_data(i_shot, it / snapshot_interval, ix, iz) =
+              tzz_data(ix, iz);
         }
       }
     }
@@ -366,20 +385,20 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
 #pragma omp parallel for collapse(1)
     for (int i_receiver = 0; i_receiver < nr; ++i_receiver) {
       if (it == 0) {
-        (*rtf_ux)(i_shot, i_receiver, it) =
-            dt * (*vx)(ix_receivers[i_receiver], iz_receivers[i_receiver]) /
+        rtf_ux_data(i_shot, i_receiver, it) =
+            dt * vx_data(ix_receivers[i_receiver], iz_receivers[i_receiver]) /
             (dx * dz);
-        (*rtf_uz)(i_shot, i_receiver, it) =
-            dt * (*vz)(ix_receivers[i_receiver], iz_receivers[i_receiver]) /
+        rtf_uz_data(i_shot, i_receiver, it) =
+            dt * vz_data(ix_receivers[i_receiver], iz_receivers[i_receiver]) /
             (dx * dz);
       } else {
-        (*rtf_ux)(i_shot, i_receiver, it) =
-            (*rtf_ux)(i_shot, i_receiver, it - 1) +
-            dt * (*vx)(ix_receivers[i_receiver], iz_receivers[i_receiver]) /
+        rtf_ux_data(i_shot, i_receiver, it) =
+            rtf_ux_data(i_shot, i_receiver, it - 1) +
+            dt * vx_data(ix_receivers[i_receiver], iz_receivers[i_receiver]) /
                 (dx * dz);
-        (*rtf_uz)(i_shot, i_receiver, it) =
-            (*rtf_uz)(i_shot, i_receiver, it - 1) +
-            dt * (*vz)(ix_receivers[i_receiver], iz_receivers[i_receiver]) /
+        rtf_uz_data(i_shot, i_receiver, it) =
+            rtf_uz_data(i_shot, i_receiver, it - 1) +
+            dt * vz_data(ix_receivers[i_receiver], iz_receivers[i_receiver]) /
                 (dx * dz);
       }
     }
@@ -388,128 +407,122 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
 #pragma omp parallel for collapse(2)
     for (int ix = 2; ix < nx - 2; ++ix) {
       for (int iz = 2; iz < nz - 2; ++iz) {
-        (*txx)(ix, iz) =
-            (*taper)(ix, iz) *
-            ((*txx)(ix, iz) +
-             dt * ((*lm)(ix, iz) *
-                       (c1 * ((*vx)(ix + 1, iz) - (*vx)(ix, iz)) +
-                        c2 * ((*vx)(ix - 1, iz) - (*vx)(ix + 2, iz))) /
+        txx_data(ix, iz) =
+            taper_data(ix, iz) *
+            (txx_data(ix, iz) +
+             dt * (lm_data(ix, iz) *
+                       (c1 * (vx_data(ix + 1, iz) - vx_data(ix, iz)) +
+                        c2 * (vx_data(ix - 1, iz) - vx_data(ix + 2, iz))) /
                        dx +
-                   (*la)(ix, iz) *
-                       (c1 * ((*vz)(ix, iz) - (*vz)(ix, iz - 1)) +
-                        c2 * ((*vz)(ix, iz - 2) - (*vz)(ix, iz + 1))) /
+                   la_data(ix, iz) *
+                       (c1 * (vz_data(ix, iz) - vz_data(ix, iz - 1)) +
+                        c2 * (vz_data(ix, iz - 2) - vz_data(ix, iz + 1))) /
                        dz));
-        (*tzz)(ix, iz) =
-            (*taper)(ix, iz) *
-            ((*tzz)(ix, iz) +
-             dt * ((*la)(ix, iz) *
-                       (c1 * ((*vx)(ix + 1, iz) - (*vx)(ix, iz)) +
-                        c2 * ((*vx)(ix - 1, iz) - (*vx)(ix + 2, iz))) /
+        tzz_data(ix, iz) =
+            taper_data(ix, iz) *
+            (tzz_data(ix, iz) +
+             dt * (la_data(ix, iz) *
+                       (c1 * (vx_data(ix + 1, iz) - vx_data(ix, iz)) +
+                        c2 * (vx_data(ix - 1, iz) - vx_data(ix + 2, iz))) /
                        dx +
-                   ((*lm)(ix, iz)) *
-                       (c1 * ((*vz)(ix, iz) - (*vz)(ix, iz - 1)) +
-                        c2 * ((*vz)(ix, iz - 2) - (*vz)(ix, iz + 1))) /
+                   (lm_data(ix, iz)) *
+                       (c1 * (vz_data(ix, iz) - vz_data(ix, iz - 1)) +
+                        c2 * (vz_data(ix, iz - 2) - vz_data(ix, iz + 1))) /
                        dz));
-        (*txz)(ix, iz) = (*taper)(ix, iz) *
-                         ((*txz)(ix, iz) +
-                          dt * (*mu)(ix, iz) *
-                              ((c1 * ((*vx)(ix, iz + 1) - (*vx)(ix, iz)) +
-                                c2 * ((*vx)(ix, iz - 1) - (*vx)(ix, iz + 2))) /
-                                   dz +
-                               (c1 * ((*vz)(ix, iz) - (*vz)(ix - 1, iz)) +
-                                c2 * ((*vz)(ix - 2, iz) - (*vz)(ix + 1, iz))) /
-                                   dx));
+        txz_data(ix, iz) =
+            taper_data(ix, iz) *
+            (txz_data(ix, iz) +
+             dt * mu_data(ix, iz) *
+                 ((c1 * (vx_data(ix, iz + 1) - vx_data(ix, iz)) +
+                   c2 * (vx_data(ix, iz - 1) - vx_data(ix, iz + 2))) /
+                      dz +
+                  (c1 * (vz_data(ix, iz) - vz_data(ix - 1, iz)) +
+                   c2 * (vz_data(ix - 2, iz) - vz_data(ix + 1, iz))) /
+                      dx));
       }
     }
 // ... and time integrate dynamic fields for velocity.
 #pragma omp parallel for collapse(2)
     for (int ix = 2; ix < nx - 2; ++ix) {
       for (int iz = 2; iz < nz - 2; ++iz) {
-        (*vx)(ix, iz) = (*taper)(ix, iz) *
-                        ((*vx)(ix, iz) +
-                         (*b_vx)(ix, iz) * dt *
-                             ((c1 * ((*txx)(ix, iz) - (*txx)(ix - 1, iz)) +
-                               c2 * ((*txx)(ix - 2, iz) - (*txx)(ix + 1, iz))) /
-                                  dx +
-                              (c1 * ((*txz)(ix, iz) - (*txz)(ix, iz - 1)) +
-                               c2 * ((*txz)(ix, iz - 2) - (*txz)(ix, iz + 1))) /
-                                  dz));
-        (*vz)(ix, iz) = (*taper)(ix, iz) *
-                        ((*vz)(ix, iz) +
-                         (*b_vz)(ix, iz) * dt *
-                             ((c1 * ((*txz)(ix + 1, iz) - (*txz)(ix, iz)) +
-                               c2 * ((*txz)(ix - 1, iz) - (*txz)(ix + 2, iz))) /
-                                  dx +
-                              (c1 * ((*tzz)(ix, iz + 1) - (*tzz)(ix, iz)) +
-                               c2 * ((*tzz)(ix, iz - 1) - (*tzz)(ix, iz + 2))) /
-                                  dz));
+        vx_data(ix, iz) =
+            taper_data(ix, iz) *
+            (vx_data(ix, iz) +
+             b_vx_data(ix, iz) * dt *
+                 ((c1 * (txx_data(ix, iz) - txx_data(ix - 1, iz)) +
+                   c2 * (txx_data(ix - 2, iz) - txx_data(ix + 1, iz))) /
+                      dx +
+                  (c1 * (txz_data(ix, iz) - txz_data(ix, iz - 1)) +
+                   c2 * (txz_data(ix, iz - 2) - txz_data(ix, iz + 1))) /
+                      dz));
+        vz_data(ix, iz) =
+            taper_data(ix, iz) *
+            (vz_data(ix, iz) +
+             b_vz_data(ix, iz) * dt *
+                 ((c1 * (txz_data(ix + 1, iz) - txz_data(ix, iz)) +
+                   c2 * (txz_data(ix - 1, iz) - txz_data(ix + 2, iz))) /
+                      dx +
+                  (c1 * (tzz_data(ix, iz + 1) - tzz_data(ix, iz)) +
+                   c2 * (tzz_data(ix, iz - 1) - tzz_data(ix, iz + 2))) /
+                      dz));
       }
     }
 
     // Inject sources at appropriate location and times.
-    for (const auto &i_source :
-         which_source_to_fire_in_which_shot[i_shot]) { // Don't parallelize
-                                                       // in assignment! Creates
-                                                       // race condition
-      // if (it < 1 and verbose) {
-      //   std::cout << "Firing source " << i_source << " in shot " << i_shot
-      //             << std::endl;
-      // }
-      //
-      //  todo VERIFY
-      //
+    for (const auto &i_source : which_source_to_fire_in_which_shot[i_shot]) {
+      // Don't parallelize in assignment! Creates race condition
       // |-inject source
       // | (x,x)-couple
-      (*vx)(ix_sources[i_source] - 1, iz_sources[i_source]) -=
+      vx_data(ix_sources[i_source] - 1, iz_sources[i_source]) -=
           (*moment)(i_source, 0, 0) * (*stf)(i_source, it) * dt *
-          (*b_vz)(ix_sources[i_source] - 1, iz_sources[i_source]) /
+          b_vz_data(ix_sources[i_source] - 1, iz_sources[i_source]) /
           (dx * dx * dx * dx);
-      (*vx)(ix_sources[i_source], iz_sources[i_source]) +=
+      vx_data(ix_sources[i_source], iz_sources[i_source]) +=
           (*moment)(i_source, 0, 0) * (*stf)(i_source, it) * dt *
-          (*b_vz)(ix_sources[i_source], iz_sources[i_source]) /
+          b_vz_data(ix_sources[i_source], iz_sources[i_source]) /
           (dx * dx * dx * dx);
       // | (z,z)-couple
-      (*vz)(ix_sources[i_source], iz_sources[i_source] - 1) -=
+      vz_data(ix_sources[i_source], iz_sources[i_source] - 1) -=
           (*moment)(i_source, 1, 1) * (*stf)(i_source, it) * dt *
-          (*b_vz)(ix_sources[i_source], iz_sources[i_source] - 1) /
+          b_vz_data(ix_sources[i_source], iz_sources[i_source] - 1) /
           (dz * dz * dz * dz);
-      (*vz)(ix_sources[i_source], iz_sources[i_source]) +=
+      vz_data(ix_sources[i_source], iz_sources[i_source]) +=
           (*moment)(i_source, 1, 1) * (*stf)(i_source, it) * dt *
-          (*b_vz)(ix_sources[i_source], iz_sources[i_source]) /
+          b_vz_data(ix_sources[i_source], iz_sources[i_source]) /
           (dz * dz * dz * dz);
       // | (x,z)-couple
-      (*vx)(ix_sources[i_source] - 1, iz_sources[i_source] + 1) +=
+      vx_data(ix_sources[i_source] - 1, iz_sources[i_source] + 1) +=
           0.25 * (*moment)(i_source, 0, 1) * (*stf)(i_source, it) * dt *
-          (*b_vz)(ix_sources[i_source] - 1, iz_sources[i_source] + 1) /
+          b_vz_data(ix_sources[i_source] - 1, iz_sources[i_source] + 1) /
           (dx * dx * dx * dx);
-      (*vx)(ix_sources[i_source], iz_sources[i_source] + 1) +=
+      vx_data(ix_sources[i_source], iz_sources[i_source] + 1) +=
           0.25 * (*moment)(i_source, 0, 1) * (*stf)(i_source, it) * dt *
-          (*b_vz)(ix_sources[i_source], iz_sources[i_source] + 1) /
+          b_vz_data(ix_sources[i_source], iz_sources[i_source] + 1) /
           (dx * dx * dx * dx);
-      (*vx)(ix_sources[i_source] - 1, iz_sources[i_source] - 1) -=
+      vx_data(ix_sources[i_source] - 1, iz_sources[i_source] - 1) -=
           0.25 * (*moment)(i_source, 0, 1) * (*stf)(i_source, it) * dt *
-          (*b_vz)(ix_sources[i_source] - 1, iz_sources[i_source] - 1) /
+          b_vz_data(ix_sources[i_source] - 1, iz_sources[i_source] - 1) /
           (dx * dx * dx * dx);
-      (*vx)(ix_sources[i_source], iz_sources[i_source] - 1) -=
+      vx_data(ix_sources[i_source], iz_sources[i_source] - 1) -=
           0.25 * (*moment)(i_source, 0, 1) * (*stf)(i_source, it) * dt *
-          (*b_vz)(ix_sources[i_source], iz_sources[i_source] - 1) /
+          b_vz_data(ix_sources[i_source], iz_sources[i_source] - 1) /
           (dx * dx * dx * dx);
       // | (z,x)-couple
-      (*vz)(ix_sources[i_source] + 1, iz_sources[i_source] - 1) +=
+      vz_data(ix_sources[i_source] + 1, iz_sources[i_source] - 1) +=
           0.25 * (*moment)(i_source, 1, 0) * (*stf)(i_source, it) * dt *
-          (*b_vz)(ix_sources[i_source] + 1, iz_sources[i_source] - 1) /
+          b_vz_data(ix_sources[i_source] + 1, iz_sources[i_source] - 1) /
           (dz * dz * dz * dz);
-      (*vz)(ix_sources[i_source] + 1, iz_sources[i_source]) +=
+      vz_data(ix_sources[i_source] + 1, iz_sources[i_source]) +=
           0.25 * (*moment)(i_source, 1, 0) * (*stf)(i_source, it) * dt *
-          (*b_vz)(ix_sources[i_source] + 1, iz_sources[i_source]) /
+          b_vz_data(ix_sources[i_source] + 1, iz_sources[i_source]) /
           (dz * dz * dz * dz);
-      (*vz)(ix_sources[i_source] - 1, iz_sources[i_source] - 1) -=
+      vz_data(ix_sources[i_source] - 1, iz_sources[i_source] - 1) -=
           0.25 * (*moment)(i_source, 1, 0) * (*stf)(i_source, it) * dt *
-          (*b_vz)(ix_sources[i_source] - 1, iz_sources[i_source] - 1) /
+          b_vz_data(ix_sources[i_source] - 1, iz_sources[i_source] - 1) /
           (dz * dz * dz * dz);
-      (*vz)(ix_sources[i_source] - 1, iz_sources[i_source]) -=
+      vz_data(ix_sources[i_source] - 1, iz_sources[i_source]) -=
           0.25 * (*moment)(i_source, 1, 0) * (*stf)(i_source, it) * dt *
-          (*b_vz)(ix_sources[i_source] - 1, iz_sources[i_source]) /
+          b_vz_data(ix_sources[i_source] - 1, iz_sources[i_source]) /
           (dz * dz * dz * dz);
     }
 
@@ -525,8 +538,8 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
 
       for (int ix = 0; ix < nx; ++ix) {
         for (int iz = 0; iz < nz; ++iz) {
-          file_vx << (*vx)(ix, iz) << " ";
-          file_vz << (*vz)(ix, iz) << " ";
+          file_vx << vx_data(ix, iz) << " ";
+          file_vz << vz_data(ix, iz) << " ";
         }
         file_vx << std::endl;
         file_vz << std::endl;
@@ -1235,64 +1248,6 @@ dynamic_vector fdWaveModel::load_vector(const std::string &model_vector_path,
 
   model_vector_file.close();
   return m;
-}
-
-// Allocation and deallocation
-
-void allocate_1d_array(real_simulation *&pDouble, int dim1) {
-  pDouble = new real_simulation[dim1];
-}
-
-void allocate_2d_array(real_simulation **&pDouble, const int dim1,
-                       const int dim2) {
-  pDouble = new real_simulation *[dim1];
-  for (int i = 0; i < dim1; ++i)
-    allocate_1d_array(pDouble[i], dim2);
-}
-
-void allocate_3d_array(real_simulation ***&pDouble, int dim1, int dim2,
-                       int dim3) {
-  pDouble = new real_simulation **[dim1];
-  for (int i = 0; i < dim1; ++i)
-    allocate_2d_array(pDouble[i], dim2, dim3);
-}
-
-void allocate_4d_array(real_simulation ****&pDouble, int dim1, int dim2,
-                       int dim3, int dim4) {
-  pDouble = new real_simulation ***[dim1];
-  for (int i = 0; i < dim1; ++i)
-    allocate_3d_array(pDouble[i], dim2, dim3, dim4);
-}
-
-void deallocate_1d_array(real_simulation *&pDouble) {
-  delete[] pDouble;
-  pDouble = nullptr;
-}
-
-void deallocate_2d_array(real_simulation **&pDouble, const int dim1) {
-  for (int i = 0; i < dim1; i++) {
-    deallocate_1d_array(pDouble[i]);
-  }
-  delete[] pDouble;
-  pDouble = nullptr;
-}
-
-void deallocate_3d_array(real_simulation ***&pDouble, const int dim1,
-                         const int dim2) {
-  for (int i = 0; i < dim1; i++) {
-    deallocate_2d_array(pDouble[i], dim2);
-  }
-  delete[] pDouble;
-  pDouble = nullptr;
-}
-
-void deallocate_4d_array(real_simulation ****&pDouble, const int dim1,
-                         const int dim2, const int dim3) {
-  for (int i = 0; i < dim1; i++) {
-    deallocate_3d_array(pDouble[i], dim2, dim3);
-  }
-  delete[] pDouble;
-  pDouble = nullptr;
 }
 
 template <class T>
