@@ -8,6 +8,7 @@ addons:
       - ubuntu-toolchain-r-test
     packages:
       - g++-7
+      - python3.7-dev
 
 script:
   - ls
@@ -15,4 +16,5 @@ script:
   - cd build
   - CXX=/usr/bin/g++-7 CC=/usr/bin/gcc-7 cmake .. -DCMAKE_BUILD_TYPE=Release
   - make forward_test
-  - ./forward_test ../tests/test_setup/forward_configuration.ini
+  - ./forward_test ../tests/test_configurations/forward_configuration.ini
+  - python --version
