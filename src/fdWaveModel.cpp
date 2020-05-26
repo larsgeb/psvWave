@@ -21,38 +21,32 @@ fdWaveModel::fdWaveModel(const char *configuration_file_relative_path) {
   parse_configuration(configuration_file_relative_path);
 
   // Allocate all fields dynamically (grouped by type)
-  allocate_2d_array(vx, nx, nz);
-  allocate_2d_array(vz, nx, nz);
-  allocate_2d_array(txx, nx, nz);
-  allocate_2d_array(tzz, nx, nz);
-  allocate_2d_array(txz, nx, nz);
-
-  allocate_2d_array(lm, nx, nz);
-  allocate_2d_array(la, nx, nz);
-  allocate_2d_array(mu, nx, nz);
-  allocate_2d_array(b_vx, nx, nz);
-  allocate_2d_array(b_vz, nx, nz);
-  allocate_2d_array(rho, nx, nz);
-  allocate_2d_array(vp, nx, nz);
-  allocate_2d_array(vs, nx, nz);
-
-  allocate_2d_array(density_l_kernel, nx, nz);
-  allocate_2d_array(lambda_kernel, nx, nz);
-  allocate_2d_array(mu_kernel, nx, nz);
-
-  allocate_2d_array(vp_kernel, nx, nz);
-  allocate_2d_array(vs_kernel, nx, nz);
-  allocate_2d_array(density_v_kernel, nx, nz);
-
-  allocate_2d_array(starting_rho, nx, nz);
-  allocate_2d_array(starting_vp, nx, nz);
-  allocate_2d_array(starting_vs, nx, nz);
-
-  allocate_2d_array(taper, nx, nz);
-
-  allocate_1d_array(t, nt);
-  allocate_2d_array(stf, n_sources, nt);
-  allocate_3d_array(moment, n_sources, 2, 2);
+  vx = new Arr2D(nx, nz);
+  vz = new Arr2D(nx, nz);
+  txx = new Arr2D(nx, nz);
+  tzz = new Arr2D(nx, nz);
+  txz = new Arr2D(nx, nz);
+  lm = new Arr2D(nx, nz);
+  la = new Arr2D(nx, nz);
+  mu = new Arr2D(nx, nz);
+  b_vx = new Arr2D(nx, nz);
+  b_vz = new Arr2D(nx, nz);
+  rho = new Arr2D(nx, nz);
+  vp = new Arr2D(nx, nz);
+  vs = new Arr2D(nx, nz);
+  density_l_kernel = new Arr2D(nx, nz);
+  lambda_kernel = new Arr2D(nx, nz);
+  mu_kernel = new Arr2D(nx, nz);
+  vp_kernel = new Arr2D(nx, nz);
+  vs_kernel = new Arr2D(nx, nz);
+  density_v_kernel = new Arr2D(nx, nz);
+  starting_rho = new Arr2D(nx, nz);
+  starting_vp = new Arr2D(nx, nz);
+  starting_vs = new Arr2D(nx, nz);
+  taper = new Arr2D(nx, nz);
+  t = new Arr1D(nt);
+  stf = new Arr2D(n_sources, nt);
+  moment = new Arr3D(n_sources, 2, 2);
   rtf_ux = new Arr3D(n_shots, nr, nt);
   rtf_uz = new Arr3D(n_shots, nr, nt);
   rtf_ux_true = new Arr3D(n_shots, nr, nt);
@@ -85,11 +79,11 @@ fdWaveModel::fdWaveModel(const char *configuration_file_relative_path) {
          i_source < which_source_to_fire_in_which_shot[i_shot].size();
          ++i_source) {
       for (unsigned int it = 0; it < nt; ++it) {
-        t[it] = it * dt;
+        (*t)(it) = it * dt;
         auto f = static_cast<real_simulation>(1.0 / alpha);
         auto shiftedTime = static_cast<real_simulation>(
-            t[it] - 1.4 / f - delay_cycles_per_shot * i_source / f);
-        stf[which_source_to_fire_in_which_shot[i_shot][i_source]][it] =
+            (*t)(it)-1.4 / f - delay_cycles_per_shot * i_source / f);
+        (*stf)(which_source_to_fire_in_which_shot[i_shot][i_source], it) =
             real_simulation((1 - 2 * pow(M_PI * f * shiftedTime, 2)) *
                             exp(-pow(M_PI * f * shiftedTime, 2)));
       }
@@ -99,23 +93,23 @@ fdWaveModel::fdWaveModel(const char *configuration_file_relative_path) {
   // Assign moment tensors based on rotation.
   for (int i_source = 0; i_source < n_sources;
        ++i_source) { // todo allow for more complex moment tensors
-    moment[i_source][0][0] = static_cast<real_simulation>(
-        cos(moment_angles[i_source] * PI / 180.0) * 1e15);
-    moment[i_source][0][1] = static_cast<real_simulation>(
-        -sin(moment_angles[i_source] * PI / 180.0) * 1e15);
-    moment[i_source][1][0] = static_cast<real_simulation>(
-        -sin(moment_angles[i_source] * PI / 180.0) * 1e15);
-    moment[i_source][1][1] = static_cast<real_simulation>(
-        -cos(moment_angles[i_source] * PI / 180.0) * 1e15);
+    (*moment)(i_source, 0, 0) = static_cast<real_simulation>(
+        cos((*moment_angles)(i_source)*PI / 180.0) * 1e15);
+    (*moment)(i_source, 0, 1) = static_cast<real_simulation>(
+        -sin((*moment_angles)(i_source)*PI / 180.0) * 1e15);
+    (*moment)(i_source, 1, 0) = static_cast<real_simulation>(
+        -sin((*moment_angles)(i_source)*PI / 180.0) * 1e15);
+    (*moment)(i_source, 1, 1) = static_cast<real_simulation>(
+        -cos((*moment_angles)(i_source)*PI / 180.0) * 1e15);
   }
 
 // Set all fields to background value so as to at least initialize.
 #pragma omp parallel for collapse(2)
   for (int ix = 0; ix < nx; ++ix) {
     for (int iz = 0; iz < nz; ++iz) {
-      vp[ix][iz] = scalar_vp;
-      vs[ix][iz] = scalar_vs;
-      rho[ix][iz] = scalar_rho;
+      (*vp)(ix, iz) = scalar_vp;
+      (*vs)(ix, iz) = scalar_vs;
+      (*rho)(ix, iz) = scalar_rho;
     }
   }
 
@@ -124,21 +118,21 @@ fdWaveModel::fdWaveModel(const char *configuration_file_relative_path) {
 
 // Initialize Gaussian taper by ...
 #pragma omp parallel for collapse(2)
-  for (int ix = 0; ix < nx;
-       ++ix) { // ... starting with zero taper in every point, ...
+  for (int ix = 0; ix < nx; ++ix) {
+    // ... starting with zero taper in every point, ...
     for (int iz = 0; iz < nz; ++iz) {
-      taper[ix][iz] = 0.0;
+      (*taper)(ix, iz) = 0.0;
     }
   }
-  for (int id = 0; id < np_boundary;
-       ++id) { // ... subsequently, move from outside inwards over the np,
-               // adding one to every point ...
+  for (int id = 0; id < np_boundary; ++id) {
+    // ... subsequently, move from outside inwards over the np,
+    // adding one to every point ...
 #pragma omp parallel for collapse(2)
     for (int ix = id; ix < nx - id; ++ix) {
-      for (int iz = id; iz < nz - id;
-           ++iz) { // (hardcoded free surface boundaries by not moving iz
-                   // < nz)
-        taper[ix][iz]++;
+      for (int iz = id; iz < nz - id; ++iz) {
+        // (hardcoded free surface boundaries by not moving iz
+        // < nz)
+        (*taper)(ix, iz)++;
       }
     }
   }
@@ -147,8 +141,8 @@ fdWaveModel::fdWaveModel(const char *configuration_file_relative_path) {
        ++ix) { // ... and finally setting the maximum taper value to taper 1
                // using exponential function, decaying outwards.
     for (int iz = 0; iz < nz; ++iz) {
-      taper[ix][iz] = static_cast<real_simulation>(
-          exp(-pow(np_factor * (np_boundary - taper[ix][iz]), 2)));
+      (*taper)(ix, iz) = static_cast<real_simulation>(
+          exp(-pow(np_factor * (np_boundary - (*taper)(ix, iz)), 2)));
     }
   }
 
@@ -160,41 +154,43 @@ fdWaveModel::fdWaveModel(const char *configuration_file_relative_path) {
 }
 
 fdWaveModel::~fdWaveModel() {
-  deallocate_2d_array(vx, nx);
-  deallocate_2d_array(vz, nx);
-  deallocate_2d_array(txx, nx);
-  deallocate_2d_array(tzz, nx);
-  deallocate_2d_array(txz, nx);
-
-  deallocate_2d_array(lm, nx);
-  deallocate_2d_array(la, nx);
-  deallocate_2d_array(mu, nx);
-  deallocate_2d_array(b_vx, nx);
-  deallocate_2d_array(b_vz, nx);
-  deallocate_2d_array(rho, nx);
-  deallocate_2d_array(vp, nx);
-  deallocate_2d_array(vs, nx);
-
-  deallocate_2d_array(density_l_kernel, nx);
-  deallocate_2d_array(lambda_kernel, nx);
-  deallocate_2d_array(mu_kernel, nx);
-
-  deallocate_2d_array(vp_kernel, nx);
-  deallocate_2d_array(vs_kernel, nx);
-  deallocate_2d_array(density_v_kernel, nx);
-
-  deallocate_2d_array(starting_rho, nx);
-  deallocate_2d_array(starting_vp, nx);
-  deallocate_2d_array(starting_vs, nx);
-
-  deallocate_2d_array(taper, nx);
-
-  deallocate_1d_array(t);
-  deallocate_2d_array(stf, n_sources);
-  deallocate_3d_array(moment, n_sources, 2);
-
-  delete rtf_ux, rtf_uz, rtf_ux_true, rtf_uz_true, a_stf_ux, a_stf_uz;
-  delete accu_vx, accu_vz, accu_txx, accu_tzz, accu_txz;
+  delete vx;
+  delete vz;
+  delete txx;
+  delete tzz;
+  delete txz;
+  delete lm;
+  delete la;
+  delete mu;
+  delete b_vx;
+  delete b_vz;
+  delete rho;
+  delete vp;
+  delete vs;
+  delete density_l_kernel;
+  delete lambda_kernel;
+  delete mu_kernel;
+  delete vp_kernel;
+  delete vs_kernel;
+  delete density_v_kernel;
+  delete starting_rho;
+  delete starting_vp;
+  delete starting_vs;
+  delete taper;
+  delete t;
+  delete stf;
+  delete moment;
+  delete rtf_ux;
+  delete rtf_uz;
+  delete rtf_ux_true;
+  delete rtf_uz_true;
+  delete a_stf_ux;
+  delete a_stf_uz;
+  delete accu_vx;
+  delete accu_vz;
+  delete accu_txx;
+  delete accu_tzz;
+  delete accu_txz;
 }
 
 void fdWaveModel::parse_configuration(
@@ -245,23 +241,20 @@ void fdWaveModel::parse_configuration(
   t0 = reader.GetReal("sources", "source_timeshift", 0.005);
   delay_cycles_per_shot =
       reader.GetReal("sources", "delay_cycles_per_shot", 12);
-  n_sources = reader.GetInteger("sources", "n_sources", 7);
+  n_sources = reader.GetInteger("sources", "n_sources", 1);
   n_shots = reader.GetInteger("sources", "n_shots", 1);
   // Parse source setup.
   ix_sources = new int[n_sources];
   iz_sources = new int[n_sources];
-  moment_angles = new real_simulation[n_sources];
+  moment_angles = new Arr1D(n_sources);
   std::vector<int> ix_sources_vector;
   std::vector<int> iz_sources_vector;
   std::vector<real_simulation> moment_angles_vector;
-  parse_string_to_vector(
-      reader.Get("sources", "ix_sources", "{25, 50, 75, 100, 125, 150, 175};"),
-      &ix_sources_vector);
-  parse_string_to_vector(
-      reader.Get("sources", "iz_sources", "{10, 10, 10, 10, 10, 10, 10};"),
-      &iz_sources_vector);
-  parse_string_to_vector(reader.Get("sources", "moment_angles",
-                                    "{90, 81, 41, 300, 147, 252, 327};"),
+  parse_string_to_vector(reader.Get("sources", "ix_sources", "{10};"),
+                         &ix_sources_vector);
+  parse_string_to_vector(reader.Get("sources", "iz_sources", "{10};"),
+                         &iz_sources_vector);
+  parse_string_to_vector(reader.Get("sources", "moment_angles", "{90};"),
                          &moment_angles_vector);
   if (ix_sources_vector.size() != n_sources or
       iz_sources_vector.size() != n_sources or
@@ -274,12 +267,11 @@ void fdWaveModel::parse_configuration(
   for (int i_source = 0; i_source < n_sources; ++i_source) {
     ix_sources[i_source] = ix_sources_vector[i_source];
     iz_sources[i_source] = iz_sources_vector[i_source];
-    moment_angles[i_source] = moment_angles_vector[i_source];
+    (*moment_angles)(i_source) = moment_angles_vector[i_source];
   }
   // Parse source stacking
   parse_string_to_nested_int_vector(
-      reader.Get("sources", "which_source_to_fire_in_which_shot",
-                 "{{0, 1, 2, 3, 4, 5, 6}};"),
+      reader.Get("sources", "which_source_to_fire_in_which_shot", "{{0}};"),
       &which_source_to_fire_in_which_shot);
   if (which_source_to_fire_in_which_shot.size() != n_shots) {
     std::cout << "Mismatch between n_shots and "
@@ -299,21 +291,15 @@ void fdWaveModel::parse_configuration(
   }
 
   // Receivers
-  nr = reader.GetInteger("receivers", "nr", 19);
+  nr = reader.GetInteger("receivers", "nr", 1);
   ix_receivers = new int[nr];
   iz_receivers = new int[nr];
   std::vector<int> ix_receivers_vector;
   std::vector<int> iz_receivers_vector;
-  parse_string_to_vector(
-      reader.Get("receivers", "ix_receivers",
-                 "{10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, "
-                 "140, 150, 160, 170, 180}; !!"),
-      &ix_receivers_vector);
-  parse_string_to_vector(
-      reader.Get("receivers", "iz_receivers",
-                 "{90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, "
-                 "90, 90, 90, 90}; !!"),
-      &iz_receivers_vector);
+  parse_string_to_vector(reader.Get("receivers", "ix_receivers", "{50};"),
+                         &ix_receivers_vector);
+  parse_string_to_vector(reader.Get("receivers", "iz_receivers", "{50};"),
+                         &iz_receivers_vector);
 
   if (ix_receivers_vector.size() != nr or iz_receivers_vector.size() != nr) {
     std::cout << "Mismatch between nr and receivers.ix_receivers or "
@@ -345,11 +331,11 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
 #pragma omp parallel for collapse(2)
   for (int ix = 0; ix < nx; ++ix) {
     for (int iz = 0; iz < nz; ++iz) {
-      vx[ix][iz] = 0.0;
-      vz[ix][iz] = 0.0;
-      txx[ix][iz] = 0.0;
-      tzz[ix][iz] = 0.0;
-      txz[ix][iz] = 0.0;
+      (*vx)(ix, iz) = 0.0;
+      (*vz)(ix, iz) = 0.0;
+      (*txx)(ix, iz) = 0.0;
+      (*tzz)(ix, iz) = 0.0;
+      (*txz)(ix, iz) = 0.0;
     }
   }
 
@@ -366,11 +352,11 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
 #pragma omp parallel for collapse(2)
       for (int ix = np_boundary; ix < nx_inner + np_boundary; ++ix) {
         for (int iz = np_boundary; iz < nz_inner + np_boundary; ++iz) {
-          (*accu_vx)(i_shot, it / snapshot_interval, ix, iz) = vx[ix][iz];
-          (*accu_vz)(i_shot, it / snapshot_interval, ix, iz) = vz[ix][iz];
-          (*accu_txx)(i_shot, it / snapshot_interval, ix, iz) = txx[ix][iz];
-          (*accu_txz)(i_shot, it / snapshot_interval, ix, iz) = txz[ix][iz];
-          (*accu_tzz)(i_shot, it / snapshot_interval, ix, iz) = tzz[ix][iz];
+          (*accu_vx)(i_shot, it / snapshot_interval, ix, iz) = (*vx)(ix, iz);
+          (*accu_vz)(i_shot, it / snapshot_interval, ix, iz) = (*vz)(ix, iz);
+          (*accu_txx)(i_shot, it / snapshot_interval, ix, iz) = (*txx)(ix, iz);
+          (*accu_txz)(i_shot, it / snapshot_interval, ix, iz) = (*txz)(ix, iz);
+          (*accu_tzz)(i_shot, it / snapshot_interval, ix, iz) = (*tzz)(ix, iz);
         }
       }
     }
@@ -381,19 +367,19 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
     for (int i_receiver = 0; i_receiver < nr; ++i_receiver) {
       if (it == 0) {
         (*rtf_ux)(i_shot, i_receiver, it) =
-            dt * vx[ix_receivers[i_receiver]][iz_receivers[i_receiver]] /
+            dt * (*vx)(ix_receivers[i_receiver], iz_receivers[i_receiver]) /
             (dx * dz);
         (*rtf_uz)(i_shot, i_receiver, it) =
-            dt * vz[ix_receivers[i_receiver]][iz_receivers[i_receiver]] /
+            dt * (*vz)(ix_receivers[i_receiver], iz_receivers[i_receiver]) /
             (dx * dz);
       } else {
         (*rtf_ux)(i_shot, i_receiver, it) =
             (*rtf_ux)(i_shot, i_receiver, it - 1) +
-            dt * vx[ix_receivers[i_receiver]][iz_receivers[i_receiver]] /
+            dt * (*vx)(ix_receivers[i_receiver], iz_receivers[i_receiver]) /
                 (dx * dz);
         (*rtf_uz)(i_shot, i_receiver, it) =
             (*rtf_uz)(i_shot, i_receiver, it - 1) +
-            dt * vz[ix_receivers[i_receiver]][iz_receivers[i_receiver]] /
+            dt * (*vz)(ix_receivers[i_receiver], iz_receivers[i_receiver]) /
                 (dx * dz);
       }
     }
@@ -402,59 +388,61 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
 #pragma omp parallel for collapse(2)
     for (int ix = 2; ix < nx - 2; ++ix) {
       for (int iz = 2; iz < nz - 2; ++iz) {
-        txx[ix][iz] =
-            taper[ix][iz] *
-            (txx[ix][iz] + dt * (lm[ix][iz] *
-                                     (c1 * (vx[ix + 1][iz] - vx[ix][iz]) +
-                                      c2 * (vx[ix - 1][iz] - vx[ix + 2][iz])) /
-                                     dx +
-                                 la[ix][iz] *
-                                     (c1 * (vz[ix][iz] - vz[ix][iz - 1]) +
-                                      c2 * (vz[ix][iz - 2] - vz[ix][iz + 1])) /
-                                     dz));
-        tzz[ix][iz] =
-            taper[ix][iz] *
-            (tzz[ix][iz] + dt * (la[ix][iz] *
-                                     (c1 * (vx[ix + 1][iz] - vx[ix][iz]) +
-                                      c2 * (vx[ix - 1][iz] - vx[ix + 2][iz])) /
-                                     dx +
-                                 (lm[ix][iz]) *
-                                     (c1 * (vz[ix][iz] - vz[ix][iz - 1]) +
-                                      c2 * (vz[ix][iz - 2] - vz[ix][iz + 1])) /
-                                     dz));
-        txz[ix][iz] =
-            taper[ix][iz] *
-            (txz[ix][iz] + dt * mu[ix][iz] *
-                               ((c1 * (vx[ix][iz + 1] - vx[ix][iz]) +
-                                 c2 * (vx[ix][iz - 1] - vx[ix][iz + 2])) /
-                                    dz +
-                                (c1 * (vz[ix][iz] - vz[ix - 1][iz]) +
-                                 c2 * (vz[ix - 2][iz] - vz[ix + 1][iz])) /
-                                    dx));
+        (*txx)(ix, iz) =
+            (*taper)(ix, iz) *
+            ((*txx)(ix, iz) +
+             dt * ((*lm)(ix, iz) *
+                       (c1 * ((*vx)(ix + 1, iz) - (*vx)(ix, iz)) +
+                        c2 * ((*vx)(ix - 1, iz) - (*vx)(ix + 2, iz))) /
+                       dx +
+                   (*la)(ix, iz) *
+                       (c1 * ((*vz)(ix, iz) - (*vz)(ix, iz - 1)) +
+                        c2 * ((*vz)(ix, iz - 2) - (*vz)(ix, iz + 1))) /
+                       dz));
+        (*tzz)(ix, iz) =
+            (*taper)(ix, iz) *
+            ((*tzz)(ix, iz) +
+             dt * ((*la)(ix, iz) *
+                       (c1 * ((*vx)(ix + 1, iz) - (*vx)(ix, iz)) +
+                        c2 * ((*vx)(ix - 1, iz) - (*vx)(ix + 2, iz))) /
+                       dx +
+                   ((*lm)(ix, iz)) *
+                       (c1 * ((*vz)(ix, iz) - (*vz)(ix, iz - 1)) +
+                        c2 * ((*vz)(ix, iz - 2) - (*vz)(ix, iz + 1))) /
+                       dz));
+        (*txz)(ix, iz) = (*taper)(ix, iz) *
+                         ((*txz)(ix, iz) +
+                          dt * (*mu)(ix, iz) *
+                              ((c1 * ((*vx)(ix, iz + 1) - (*vx)(ix, iz)) +
+                                c2 * ((*vx)(ix, iz - 1) - (*vx)(ix, iz + 2))) /
+                                   dz +
+                               (c1 * ((*vz)(ix, iz) - (*vz)(ix - 1, iz)) +
+                                c2 * ((*vz)(ix - 2, iz) - (*vz)(ix + 1, iz))) /
+                                   dx));
       }
     }
 // ... and time integrate dynamic fields for velocity.
 #pragma omp parallel for collapse(2)
     for (int ix = 2; ix < nx - 2; ++ix) {
       for (int iz = 2; iz < nz - 2; ++iz) {
-        vx[ix][iz] =
-            taper[ix][iz] *
-            (vx[ix][iz] + b_vx[ix][iz] * dt *
-                              ((c1 * (txx[ix][iz] - txx[ix - 1][iz]) +
-                                c2 * (txx[ix - 2][iz] - txx[ix + 1][iz])) /
-                                   dx +
-                               (c1 * (txz[ix][iz] - txz[ix][iz - 1]) +
-                                c2 * (txz[ix][iz - 2] - txz[ix][iz + 1])) /
-                                   dz));
-        vz[ix][iz] =
-            taper[ix][iz] *
-            (vz[ix][iz] + b_vz[ix][iz] * dt *
-                              ((c1 * (txz[ix + 1][iz] - txz[ix][iz]) +
-                                c2 * (txz[ix - 1][iz] - txz[ix + 2][iz])) /
-                                   dx +
-                               (c1 * (tzz[ix][iz + 1] - tzz[ix][iz]) +
-                                c2 * (tzz[ix][iz - 1] - tzz[ix][iz + 2])) /
-                                   dz));
+        (*vx)(ix, iz) = (*taper)(ix, iz) *
+                        ((*vx)(ix, iz) +
+                         (*b_vx)(ix, iz) * dt *
+                             ((c1 * ((*txx)(ix, iz) - (*txx)(ix - 1, iz)) +
+                               c2 * ((*txx)(ix - 2, iz) - (*txx)(ix + 1, iz))) /
+                                  dx +
+                              (c1 * ((*txz)(ix, iz) - (*txz)(ix, iz - 1)) +
+                               c2 * ((*txz)(ix, iz - 2) - (*txz)(ix, iz + 1))) /
+                                  dz));
+        (*vz)(ix, iz) = (*taper)(ix, iz) *
+                        ((*vz)(ix, iz) +
+                         (*b_vz)(ix, iz) * dt *
+                             ((c1 * ((*txz)(ix + 1, iz) - (*txz)(ix, iz)) +
+                               c2 * ((*txz)(ix - 1, iz) - (*txz)(ix + 2, iz))) /
+                                  dx +
+                              (c1 * ((*tzz)(ix, iz + 1) - (*tzz)(ix, iz)) +
+                               c2 * ((*tzz)(ix, iz - 1) - (*tzz)(ix, iz + 2))) /
+                                  dz));
       }
     }
 
@@ -467,58 +455,61 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
       //   std::cout << "Firing source " << i_source << " in shot " << i_shot
       //             << std::endl;
       // }
+      //
+      //  todo VERIFY
+      //
       // |-inject source
       // | (x,x)-couple
-      vx[ix_sources[i_source] - 1][iz_sources[i_source]] -=
-          moment[i_source][0][0] * stf[i_source][it] * dt *
-          b_vz[ix_sources[i_source] - 1][iz_sources[i_source]] /
+      (*vx)(ix_sources[i_source] - 1, iz_sources[i_source]) -=
+          (*moment)(i_source, 0, 0) * (*stf)(i_source, it) * dt *
+          (*b_vz)(ix_sources[i_source] - 1, iz_sources[i_source]) /
           (dx * dx * dx * dx);
-      vx[ix_sources[i_source]][iz_sources[i_source]] +=
-          moment[i_source][0][0] * stf[i_source][it] * dt *
-          b_vz[ix_sources[i_source]][iz_sources[i_source]] /
+      (*vx)(ix_sources[i_source], iz_sources[i_source]) +=
+          (*moment)(i_source, 0, 0) * (*stf)(i_source, it) * dt *
+          (*b_vz)(ix_sources[i_source], iz_sources[i_source]) /
           (dx * dx * dx * dx);
       // | (z,z)-couple
-      vz[ix_sources[i_source]][iz_sources[i_source] - 1] -=
-          moment[i_source][1][1] * stf[i_source][it] * dt *
-          b_vz[ix_sources[i_source]][iz_sources[i_source] - 1] /
+      (*vz)(ix_sources[i_source], iz_sources[i_source] - 1) -=
+          (*moment)(i_source, 1, 1) * (*stf)(i_source, it) * dt *
+          (*b_vz)(ix_sources[i_source], iz_sources[i_source] - 1) /
           (dz * dz * dz * dz);
-      vz[ix_sources[i_source]][iz_sources[i_source]] +=
-          moment[i_source][1][1] * stf[i_source][it] * dt *
-          b_vz[ix_sources[i_source]][iz_sources[i_source]] /
+      (*vz)(ix_sources[i_source], iz_sources[i_source]) +=
+          (*moment)(i_source, 1, 1) * (*stf)(i_source, it) * dt *
+          (*b_vz)(ix_sources[i_source], iz_sources[i_source]) /
           (dz * dz * dz * dz);
       // | (x,z)-couple
-      vx[ix_sources[i_source] - 1][iz_sources[i_source] + 1] +=
-          0.25 * moment[i_source][0][1] * stf[i_source][it] * dt *
-          b_vz[ix_sources[i_source] - 1][iz_sources[i_source] + 1] /
+      (*vx)(ix_sources[i_source] - 1, iz_sources[i_source] + 1) +=
+          0.25 * (*moment)(i_source, 0, 1) * (*stf)(i_source, it) * dt *
+          (*b_vz)(ix_sources[i_source] - 1, iz_sources[i_source] + 1) /
           (dx * dx * dx * dx);
-      vx[ix_sources[i_source]][iz_sources[i_source] + 1] +=
-          0.25 * moment[i_source][0][1] * stf[i_source][it] * dt *
-          b_vz[ix_sources[i_source]][iz_sources[i_source] + 1] /
+      (*vx)(ix_sources[i_source], iz_sources[i_source] + 1) +=
+          0.25 * (*moment)(i_source, 0, 1) * (*stf)(i_source, it) * dt *
+          (*b_vz)(ix_sources[i_source], iz_sources[i_source] + 1) /
           (dx * dx * dx * dx);
-      vx[ix_sources[i_source] - 1][iz_sources[i_source] - 1] -=
-          0.25 * moment[i_source][0][1] * stf[i_source][it] * dt *
-          b_vz[ix_sources[i_source] - 1][iz_sources[i_source] - 1] /
+      (*vx)(ix_sources[i_source] - 1, iz_sources[i_source] - 1) -=
+          0.25 * (*moment)(i_source, 0, 1) * (*stf)(i_source, it) * dt *
+          (*b_vz)(ix_sources[i_source] - 1, iz_sources[i_source] - 1) /
           (dx * dx * dx * dx);
-      vx[ix_sources[i_source]][iz_sources[i_source] - 1] -=
-          0.25 * moment[i_source][0][1] * stf[i_source][it] * dt *
-          b_vz[ix_sources[i_source]][iz_sources[i_source] - 1] /
+      (*vx)(ix_sources[i_source], iz_sources[i_source] - 1) -=
+          0.25 * (*moment)(i_source, 0, 1) * (*stf)(i_source, it) * dt *
+          (*b_vz)(ix_sources[i_source], iz_sources[i_source] - 1) /
           (dx * dx * dx * dx);
       // | (z,x)-couple
-      vz[ix_sources[i_source] + 1][iz_sources[i_source] - 1] +=
-          0.25 * moment[i_source][1][0] * stf[i_source][it] * dt *
-          b_vz[ix_sources[i_source] + 1][iz_sources[i_source] - 1] /
+      (*vz)(ix_sources[i_source] + 1, iz_sources[i_source] - 1) +=
+          0.25 * (*moment)(i_source, 1, 0) * (*stf)(i_source, it) * dt *
+          (*b_vz)(ix_sources[i_source] + 1, iz_sources[i_source] - 1) /
           (dz * dz * dz * dz);
-      vz[ix_sources[i_source] + 1][iz_sources[i_source]] +=
-          0.25 * moment[i_source][1][0] * stf[i_source][it] * dt *
-          b_vz[ix_sources[i_source] + 1][iz_sources[i_source]] /
+      (*vz)(ix_sources[i_source] + 1, iz_sources[i_source]) +=
+          0.25 * (*moment)(i_source, 1, 0) * (*stf)(i_source, it) * dt *
+          (*b_vz)(ix_sources[i_source] + 1, iz_sources[i_source]) /
           (dz * dz * dz * dz);
-      vz[ix_sources[i_source] - 1][iz_sources[i_source] - 1] -=
-          0.25 * moment[i_source][1][0] * stf[i_source][it] * dt *
-          b_vz[ix_sources[i_source] - 1][iz_sources[i_source] - 1] /
+      (*vz)(ix_sources[i_source] - 1, iz_sources[i_source] - 1) -=
+          0.25 * (*moment)(i_source, 1, 0) * (*stf)(i_source, it) * dt *
+          (*b_vz)(ix_sources[i_source] - 1, iz_sources[i_source] - 1) /
           (dz * dz * dz * dz);
-      vz[ix_sources[i_source] - 1][iz_sources[i_source]] -=
-          0.25 * moment[i_source][1][0] * stf[i_source][it] * dt *
-          b_vz[ix_sources[i_source] - 1][iz_sources[i_source]] /
+      (*vz)(ix_sources[i_source] - 1, iz_sources[i_source]) -=
+          0.25 * (*moment)(i_source, 1, 0) * (*stf)(i_source, it) * dt *
+          (*b_vz)(ix_sources[i_source] - 1, iz_sources[i_source]) /
           (dz * dz * dz * dz);
     }
 
@@ -534,8 +525,8 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
 
       for (int ix = 0; ix < nx; ++ix) {
         for (int iz = 0; iz < nz; ++iz) {
-          file_vx << vx[ix][iz] << " ";
-          file_vz << vz[ix][iz] << " ";
+          file_vx << (*vx)(ix, iz) << " ";
+          file_vz << (*vz)(ix, iz) << " ";
         }
         file_vx << std::endl;
         file_vz << std::endl;
@@ -558,11 +549,11 @@ void fdWaveModel::adjoint_simulate(int i_shot, bool verbose) {
   // Reset dynamical fields
   for (int ix = 0; ix < nx; ++ix) {
     for (int iz = 0; iz < nz; ++iz) {
-      vx[ix][iz] = 0.0;
-      vz[ix][iz] = 0.0;
-      txx[ix][iz] = 0.0;
-      tzz[ix][iz] = 0.0;
-      txz[ix][iz] = 0.0;
+      (*vx)(ix, iz) = 0.0;
+      (*vz)(ix, iz) = 0.0;
+      (*txx)(ix, iz) = 0.0;
+      (*tzz)(ix, iz) = 0.0;
+      (*txz)(ix, iz) = 0.0;
     }
   }
 
@@ -581,43 +572,53 @@ void fdWaveModel::adjoint_simulate(int i_shot, bool verbose) {
            ix < np_boundary + nx_inner - nx_inner_boundary; ++ix) {
         for (int iz = np_boundary + nz_inner_boundary;
              iz < np_boundary + nz_inner - nz_inner_boundary; ++iz) {
-          density_l_kernel[ix][iz] -=
+          (*density_l_kernel)(ix, iz) -=
               snapshot_interval * dt *
-              ((*accu_vx)(i_shot, it / snapshot_interval, ix, iz) * vx[ix][iz] +
-               (*accu_vz)(i_shot, it / snapshot_interval, ix, iz) * vz[ix][iz]);
+              ((*accu_vx)(i_shot, it / snapshot_interval, ix, iz) *
+                   (*vx)(ix, iz) +
+               (*accu_vz)(i_shot, it / snapshot_interval, ix, iz) *
+                   (*vz)(ix, iz));
 
-          lambda_kernel[ix][iz] +=
+          (*lambda_kernel)(ix, iz) +=
               snapshot_interval * dt *
               ((((*accu_txx)(i_shot, it / snapshot_interval, ix, iz) -
                  ((*accu_tzz)(i_shot, it / snapshot_interval, ix, iz) *
-                  la[ix][iz]) /
-                     lm[ix][iz]) +
+                  (*la)(ix, iz)) /
+                     (*lm)(ix, iz)) +
                 ((*accu_tzz)(i_shot, it / snapshot_interval, ix, iz) -
                  ((*accu_txx)(i_shot, it / snapshot_interval, ix, iz) *
-                  la[ix][iz]) /
-                     lm[ix][iz])) *
-               ((txx[ix][iz] - (tzz[ix][iz] * la[ix][iz]) / lm[ix][iz]) +
-                (tzz[ix][iz] - (txx[ix][iz] * la[ix][iz]) / lm[ix][iz]))) /
-              ((lm[ix][iz] - ((la[ix][iz] * la[ix][iz]) / (lm[ix][iz]))) *
-               (lm[ix][iz] - ((la[ix][iz] * la[ix][iz]) / (lm[ix][iz]))));
+                  (*la)(ix, iz)) /
+                     (*lm)(ix, iz))) *
+               (((*txx)(ix, iz) -
+                 ((*tzz)(ix, iz) * (*la)(ix, iz)) / (*lm)(ix, iz)) +
+                ((*tzz)(ix, iz) -
+                 ((*txx)(ix, iz) * (*la)(ix, iz)) / (*lm)(ix, iz)))) /
+              (((*lm)(ix, iz) -
+                (((*la)(ix, iz) * (*la)(ix, iz)) / ((*lm)(ix, iz)))) *
+               ((*lm)(ix, iz) -
+                (((*la)(ix, iz) * (*la)(ix, iz)) / ((*lm)(ix, iz)))));
 
-          mu_kernel[ix][iz] +=
+          (*mu_kernel)(ix, iz) +=
               snapshot_interval * dt * 2 *
-              ((((txx[ix][iz] - (tzz[ix][iz] * la[ix][iz]) / lm[ix][iz]) *
+              (((((*txx)(ix, iz) -
+                  ((*tzz)(ix, iz) * (*la)(ix, iz)) / (*lm)(ix, iz)) *
                  ((*accu_txx)(i_shot, it / snapshot_interval, ix, iz) -
                   ((*accu_tzz)(i_shot, it / snapshot_interval, ix, iz) *
-                   la[ix][iz]) /
-                      lm[ix][iz])) +
-                ((tzz[ix][iz] - (txx[ix][iz] * la[ix][iz]) / lm[ix][iz]) *
+                   (*la)(ix, iz)) /
+                      (*lm)(ix, iz))) +
+                (((*tzz)(ix, iz) -
+                  ((*txx)(ix, iz) * (*la)(ix, iz)) / (*lm)(ix, iz)) *
                  ((*accu_tzz)(i_shot, it / snapshot_interval, ix, iz) -
                   ((*accu_txx)(i_shot, it / snapshot_interval, ix, iz) *
-                   la[ix][iz]) /
-                      lm[ix][iz]))) /
-                   ((lm[ix][iz] - ((la[ix][iz] * la[ix][iz]) / (lm[ix][iz]))) *
-                    (lm[ix][iz] - ((la[ix][iz] * la[ix][iz]) / (lm[ix][iz])))) +
-               2 * (txz[ix][iz] *
+                   (*la)(ix, iz)) /
+                      (*lm)(ix, iz)))) /
+                   (((*lm)(ix, iz) -
+                     (((*la)(ix, iz) * (*la)(ix, iz)) / ((*lm)(ix, iz)))) *
+                    ((*lm)(ix, iz) -
+                     (((*la)(ix, iz) * (*la)(ix, iz)) / ((*lm)(ix, iz))))) +
+               2 * ((*txz)(ix, iz) *
                     (*accu_txz)(i_shot, it / snapshot_interval, ix, iz) /
-                    (4 * mu[ix][iz] * mu[ix][iz])));
+                    (4 * (*mu)(ix, iz) * (*mu)(ix, iz))));
         }
       }
     }
@@ -626,69 +627,71 @@ void fdWaveModel::adjoint_simulate(int i_shot, bool verbose) {
 #pragma omp parallel for collapse(2)
     for (int ix = 2; ix < nx - 2; ++ix) {
       for (int iz = 2; iz < nz - 2; ++iz) {
-        txx[ix][iz] =
-            taper[ix][iz] *
-            (txx[ix][iz] - dt * (lm[ix][iz] *
-                                     (c1 * (vx[ix + 1][iz] - vx[ix][iz]) +
-                                      c2 * (vx[ix - 1][iz] - vx[ix + 2][iz])) /
-                                     dx +
-                                 la[ix][iz] *
-                                     (c1 * (vz[ix][iz] - vz[ix][iz - 1]) +
-                                      c2 * (vz[ix][iz - 2] - vz[ix][iz + 1])) /
-                                     dz));
-        tzz[ix][iz] =
-            taper[ix][iz] *
-            (tzz[ix][iz] - dt * (la[ix][iz] *
-                                     (c1 * (vx[ix + 1][iz] - vx[ix][iz]) +
-                                      c2 * (vx[ix - 1][iz] - vx[ix + 2][iz])) /
-                                     dx +
-                                 (lm[ix][iz]) *
-                                     (c1 * (vz[ix][iz] - vz[ix][iz - 1]) +
-                                      c2 * (vz[ix][iz - 2] - vz[ix][iz + 1])) /
-                                     dz));
-        txz[ix][iz] =
-            taper[ix][iz] *
-            (txz[ix][iz] - dt * mu[ix][iz] *
-                               ((c1 * (vx[ix][iz + 1] - vx[ix][iz]) +
-                                 c2 * (vx[ix][iz - 1] - vx[ix][iz + 2])) /
-                                    dz +
-                                (c1 * (vz[ix][iz] - vz[ix - 1][iz]) +
-                                 c2 * (vz[ix - 2][iz] - vz[ix + 1][iz])) /
-                                    dx));
+        (*txx)(ix, iz) =
+            (*taper)(ix, iz) *
+            ((*txx)(ix, iz) -
+             dt * ((*lm)(ix, iz) *
+                       (c1 * ((*vx)(ix + 1, iz) - (*vx)(ix, iz)) +
+                        c2 * ((*vx)(ix - 1, iz) - (*vx)(ix + 2, iz))) /
+                       dx +
+                   (*la)(ix, iz) *
+                       (c1 * ((*vz)(ix, iz) - (*vz)(ix, iz - 1)) +
+                        c2 * ((*vz)(ix, iz - 2) - (*vz)(ix, iz + 1))) /
+                       dz));
+        (*tzz)(ix, iz) =
+            (*taper)(ix, iz) *
+            ((*tzz)(ix, iz) -
+             dt * ((*la)(ix, iz) *
+                       (c1 * ((*vx)(ix + 1, iz) - (*vx)(ix, iz)) +
+                        c2 * ((*vx)(ix - 1, iz) - (*vx)(ix + 2, iz))) /
+                       dx +
+                   ((*lm)(ix, iz)) *
+                       (c1 * ((*vz)(ix, iz) - (*vz)(ix, iz - 1)) +
+                        c2 * ((*vz)(ix, iz - 2) - (*vz)(ix, iz + 1))) /
+                       dz));
+        (*txz)(ix, iz) = (*taper)(ix, iz) *
+                         ((*txz)(ix, iz) -
+                          dt * (*mu)(ix, iz) *
+                              ((c1 * ((*vx)(ix, iz + 1) - (*vx)(ix, iz)) +
+                                c2 * ((*vx)(ix, iz - 1) - (*vx)(ix, iz + 2))) /
+                                   dz +
+                               (c1 * ((*vz)(ix, iz) - (*vz)(ix - 1, iz)) +
+                                c2 * ((*vz)(ix - 2, iz) - (*vz)(ix + 1, iz))) /
+                                   dx));
       }
     }
 // Reverse time integrate dynamic fields for velocity
 #pragma omp parallel for collapse(2)
     for (int ix = 2; ix < nx - 2; ++ix) {
       for (int iz = 2; iz < nz - 2; ++iz) {
-        vx[ix][iz] =
-            taper[ix][iz] *
-            (vx[ix][iz] - b_vx[ix][iz] * dt *
-                              ((c1 * (txx[ix][iz] - txx[ix - 1][iz]) +
-                                c2 * (txx[ix - 2][iz] - txx[ix + 1][iz])) /
-                                   dx +
-                               (c1 * (txz[ix][iz] - txz[ix][iz - 1]) +
-                                c2 * (txz[ix][iz - 2] - txz[ix][iz + 1])) /
-                                   dz));
-        vz[ix][iz] =
-            taper[ix][iz] *
-            (vz[ix][iz] - b_vz[ix][iz] * dt *
-                              ((c1 * (txz[ix + 1][iz] - txz[ix][iz]) +
-                                c2 * (txz[ix - 1][iz] - txz[ix + 2][iz])) /
-                                   dx +
-                               (c1 * (tzz[ix][iz + 1] - tzz[ix][iz]) +
-                                c2 * (tzz[ix][iz - 1] - tzz[ix][iz + 2])) /
-                                   dz));
+        (*vx)(ix, iz) = (*taper)(ix, iz) *
+                        ((*vx)(ix, iz) -
+                         (*b_vx)(ix, iz) * dt *
+                             ((c1 * ((*txx)(ix, iz) - (*txx)(ix - 1, iz)) +
+                               c2 * ((*txx)(ix - 2, iz) - (*txx)(ix + 1, iz))) /
+                                  dx +
+                              (c1 * ((*txz)(ix, iz) - (*txz)(ix, iz - 1)) +
+                               c2 * ((*txz)(ix, iz - 2) - (*txz)(ix, iz + 1))) /
+                                  dz));
+        (*vz)(ix, iz) = (*taper)(ix, iz) *
+                        ((*vz)(ix, iz) -
+                         (*b_vz)(ix, iz) * dt *
+                             ((c1 * ((*txz)(ix + 1, iz) - (*txz)(ix, iz)) +
+                               c2 * ((*txz)(ix - 1, iz) - (*txz)(ix + 2, iz))) /
+                                  dx +
+                              (c1 * ((*tzz)(ix, iz + 1) - (*tzz)(ix, iz)) +
+                               c2 * ((*tzz)(ix, iz - 1) - (*tzz)(ix, iz + 2))) /
+                                  dz));
       }
     }
 
     // Inject adjoint sources
     for (int ir = 0; ir < nr; ++ir) {
-      vx[ix_receivers[ir]][iz_receivers[ir]] +=
-          dt * b_vx[ix_receivers[ir]][iz_receivers[ir]] *
+      (*vx)(ix_receivers[ir], iz_receivers[ir]) +=
+          dt * (*b_vx)(ix_receivers[ir], iz_receivers[ir]) *
           (*a_stf_ux)(i_shot, ir, it) / (dx * dz);
-      vz[ix_receivers[ir]][iz_receivers[ir]] +=
-          dt * b_vz[ix_receivers[ir]][iz_receivers[ir]] *
+      (*vz)(ix_receivers[ir], iz_receivers[ir]) +=
+          dt * (*b_vz)(ix_receivers[ir], iz_receivers[ir]) *
           (*a_stf_uz)(i_shot, ir, it) / (dx * dz);
     }
   }
@@ -753,7 +756,7 @@ void fdWaveModel::write_sources() {
     for (int i_source : which_source_to_fire_in_which_shot[i_shot]) {
       shot_file << std::endl;
       for (int it = 0; it < nt; ++it) {
-        shot_file << stf[i_source][it] << " ";
+        shot_file << (*stf)(i_source, it) << " ";
       }
     }
     shot_file.close();
@@ -764,11 +767,11 @@ void fdWaveModel::update_from_velocity() {
 #pragma omp parallel for collapse(2)
   for (int ix = 0; ix < nx; ++ix) {
     for (int iz = 0; iz < nz; ++iz) {
-      mu[ix][iz] = real_simulation(pow(vs[ix][iz], 2) * rho[ix][iz]);
-      lm[ix][iz] = real_simulation(pow(vp[ix][iz], 2) * rho[ix][iz]);
-      la[ix][iz] = lm[ix][iz] - 2 * mu[ix][iz];
-      b_vx[ix][iz] = real_simulation(1.0 / rho[ix][iz]);
-      b_vz[ix][iz] = b_vx[ix][iz];
+      (*mu)(ix, iz) = real_simulation(pow((*vs)(ix, iz), 2) * (*rho)(ix, iz));
+      (*lm)(ix, iz) = real_simulation(pow((*vp)(ix, iz), 2) * (*rho)(ix, iz));
+      (*la)(ix, iz) = (*lm)(ix, iz) - 2 * (*mu)(ix, iz);
+      (*b_vx)(ix, iz) = real_simulation(1.0 / (*rho)(ix, iz));
+      (*b_vz)(ix, iz) = (*b_vx)(ix, iz);
     }
   }
 }
@@ -850,13 +853,13 @@ void fdWaveModel::calculate_l2_misfit() {
         misfit += 0.5 * dt *
                   pow((*rtf_ux_true)(i_shot, i_receiver, it) -
                           (*rtf_ux)(i_shot, i_receiver, it),
-                      2); // /
+                      2);
         // data_variance_ux[i_shot][i_receiver][it];
         misfit += 0.5 * dt *
                   pow((*rtf_uz_true)(i_shot, i_receiver, it) -
                           (*rtf_uz)(i_shot, i_receiver, it),
-                      2); // /
-                          // data_variance_uz[i_shot][i_receiver][it];
+                      2);
+        // data_variance_uz[i_shot][i_receiver][it];
       }
     }
   }
@@ -880,15 +883,16 @@ void fdWaveModel::map_kernels_to_velocity() {
 #pragma omp parallel for collapse(2)
   for (int ix = 0; ix < nx; ++ix) {
     for (int iz = 0; iz < nz; ++iz) {
-      vp_kernel[ix][iz] = 2 * vp[ix][iz] * lambda_kernel[ix][iz] / b_vx[ix][iz];
-      vs_kernel[ix][iz] = (2 * vs[ix][iz] * mu_kernel[ix][iz] -
-                           4 * vs[ix][iz] * lambda_kernel[ix][iz]) /
-                          b_vx[ix][iz];
-      density_v_kernel[ix][iz] =
-          density_l_kernel[ix][iz] +
-          (vp[ix][iz] * vp[ix][iz] - 2 * vs[ix][iz] * vs[ix][iz]) *
-              lambda_kernel[ix][iz] +
-          vs[ix][iz] * vs[ix][iz] * mu_kernel[ix][iz];
+      (*vp_kernel)(ix, iz) =
+          2 * (*vp)(ix, iz) * (*lambda_kernel)(ix, iz) / (*b_vx)(ix, iz);
+      (*vs_kernel)(ix, iz) = (2 * (*vs)(ix, iz) * (*mu_kernel)(ix, iz) -
+                              4 * (*vs)(ix, iz) * (*lambda_kernel)(ix, iz)) /
+                             (*b_vx)(ix, iz);
+      (*density_v_kernel)(ix, iz) =
+          (*density_l_kernel)(ix, iz) +
+          ((*vp)(ix, iz) * (*vp)(ix, iz) - 2 * (*vs)(ix, iz) * (*vs)(ix, iz)) *
+              (*lambda_kernel)(ix, iz) +
+          (*vs)(ix, iz) * (*vs)(ix, iz) * (*mu_kernel)(ix, iz);
     }
   }
 }
@@ -949,9 +953,9 @@ void fdWaveModel::load_model(const std::string &de_path,
       std::cout << iter << " " << ix << " " << iz << " " << de_file.good()
                 << " " << std::endl;
 
-      rho[ix][iz] = placeholder_de;
-      vp[ix][iz] = placeholder_vp;
-      vs[ix][iz] = placeholder_vs;
+      (*rho)(ix, iz) = placeholder_de;
+      (*vp)(ix, iz) = placeholder_vp;
+      (*vs)(ix, iz) = placeholder_vs;
       iter++;
 
       if (!de_file.good() or !vp_file.good() or !vs_file.good()) {
@@ -1010,9 +1014,9 @@ void fdWaveModel::run_model(bool verbose, bool simulate_adjoint) {
 void fdWaveModel::reset_kernels() {
   for (int ix = 0; ix < nx; ++ix) {
     for (int iz = 0; iz < nz; ++iz) {
-      lambda_kernel[ix][iz] = 0.0;
-      mu_kernel[ix][iz] = 0.0;
-      density_l_kernel[ix][iz] = 0.0;
+      (*lambda_kernel)(ix, iz) = 0.0;
+      (*mu_kernel)(ix, iz) = 0.0;
+      (*density_l_kernel)(ix, iz) = 0.0;
     }
   }
 }
@@ -1031,9 +1035,9 @@ void fdWaveModel::write_kernels() {
 
   for (int ix = 0; ix < nx; ++ix) {
     for (int iz = 0; iz < nz; ++iz) {
-      file_kernel_vp << vp_kernel[ix][iz] << " ";
-      file_kernel_vs << vs_kernel[ix][iz] << " ";
-      file_kernel_density << density_v_kernel[ix][iz] << " ";
+      file_kernel_vp << (*vp_kernel)(ix, iz) << " ";
+      file_kernel_vs << (*vs_kernel)(ix, iz) << " ";
+      file_kernel_density << (*density_v_kernel)(ix, iz) << " ";
     }
     file_kernel_vp << std::endl;
     file_kernel_vs << std::endl;
@@ -1078,13 +1082,13 @@ dynamic_vector fdWaveModel::get_model_vector() {
       // same value.
       for (int sub_ix = 0; sub_ix < basis_gridpoints_x; sub_ix++) {
         for (int sub_iz = 0; sub_iz < basis_gridpoints_z; sub_iz++) {
-          m[i_parameter] += vp[gix + sub_ix][giz + sub_iz] /
+          m[i_parameter] += (*vp)(gix + sub_ix, giz + sub_iz) /
                             (basis_gridpoints_x * basis_gridpoints_z);
           m[i_parameter + n_free_per_par] +=
-              vs[gix + sub_ix][giz + sub_iz] /
+              (*vs)(gix + sub_ix, giz + sub_iz) /
               (basis_gridpoints_x * basis_gridpoints_z);
           m[i_parameter + 2 * n_free_per_par] +=
-              rho[gix + sub_ix][giz + sub_iz] /
+              (*rho)(gix + sub_ix, giz + sub_iz) /
               (basis_gridpoints_x * basis_gridpoints_z);
         }
       }
@@ -1120,9 +1124,10 @@ void fdWaveModel::set_model_vector(dynamic_vector m) {
       // same value.
       for (int sub_ix = 0; sub_ix < basis_gridpoints_x; sub_ix++) {
         for (int sub_iz = 0; sub_iz < basis_gridpoints_z; sub_iz++) {
-          vp[gix + sub_ix][giz + sub_iz] = m[i_parameter];
-          vs[gix + sub_ix][giz + sub_iz] = m[i_parameter + n_free_per_par];
-          rho[gix + sub_ix][giz + sub_iz] = m[i_parameter + 2 * n_free_per_par];
+          (*vp)(gix + sub_ix, giz + sub_iz) = m[i_parameter];
+          (*vs)(gix + sub_ix, giz + sub_iz) = m[i_parameter + n_free_per_par];
+          (*rho)(gix + sub_ix, giz + sub_iz) =
+              m[i_parameter + 2 * n_free_per_par];
         }
       }
     }
@@ -1164,16 +1169,14 @@ dynamic_vector fdWaveModel::get_gradient_vector() {
       // same value.
       for (int sub_ix = 0; sub_ix < basis_gridpoints_x; sub_ix++) {
         for (int sub_iz = 0; sub_iz < basis_gridpoints_z; sub_iz++) {
-          g[i_parameter] +=
-              vp_kernel[gix + sub_ix][giz + sub_iz]; // / (basis_gridpoints_x *
-                                                     // basis_gridpoints_z);
+          g[i_parameter] += (*vp_kernel)(gix + sub_ix, giz + sub_iz);
+          // (basis_gridpoints_x * basis_gridpoints_z);
           g[i_parameter + n_free_per_par] +=
-              vs_kernel[gix + sub_ix][giz + sub_iz]; // / (basis_gridpoints_x *
-                                                     // basis_gridpoints_z);
+              (*vs_kernel)(gix + sub_ix, giz + sub_iz);
+          // (basis_gridpoints_x * basis_gridpoints_z);
           g[i_parameter + 2 * n_free_per_par] +=
-              density_v_kernel[gix + sub_ix]
-                              [giz + sub_iz]; //  / (basis_gridpoints_x *
-                                              //  basis_gridpoints_z);
+              (*density_v_kernel)(gix + sub_ix, giz + sub_iz);
+          // (basis_gridpoints_x *  basis_gridpoints_z);
         }
       }
     }

@@ -1,6 +1,14 @@
 cmake_minimum_required(VERSION 3.10)
 project(forward-virieux)
 
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
+set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+
 add_executable(forward_test tests/forward_test.cpp src/fdWaveModel.cpp src/fdWaveModel.h)
 add_library(pyWave SHARED src/pyWave.cpp src/fdWaveModel.cpp src/fdWaveModel.h)
 add_executable(adjoint_test tests/adjoint_test.cpp src/fdWaveModel.cpp src/fdWaveModel.h)

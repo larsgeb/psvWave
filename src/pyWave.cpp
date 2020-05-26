@@ -32,7 +32,59 @@ public:
         // strides
         ));
 
-    return py::make_tuple(numpy_accu_vx);
+    py::array_t<real_simulation> numpy_accu_vz(py::buffer_info(
+        accu_vz->arr,
+        sizeof(real_simulation), // itemsize
+        py::format_descriptor<real_simulation>::format(),
+        4, // ndim
+        shape,
+        std::vector<size_t>{
+            shape[3] * shape[2] * shape[1] * sizeof(real_simulation),
+            shape[3] * shape[2] * sizeof(real_simulation),
+            shape[3] * sizeof(real_simulation), sizeof(real_simulation)}
+        // strides
+        ));
+
+    py::array_t<real_simulation> numpy_accu_txx(py::buffer_info(
+        accu_tzz->arr,
+        sizeof(real_simulation), // itemsize
+        py::format_descriptor<real_simulation>::format(),
+        4, // ndim
+        shape,
+        std::vector<size_t>{
+            shape[3] * shape[2] * shape[1] * sizeof(real_simulation),
+            shape[3] * shape[2] * sizeof(real_simulation),
+            shape[3] * sizeof(real_simulation), sizeof(real_simulation)}
+        // strides
+        ));
+    py::array_t<real_simulation> numpy_accu_tzz(py::buffer_info(
+        accu_tzz->arr,
+        sizeof(real_simulation), // itemsize
+        py::format_descriptor<real_simulation>::format(),
+        4, // ndim
+        shape,
+        std::vector<size_t>{
+            shape[3] * shape[2] * shape[1] * sizeof(real_simulation),
+            shape[3] * shape[2] * sizeof(real_simulation),
+            shape[3] * sizeof(real_simulation), sizeof(real_simulation)}
+        // strides
+        ));
+
+    py::array_t<real_simulation> numpy_accu_txz(py::buffer_info(
+        accu_txz->arr,
+        sizeof(real_simulation), // itemsize
+        py::format_descriptor<real_simulation>::format(),
+        4, // ndim
+        shape,
+        std::vector<size_t>{
+            shape[3] * shape[2] * shape[1] * sizeof(real_simulation),
+            shape[3] * shape[2] * sizeof(real_simulation),
+            shape[3] * sizeof(real_simulation), sizeof(real_simulation)}
+        // strides
+        ));
+
+    return py::make_tuple(numpy_accu_vx, numpy_accu_vz, numpy_accu_txx,
+                          numpy_accu_tzz, numpy_accu_txz);
   };
 
   py::tuple get_extent(bool include_absorbing_boundary = true) {

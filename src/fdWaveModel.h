@@ -260,39 +260,35 @@ public:
 
   // |--< Spatial fields >--
   // | Dynamic physical fields
-  real_simulation **vx;
-  real_simulation **vz;
-  real_simulation **txx;
-  real_simulation **tzz;
-  real_simulation **txz;
+  Arr2D *vx, *vz, *txx, *tzz, *txz;
   // | Static physical fields
-  real_simulation **lm;
-  real_simulation **la;
-  real_simulation **mu;
-  real_simulation **b_vx;
-  real_simulation **b_vz;
-  real_simulation **rho;
-  real_simulation **vp;
-  real_simulation **vs;
+  Arr2D *lm;
+  Arr2D *la;
+  Arr2D *mu;
+  Arr2D *b_vx;
+  Arr2D *b_vz;
+  Arr2D *rho;
+  Arr2D *vp;
+  Arr2D *vs;
   // | Sensitivity kernels in Lamé's basis
-  real_simulation **lambda_kernel;
-  real_simulation **mu_kernel;
-  real_simulation **density_l_kernel;
+  Arr2D *lambda_kernel;
+  Arr2D *mu_kernel;
+  Arr2D *density_l_kernel;
   // | Sensitivity kernels in velocity basis
-  real_simulation **vp_kernel;
-  real_simulation **vs_kernel;
-  real_simulation **density_v_kernel;
+  Arr2D *vp_kernel;
+  Arr2D *vs_kernel;
+  Arr2D *density_v_kernel;
   // | Static physical fields for the starting model
-  real_simulation **starting_rho;
-  real_simulation **starting_vp;
-  real_simulation **starting_vs;
+  Arr2D *starting_rho;
+  Arr2D *starting_vp;
+  Arr2D *starting_vs;
   // | Taper field
-  real_simulation **taper;
+  Arr2D *taper;
 
   // |--< Time dependent signals >--
-  real_simulation *t;
-  real_simulation **stf;
-  real_simulation ***moment;
+  Arr1D *t;
+  Arr2D *stf;
+  Arr3D *moment;
   Arr3D *rtf_ux;
   Arr3D *rtf_uz;
   Arr3D *rtf_ux_true;
@@ -332,7 +328,7 @@ public:
   real_simulation delay_cycles_per_shot; // over f
   int *ix_sources;
   int *iz_sources;
-  real_simulation *moment_angles;
+  Arr1D *moment_angles;
   real_simulation peak_frequency;
   real_simulation alpha;
   real_simulation t0;
