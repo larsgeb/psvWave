@@ -5,8 +5,7 @@ import pyWave
 # import numpy
 
 model = pyWave.fdModel(
-    "/home/larsgebraad/Documents/forward-virieux/tests"
-    "/test_configurations/forward_configuration.ini")
+    "../tests/test_configurations/forward_configuration.ini")
 
 samples = 1
 t0 = time.time()
