@@ -19,10 +19,6 @@ int main(int argc, char **argv) {
 
   auto *model = new fdWaveModel(configuration_file);
 
-  // model->load_model("../tests/test_setup/de_target.txt",
-  // "../tests/test_setup/vp_target.txt", "../tests/test_setup/vs_target.txt",
-  // true);
-
   auto startTime = omp_get_wtime();
   int n_tests = 5;
   std::cout << "Running forward simulation " << n_tests << " times."
