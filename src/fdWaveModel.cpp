@@ -184,9 +184,6 @@ fdWaveModel::~fdWaveModel() {
   deallocate_array(accu_txx);
   deallocate_array(accu_tzz);
   deallocate_array(accu_txz);
-
-  // delete rtf_ux, rtf_uz, rtf_ux_true, rtf_uz_true, a_stf_ux, a_stf_uz;
-  // delete accu_vx, accu_vz, accu_txx, accu_tzz, accu_txz;
 }
 
 void fdWaveModel::parse_configuration(
@@ -356,8 +353,8 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
     // Take wavefield snapshot at requited intervals.
     if (it % snapshot_interval == 0 and store_fields) {
 #pragma omp parallel for collapse(2)
-      for (int ix = np_boundary; ix < nx_inner + np_boundary; ++ix) {
-        for (int iz = np_boundary; iz < nz_inner + np_boundary; ++iz) {
+      for (int ix = 0; ix < nx; ++ix) {
+        for (int iz = 0; iz < nz; ++iz) {
           accu_vx[i_shot][it / snapshot_interval][ix][iz] = vx[ix][iz];
           accu_vz[i_shot][it / snapshot_interval][ix][iz] = vz[ix][iz];
           accu_txx[i_shot][it / snapshot_interval][ix][iz] = txx[ix][iz];
@@ -1215,77 +1212,6 @@ dynamic_vector fdWaveModel::load_vector(const std::string &model_vector_path,
   model_vector_file.close();
   return m;
 }
-
-// Allocation and deallocation
-
-// void allocate_1d_array(real_simulation *&pDouble, int dim1) {
-//   pDouble = new real_simulation[dim1];
-// }
-
-// void allocate_2d_array(real_simulation **&pDouble, int dim1, int dim2) {
-//   pDouble = new real_simulation *[dim1];
-
-//   int size = dim1 * dim2;
-
-//   pDouble[0] = new real_simulation[size];
-
-//   for (int ir = 1; ir < dim1; ir++) {
-//     pDouble[ir] = &pDouble[0][ir * dim2];
-//   }
-// }
-
-// void allocate_3d_array(real_simulation ***&pDouble, int dim1, int dim2,
-//                        int dim3) {
-//   pDouble = new real_simulation **[dim1];
-
-//   int size = dim1 * dim2 * dim3;
-
-//   pDouble[0][0] = new real_simulation[size];
-
-//   for (int il = 1; il < dim1; il++) {
-//     for (int ir = 1; ir < dim2; ir++) {
-//       pDouble[il][ir] = &pDouble[0][0][ir * dim2];
-//     }
-//   }
-// }
-
-// void allocate_4d_array(real_simulation ****&pDouble, int dim1, int dim2,
-//                        int dim3, int dim4) {
-//   pDouble = new real_simulation ***[dim1];
-//   for (int i = 0; i < dim1; ++i)
-//     allocate_3d_array(pDouble[i], dim2, dim3, dim4);
-// }
-
-// void deallocate_1d_array(real_simulation *&pDouble) {
-//   delete[] pDouble;
-//   pDouble = nullptr;
-// }
-
-// void deallocate_2d_array(real_simulation **&pDouble, const int dim1) {
-//   // for (int i = 0; i < dim1; i++) {
-//   //   deallocate_1d_array(pDouble[i]);
-//   // }
-//   delete[] pDouble;
-//   pDouble = nullptr;
-// }
-
-// void deallocate_3d_array(real_simulation ***&pDouble, const int dim1,
-//                          const int dim2) {
-//   for (int i = 0; i < dim1; i++) {
-//     deallocate_2d_array(pDouble[i], dim2);
-//   }
-//   delete[] pDouble;
-//   pDouble = nullptr;
-// }
-
-// void deallocate_4d_array(real_simulation ****&pDouble, const int dim1,
-//                          const int dim2, const int dim3) {
-//   for (int i = 0; i < dim1; i++) {
-//     deallocate_3d_array(pDouble[i], dim2, dim3);
-//   }
-//   delete[] pDouble;
-//   pDouble = nullptr;
-// }
 
 template <class T>
 void parse_string_to_vector(std::basic_string<char> string_to_parse,
