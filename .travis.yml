@@ -8,12 +8,20 @@ addons:
       - ubuntu-toolchain-r-test
     packages:
       - g++-7
+      - python3.6-dev
 
 script:
   - ls
+  - pip install -r requirements.txt
+  - export PYBIND_INCLUDES=`python -c'import pybind11;print(pybind11.get_include())'`
+  - export PYTHON_INCLUDES=`python -c"from sysconfig import get_paths as gp; print(gp()[\"include\"])"`
+  - export SUFFIX=`python3-config --extension-suffix`
   - mkdir build
   - cd build
   - CXX=/usr/bin/g++-7 CC=/usr/bin/gcc-7 cmake .. -DCMAKE_BUILD_TYPE=Release
   - make forward_test
   - ./forward_test ../tests/test_configurations/forward_configuration.ini
   - python --version
+  - make pyWave
+  
+  

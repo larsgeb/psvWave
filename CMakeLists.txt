@@ -11,12 +11,24 @@ target_include_directories(forward_test PRIVATE ext/inih)
 
 target_include_directories(pyWave PRIVATE ext/eigen)
 target_include_directories(pyWave PRIVATE ext/inih)
-target_include_directories(pyWave PRIVATE /usr/include/python3.8)
-target_include_directories(pyWave PRIVATE /home/larsgebraad/.local/lib/python3.8/site-packages/pybind11/include)
+
+
+find_package(PythonLibs REQUIRED)
+target_include_directories(pyWave PRIVATE ${PYTHON_INCLUDE_DIRS})
+
+MESSAGE(STATUS "Suffix: $ENV{SUFFIX}")
+
+IF(DEFINED ENV{PYBIND_INCLUDES})
+    MESSAGE(STATUS "Loaded PyBind includes from environment variable: $ENV{PYBIND_INCLUDES}")
+    target_include_directories(pyWave PRIVATE $ENV{PYBIND_INCLUDES})
+ELSE()
+    MESSAGE(STATUS "Using default PyBind includes")
+    target_include_directories(pyWave PRIVATE /home/larsgebraad/.local/lib/python3.8/site-packages/pybind11/include)
+ENDIF()
 
 set_target_properties(pyWave PROPERTIES PREFIX "")
 set_target_properties(pyWave PROPERTIES OUTPUT_NAME "pyWave")
-set_target_properties(pyWave PROPERTIES SUFFIX ".cpython-38-x86_64-linux-gnu.so")
+set_target_properties(pyWave PROPERTIES SUFFIX $ENV{SUFFIX}")
 
 
 find_package(OpenMP)
