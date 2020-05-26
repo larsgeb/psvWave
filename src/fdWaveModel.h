@@ -12,6 +12,8 @@
 #include "Eigen/Dense"
 #include "Eigen/Sparse"
 
+#include "contiguous_arrays.h"
+
 /** \typedef
  * \brief Typedef that determines simulation precision.
  *
@@ -293,20 +295,17 @@ public:
   real_simulation *t;
   real_simulation **stf;
   real_simulation ***moment;
-  Arr3D *rtf_ux;
-  Arr3D *rtf_uz;
-  Arr3D *rtf_ux_true;
-  Arr3D *rtf_uz_true;
-  Arr3D *a_stf_ux;
-  Arr3D *a_stf_uz;
-  Arr4D *accu_vx;
-  Arr4D *accu_vz;
-  Arr4D *accu_txx; // Todo there is some ram usage to be optimized here as
-                   // not the full wavefields have to be stored.
-  Arr4D *accu_tzz; // Todo there is some ram usage to be optimized here as
-                   // not the full wavefields have to be stored.
-  Arr4D *accu_txz; // Todo there is some ram usage to be optimized here as
-                   // not the full wavefields have to be stored.
+  real_simulation ***rtf_ux;
+  real_simulation ***rtf_uz;
+  real_simulation ***rtf_ux_true;
+  real_simulation ***rtf_uz_true;
+  real_simulation ***a_stf_ux;
+  real_simulation ***a_stf_uz;
+  real_simulation ****accu_vx;
+  real_simulation ****accu_vz;
+  real_simulation ****accu_txx;
+  real_simulation ****accu_tzz;
+  real_simulation ****accu_txz;
 
   // -- Definition of simulation --
   // | Domain
@@ -370,72 +369,72 @@ public:
 
 // Miscellaneous functions
 
-/** \brief Function to allocate 1d dynamic arrays.
- *
- * @param pDouble rvalue to pointer of 1d array.
- * @param dim1 First dimension of 1d array.
- */
-void allocate_1d_array(real_simulation *&pDouble, int dim1);
+// /** \brief Function to allocate 1d dynamic arrays.
+//  *
+//  * @param pDouble rvalue to pointer of 1d array.
+//  * @param dim1 First dimension of 1d array.
+//  */
+// void allocate_1d_array(real_simulation *&pDouble, int dim1);
 
-/** \brief Function to allocate 2d dynamic arrays.
- *
- * @param pDouble rvalue to pointer of 2d array.
- * @param dim1 First dimension of 2d array.
- * @param dim2 Second dimension of 2d array.
- */
-void allocate_2d_array(real_simulation **&pDouble, int dim1, int dim2);
+// /** \brief Function to allocate 2d dynamic arrays.
+//  *
+//  * @param pDouble rvalue to pointer of 2d array.
+//  * @param dim1 First dimension of 2d array.
+//  * @param dim2 Second dimension of 2d array.
+//  */
+// void allocate_2d_array(real_simulation **&pDouble, int dim1, int dim2);
 
-/** \brief Function to allocate 4d dynamic arrays.
- *
- * @param pDouble rvalue to pointer of 3d array.
- * @param dim1 First dimension of 3d array.
- * @param dim2 Second dimension of 3d array.
- * @param dim3 Third dimension of 3d array.
- */
-void allocate_3d_array(real_simulation ***&pDouble, int dim1, int dim2,
-                       int dim3);
+// /** \brief Function to allocate 4d dynamic arrays.
+//  *
+//  * @param pDouble rvalue to pointer of 3d array.
+//  * @param dim1 First dimension of 3d array.
+//  * @param dim2 Second dimension of 3d array.
+//  * @param dim3 Third dimension of 3d array.
+//  */
+// void allocate_3d_array(real_simulation ***&pDouble, int dim1, int dim2,
+//                        int dim3);
 
-/** \brief Function to allocate 4d dynamic arrays.
- *
- * @param pDouble rvalue to pointer of 4d array.
- * @param dim1 First dimension of 4d array.
- * @param dim2 Second dimension of 4d array.
- * @param dim3 Third dimension of 4d array.
- * @param dim4 Fourth dimension of 4d array.
- */
-void allocate_4d_array(real_simulation ****&pDouble, int dim1, int dim2,
-                       int dim3, int dim4);
+// /** \brief Function to allocate 4d dynamic arrays.
+//  *
+//  * @param pDouble rvalue to pointer of 4d array.
+//  * @param dim1 First dimension of 4d array.
+//  * @param dim2 Second dimension of 4d array.
+//  * @param dim3 Third dimension of 4d array.
+//  * @param dim4 Fourth dimension of 4d array.
+//  */
+// void allocate_4d_array(real_simulation ****&pDouble, int dim1, int dim2,
+//                        int dim3, int dim4);
 
-/** \brief Function to de-allocate 1d dynamic arrays.
- *
- * @param pDouble rvalue to pointer of 1d array.
- */
-void deallocate_1d_array(real_simulation *&pDouble);
+// /** \brief Function to de-allocate 1d dynamic arrays.
+//  *
+//  * @param pDouble rvalue to pointer of 1d array.
+//  */
+// void deallocate_1d_array(real_simulation *&pDouble);
 
-/** \brief Function to de-allocate 2d dynamic arrays.
- *
- * @param pDouble rvalue to pointer of 2d array.
- * @param dim1 First dimension of 2d array.
- */
-void deallocate_2d_array(real_simulation **&pDouble, int dim1);
+// /** \brief Function to de-allocate 2d dynamic arrays.
+//  *
+//  * @param pDouble rvalue to pointer of 2d array.
+//  * @param dim1 First dimension of 2d array.
+//  */
+// void deallocate_2d_array(real_simulation **&pDouble, int dim1);
 
-/** \brief Function to de-allocate 3d dynamic arrays.
- *
- * @param pDouble rvalue to pointer of 3d array.
- * @param dim1 First dimension of 3d array.
- * @param dim2 Second dimension of 3d array.
- */
-void deallocate_3d_array(real_simulation ***&pDouble, int dim1, int dim2);
+// /** \brief Function to de-allocate 3d dynamic arrays.
+//  *
+//  * @param pDouble rvalue to pointer of 3d array.
+//  * @param dim1 First dimension of 3d array.
+//  * @param dim2 Second dimension of 3d array.
+//  */
+// void deallocate_3d_array(real_simulation ***&pDouble, int dim1, int dim2);
 
-/** \brief Function to de-allocate 4d dynamic arrays.
- *
- * @param pDouble rvalue to pointer of 4d array.
- * @param dim1 First dimension of 4d array.
- * @param dim2 Second dimension of 4d array.
- * @param dim3 Third dimension of 4d array.
- */
-void deallocate_4d_array(real_simulation ****&pDouble, int dim1, int dim2,
-                         int dim3);
+// /** \brief Function to de-allocate 4d dynamic arrays.
+//  *
+//  * @param pDouble rvalue to pointer of 4d array.
+//  * @param dim1 First dimension of 4d array.
+//  * @param dim2 Second dimension of 4d array.
+//  * @param dim3 Third dimension of 4d array.
+//  */
+// void deallocate_4d_array(real_simulation ****&pDouble, int dim1, int dim2,
+//                          int dim3);
 
 /** \brief Function to parse strings containing lists to std::vectors.
  *
