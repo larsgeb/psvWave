@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <thread>
 #include <vector>
 
 namespace py = pybind11;
@@ -88,11 +89,81 @@ public:
   void forward_simulate_explicit_threads(int i_shot, bool store_fields,
                                          bool verbose, bool output_wavefields,
                                          int omp_threads_override) {
-    auto old_limit = omp_get_num_threads();
-    if (omp_threads_override != 0) {
-      omp_set_num_threads(omp_threads_override);
+
+    const auto old_limit = omp_get_max_threads();
+    const auto optimal = std::thread::hardware_concurrency();
+
+    if (verbose) {
+      std::cout << "OpenMP info:" << std::endl
+                << "  Original thread limit: " << omp_get_max_threads()
+                << std::endl
+                << "  Hardware concurrency: " << optimal << std::endl;
     }
+
+    if (omp_threads_override != 0) {
+      if (verbose) {
+        std::cout << "  Setting override number of threads: "
+                  << omp_threads_override << std::endl;
+      }
+      omp_set_num_threads(omp_threads_override);
+    } else {
+      if (verbose) {
+        std::cout << "  Setting original number of threads: "
+                  << omp_get_max_threads() << std::endl;
+      }
+      omp_set_num_threads(omp_get_max_threads());
+    }
+
+    if (verbose) {
+      std::cout << "  Actual threads: " << omp_get_max_threads() << std::endl;
+    }
+
     forward_simulate(i_shot, store_fields, verbose, output_wavefields);
+
+    if (verbose) {
+      std::cout << "  Resetting threads to: " << old_limit << std::endl
+                << std::endl;
+    }
+    omp_set_num_threads(old_limit);
+  }
+
+  void adjoint_simulate_explicit_threads(int i_shot, bool verbose,
+                                         int omp_threads_override) {
+
+    const auto old_limit = omp_get_max_threads();
+    const auto optimal = std::thread::hardware_concurrency();
+
+    if (verbose) {
+      std::cout << "OpenMP info:" << std::endl
+                << "  Original thread limit: " << omp_get_max_threads()
+                << std::endl
+                << "  Hardware concurrency: " << optimal << std::endl;
+    }
+
+    if (omp_threads_override != 0) {
+      if (verbose) {
+        std::cout << "  Setting override number of threads: "
+                  << omp_threads_override << std::endl;
+      }
+      omp_set_num_threads(omp_threads_override);
+    } else {
+      if (verbose) {
+        std::cout << "  Setting original number of threads: "
+                  << omp_get_max_threads() << std::endl;
+      }
+      omp_set_num_threads(omp_get_max_threads());
+    }
+
+    if (verbose) {
+      std::cout << "  Actual threads: " << omp_get_max_threads() << std::endl;
+    }
+
+    adjoint_simulate(i_shot, verbose);
+
+    if (verbose) {
+      std::cout << "  Resetting threads to: " << old_limit << std::endl
+                << std::endl;
+    }
     omp_set_num_threads(old_limit);
   }
 
@@ -135,16 +206,46 @@ public:
     return py::make_tuple(array_vp, array_vs, array_rho);
   }
 
-  void set_parameter_fields(Eigen::MatrixXd _vp, Eigen::MatrixXd _vs,
-                            Eigen::MatrixXd _rho) {
-#pragma omp parallel for collapse(2)
-    for (int ix = 0; ix < nx; ++ix) {
-      for (int iz = 0; iz < nz; ++iz) {
-        vp[ix][iz] = _vp(ix, iz);
-        vs[ix][iz] = _vs(ix, iz);
-        rho[ix][iz] = _rho(ix, iz);
-      }
-    }
+  void set_parameter_fields(py::array_t<real_simulation> _vp,
+                            py::array_t<real_simulation> _vs,
+                            py::array_t<real_simulation> _rho) {
+
+    // Get buffer information for the passed arrays
+    py::buffer_info _vp_buffer = _vp.request();
+    py::buffer_info _vs_buffer = _vs.request();
+    py::buffer_info _rho_buffer = _rho.request();
+
+    // Get the required size
+    std::vector<ssize_t> shape{nx, nz};
+
+    // Verify the buffer shape
+    if (!(_vp_buffer.shape == shape)) {
+      throw py::value_error(
+          "The input ndarray _vp does not have the right shape.");
+    };
+    if (!(_vs_buffer.shape == shape)) {
+      throw py::value_error(
+          "The input ndarray _vs does not have the right shape.");
+    };
+    if (!(_rho_buffer.shape == shape)) {
+      throw py::value_error(
+          "The input ndarray _rho does not have the right shape.");
+    };
+
+    // Get the total size of the buffer
+    int buffer_size = _vp_buffer.shape[0] * _vp_buffer.shape[1];
+
+    // Get pointer to the start of the (contiguous) buffer
+    real_simulation *_vp_ptr = (real_simulation *)_vp_buffer.ptr;
+    real_simulation *_vs_ptr = (real_simulation *)_vs_buffer.ptr;
+    real_simulation *_rho_ptr = (real_simulation *)_rho_buffer.ptr;
+
+    // Copy the data
+    copy_data(vp[0], _vp_ptr, buffer_size);
+    copy_data(vs[0], _vs_ptr, buffer_size);
+    copy_data(rho[0], _rho_ptr, buffer_size);
+
+    // Recalculate Lamé's parameters
     update_from_velocity();
   }
 
@@ -226,7 +327,7 @@ public:
     };
     if (!(uz_buffer.shape == shape)) {
       throw py::value_error(
-          "The input ndarray ux does not have the right shape.");
+          "The input ndarray uz does not have the right shape.");
     };
 
     // Get the total size of the buffer
@@ -266,12 +367,12 @@ public:
         ux_buffer.shape[0] * ux_buffer.shape[1] * ux_buffer.shape[2];
 
     // Get pointer to the start of the (contiguous) buffer
-    real_simulation *ptr_ux = (real_simulation *)ux_buffer.ptr;
-    real_simulation *ptr_uz = (real_simulation *)uz_buffer.ptr;
+    real_simulation *ux_ptr = (real_simulation *)ux_buffer.ptr;
+    real_simulation *uz_ptr = (real_simulation *)uz_buffer.ptr;
 
     // Copy the data
-    copy_data(rtf_ux_true[0][0], ptr_ux, buffer_size);
-    copy_data(rtf_uz_true[0][0], ptr_uz, buffer_size);
+    copy_data(rtf_ux_true[0][0], ux_ptr, buffer_size);
+    copy_data(rtf_uz_true[0][0], uz_ptr, buffer_size);
   }
 };
 
@@ -288,7 +389,7 @@ PYBIND11_MODULE(pyWave, m) {
         String that contains the path to the .ini file describing the 
         FWI problem.
 )mydelimiter")
-      .def("forward_shot",
+      .def("forward_simulate",
            &fdWaveModelExtended::forward_simulate_explicit_threads,
            py::arg("i_shot"), py::arg("store_fields") = true,
            py::arg("verbose") = false, py::arg("output_wavefields") = false,
@@ -326,7 +427,10 @@ PYBIND11_MODULE(pyWave, m) {
       .def_readonly("n_shots", &fdWaveModelExtended::n_shots)
       .def_readonly("misfit", &fdWaveModelExtended::misfit)
       .def("reset_kernels", &fdWaveModelExtended::reset_kernels)
-      .def("adjoint_simulate", &fdWaveModelExtended::adjoint_simulate)
+      .def("adjoint_simulate",
+           &fdWaveModelExtended::adjoint_simulate_explicit_threads,
+           py::arg("i_shot"), py::arg("verbose") = false,
+           py::arg("omp_threads_override") = 0)
       .def("map_kernels_to_velocity",
            &fdWaveModelExtended::map_kernels_to_velocity);
 
