@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.10)
 project(forward-virieux)
 
+set(CMAKE_CXX_FLAGS "")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Wextra")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+
 add_executable(forward_test tests/forward_test.cpp src/fdWaveModel.cpp src/contiguous_arrays.h src/fdWaveModel.h)
 add_library(pyWave SHARED src/pyWave.cpp src/fdWaveModel.cpp src/contiguous_arrays.h src/fdWaveModel.h)
 
@@ -37,3 +41,4 @@ if (OPENMP_FOUND)
     set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif()
 
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
