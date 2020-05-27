@@ -26,7 +26,7 @@ numpy.save("rho_starting", rho_starting)
 x_middle = (IX.max() + IX.min()) / 2
 z_middle = (IZ.max() + IZ.min()) / 2
 
-circle = ((IX - x_middle) ** 2 + (IZ - z_middle) ** 2) ** 0.5 < 50
+circle = ((IX - x_middle) ** 2 + (IZ - z_middle) ** 2) ** 0.5 < 15
 vs = vs * (1 - 0.1 * circle)
 vp = vp * (1 - 0.1 * circle)
 
@@ -52,9 +52,7 @@ model.set_parameter_fields(vp_target, vs_target, rho_target)
 # Create true data ------------------------------------------------------------
 
 for i_shot in range(model.n_shots):
-    model.forward_shot(
-        i_shot, verbose=True, store_fields=True, omp_threads_override=4
-    )
+    model.forward_simulate(i_shot)
 
 # Cheating of course, as this is synthetically generated data.
 ux_obs, uz_obs = model.get_synthetic_data()
@@ -71,9 +69,7 @@ rho = rho_starting
 model.set_parameter_fields(vp_starting, vs_starting, rho_starting)
 
 for i_shot in range(model.n_shots):
-    model.forward_shot(
-        i_shot, verbose=True, store_fields=True, omp_threads_override=4
-    )
+    model.forward_simulate(i_shot)
 
 ux, uz = model.get_synthetic_data()
 ux_obs, uz_obs = model.get_observed_data()
@@ -100,7 +96,7 @@ print(f"Data misfit: {model.misfit:.2f}")
 model.calculate_l2_adjoint_sources()
 model.reset_kernels()
 for i_shot in range(model.n_shots):
-    model.adjoint_simulate(i_shot, True)
+    model.adjoint_simulate(i_shot)
 model.map_kernels_to_velocity()
 
 g_vp, g_vs, g_rho = model.get_kernels()
@@ -127,58 +123,75 @@ for i in range(3):
     plt.colorbar()
 
 plt.tight_layout()
-plt.show()
+plt.close()
 
 # Start iterating -------------------------------------------------------------
 
-for i in range(250):
+m = model.get_model_vector()
 
-    # Update fields
-    vp -= 0.1 * g_vp
-    vs -= 0.1 * g_vs
-    rho -= 0.1 * g_rho
-    model.set_parameter_fields(vp, vs, rho)
+print("Starting gradient descent")
 
-    # Simulate forward
-    for i_shot in range(model.n_shots):
-        model.forward_shot(
-            i_shot, verbose=True, store_fields=True, omp_threads_override=4
-        )
+fields_during_iteration = []
 
-    # Calculate misfit and adjoint sources
-    model.calculate_l2_misfit()
-    model.calculate_l2_adjoint_sources()
-    print(f"Data misfit: {model.misfit:.2f}")
+iterations = 20
 
-    # Simulate adjoint
-    model.reset_kernels()
-    for i_shot in range(model.n_shots):
-        model.adjoint_simulate(i_shot, True)
-    model.map_kernels_to_velocity()
+try:
+    for i in range(iterations):
 
-    # Get new kernels
-    g_vp, g_vs, g_rho = model.get_kernels()
+        g = model.get_gradient_vector()
+        m -= 0.1 * g
+        model.set_model_vector(m)
 
+        fields_during_iteration.append(list(model.get_parameter_fields()))
+
+        # Simulate forward
+        for i_shot in range(model.n_shots):
+            model.forward_simulate(i_shot)
+
+        # Calculate misfit and adjoint sources
+        model.calculate_l2_misfit()
+        model.calculate_l2_adjoint_sources()
+        print(f"Data misfit: {model.misfit:.2f}")
+
+        # Simulate adjoint
+        model.reset_kernels()
+        for i_shot in range(model.n_shots):
+            model.adjoint_simulate(i_shot)
+        model.map_kernels_to_velocity()
+except KeyboardInterrupt:
+    m = model.get_model_vector()
+    iterations = i
+
+vp, vs, rho = model.get_parameter_fields()
 fields = [vp, vs, rho]
 maxf = [2400, 1000, 1800]
 minf = [1600, 600, 1200]
 
-plt.figure(figsize=(10, 4))
-for i in range(3):
-    plt.subplot(1, 3, int(i + 1))
-    plt.xlabel("x [m]")
-    plt.ylabel("z [m]")
-    plt.imshow(
-        fields[i].T,
-        cmap=plt.get_cmap("seismic"),
-        extent=extent,
-        vmin=minf[i],
-        vmax=maxf[i],
-    )
-    plt.gca().invert_yaxis()
-    plt.colorbar()
+fig = plt.figure(figsize=(10, 4))
 
-plt.tight_layout()
+
+def animate(j):
+    images = []
+    for i in range(3):
+        plt.subplot(1, 3, int(i + 1))
+        plt.cla()
+        plt.xlabel("x [m]")
+        plt.ylabel("z [m]")
+        images.append(
+            plt.imshow(
+                fields_during_iteration[j][i].T,
+                cmap=plt.get_cmap("seismic"),
+                extent=extent,
+                vmin=minf[i],
+                vmax=maxf[i],
+            )
+        )
+        plt.gca().invert_yaxis()
+    plt.tight_layout()
+    return tuple(images)
+
+
+anim = animation.FuncAnimation(fig, animate, frames=iterations, interval=10)
 plt.show()
 
 exit(0)
