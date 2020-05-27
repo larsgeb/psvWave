@@ -148,6 +148,16 @@ public:
     update_from_velocity();
   }
 
+  py::tuple get_kernels() {
+    auto array_vp_kernel =
+        array_to_numpy(vp_kernel, std::vector<ssize_t>{nx, nz});
+    auto array_vs_kernel =
+        array_to_numpy(vs_kernel, std::vector<ssize_t>{nx, nz});
+    auto array_rho_kernel =
+        array_to_numpy(density_v_kernel, std::vector<ssize_t>{nx, nz});
+    return py::make_tuple(array_vp_kernel, array_vs_kernel, array_rho_kernel);
+  }
+
   py::tuple get_synthetic_data() {
     auto array_rtf_ux =
         array_to_numpy(rtf_ux, std::vector<ssize_t>{n_shots, nr, nt});
@@ -301,6 +311,7 @@ PYBIND11_MODULE(pyWave, m) {
       .def("get_extent", &fdWaveModelExtended::get_extent)
       .def("get_coordinates", &fdWaveModelExtended::get_coordinates)
       .def("get_parameter_fields", &fdWaveModelExtended::get_parameter_fields)
+      .def("get_kernels", &fdWaveModelExtended::get_kernels)
       .def("set_parameter_fields", &fdWaveModelExtended::set_parameter_fields)
       .def("get_synthetic_data", &fdWaveModelExtended::get_synthetic_data)
       .def("get_observed_data", &fdWaveModelExtended::get_observed_data)
@@ -308,7 +319,16 @@ PYBIND11_MODULE(pyWave, m) {
       .def("set_observed_data", &fdWaveModelExtended::set_observed_data)
       .def("get_receivers", &fdWaveModelExtended::get_receivers,
            py::arg("in_units") = true,
-           py::arg("include_absorbing_boundary_as_index") = true);
+           py::arg("include_absorbing_boundary_as_index") = true)
+      .def("calculate_l2_misfit", &fdWaveModelExtended::calculate_l2_misfit)
+      .def("calculate_l2_adjoint_sources",
+           &fdWaveModelExtended::calculate_l2_adjoint_sources)
+      .def_readonly("n_shots", &fdWaveModelExtended::n_shots)
+      .def_readonly("misfit", &fdWaveModelExtended::misfit)
+      .def("reset_kernels", &fdWaveModelExtended::reset_kernels)
+      .def("adjoint_simulate", &fdWaveModelExtended::adjoint_simulate)
+      .def("map_kernels_to_velocity",
+           &fdWaveModelExtended::map_kernels_to_velocity);
 
   ;
 }
