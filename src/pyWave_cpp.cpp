@@ -376,7 +376,7 @@ public:
   }
 };
 
-PYBIND11_MODULE(pyWave, m) {
+PYBIND11_MODULE(pyWave_cpp, m) {
 
   py::class_<fdWaveModelExtended>(m, "fdModel")
       .def(py::init<const char *>(), R"mydelimiter(
@@ -406,6 +406,7 @@ PYBIND11_MODULE(pyWave, m) {
       .def_readonly("dz", &fdWaveModelExtended::dz)
       .def_readonly("dx", &fdWaveModelExtended::dx)
       .def_readonly("time_step", &fdWaveModelExtended::dt)
+      .def_readonly("free_parameters", &fdWaveModelExtended::free_parameters)
       .def_readonly("snapshot_interval",
                     &fdWaveModelExtended::snapshot_interval)
       .def_readonly("snapshots", &fdWaveModelExtended::snapshots)
