@@ -16,7 +16,7 @@ addons:
 script:
   - wget -qO- https://bootstrap.pypa.io/get-pip.py | python3
   - python3 --version
-  - ls
+  - python3 -m pip install -e .[dev]
   - python3 setup.py bdist_wheel
   - ls dist
 
