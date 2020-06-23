@@ -1,3 +1,10 @@
+dist: xenial
+sudo: false
+language: cpp
+dist: bionic
+python:
+  - 3.7
+
 addons:
   apt:
     sources:
@@ -6,25 +13,11 @@ addons:
       - g++-7
       - python3.7-dev
 
-matrix:
-  include:
-    - language: python
-      dist: xenial
-      sudo: required
-      python: "3.7"
-      services:
-        - docker
-env:
-  global:
-    - CIBW_SKIP="cp27-* cp33-* cp34-* cp35-*"
-    - CC="gcc"
-    - PYTHON=python3
-    - PIP=pip3
-install:
-  - $PIP install -e .[dev]
-  - ls -la
-  - find . -type f -iname '*.so' -print -delete
 script:
-  - $PIP install cibuildwheel==0.12.0
-  - cibuildwheel --output-dir wheelhouse
-  - ls wheelhouse
+  - wget -qO- https://bootstrap.pypa.io/get-pip.py | python3
+  - python3 --version
+  - ls
+  - python3 setup.py bdist_wheel
+  - ls dist
+
+  
