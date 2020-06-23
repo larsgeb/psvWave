@@ -130,6 +130,8 @@ setup(
     ext_modules=[CMakeExtension("__pyWave")],
     cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False,
-    package_data={"": ["pyWave/__pyWave" + get_config_vars()["EXT_SUFFIX"]]},
+    package_data={"pyWave": ["__pyWave" + get_config_vars()["EXT_SUFFIX"]]},
     include_package_data=True,
 )
+
+print("pyWave/__pyWave" + get_config_vars()["EXT_SUFFIX"])
