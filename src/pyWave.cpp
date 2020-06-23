@@ -1,12 +1,14 @@
-#include "fdWaveModel.h"
-#include <iostream>
 #include <pybind11/eigen.h>
 #include <pybind11/pybind11.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+
+#include <iostream>
 #include <thread>
 #include <vector>
+
+#include "fdWaveModel.h"
 
 namespace py = pybind11;
 
@@ -50,7 +52,8 @@ py::array_t<T> array_to_numpy(T *pointer, std::vector<ssize_t> shape) {
                                         shape, std::vector<size_t>{sizeof(T)}));
 }
 
-template <class T> void copy_data(T *destination, T *source, int size) {
+template <class T>
+void copy_data(T *destination, T *source, int size) {
 #pragma omp parallel for collapse(1)
   for (size_t i1 = 0; i1 < size; i1++) {
     destination[i1] = source[i1];
@@ -66,7 +69,7 @@ void copy_data_cast(T1 *destination, T2 *source, int size) {
 }
 
 class fdWaveModelExtended : public fdWaveModel {
-public:
+ public:
   using fdWaveModel::fdWaveModel;
 
   py::tuple get_snapshots() {
@@ -89,7 +92,6 @@ public:
   void forward_simulate_explicit_threads(int i_shot, bool store_fields,
                                          bool verbose, bool output_wavefields,
                                          int omp_threads_override) {
-
     const auto old_limit = omp_get_max_threads();
     const auto optimal = std::thread::hardware_concurrency();
 
@@ -129,7 +131,6 @@ public:
 
   void adjoint_simulate_explicit_threads(int i_shot, bool verbose,
                                          int omp_threads_override) {
-
     const auto old_limit = omp_get_max_threads();
     const auto optimal = std::thread::hardware_concurrency();
 
@@ -168,7 +169,6 @@ public:
   }
 
   py::tuple get_coordinates(bool in_units) {
-
     real_simulation **IX, **IZ;
 
     allocate_array(IX, nx, nz);
@@ -209,7 +209,6 @@ public:
   void set_parameter_fields(py::array_t<real_simulation> _vp,
                             py::array_t<real_simulation> _vs,
                             py::array_t<real_simulation> _rho) {
-
     // Get buffer information for the passed arrays
     py::buffer_info _vp_buffer = _vp.request();
     py::buffer_info _vs_buffer = _vs.request();
@@ -277,7 +276,6 @@ public:
 
   py::tuple get_receivers(bool in_units,
                           bool include_absorbing_boundary_as_index) {
-
     // Create new arrays
     py::array_t<real_simulation> x_receivers(
         py::buffer_info(nullptr, sizeof(real_simulation),
@@ -312,7 +310,6 @@ public:
 
   void set_synthetic_data(py::array_t<real_simulation> ux,
                           py::array_t<real_simulation> uz) {
-
     // Get buffer information for the passed arrays
     py::buffer_info ux_buffer = ux.request();
     py::buffer_info uz_buffer = uz.request();
@@ -376,8 +373,7 @@ public:
   }
 };
 
-PYBIND11_MODULE(pyWave_cpp, m) {
-
+PYBIND11_MODULE(__pyWave, m) {
   py::class_<fdWaveModelExtended>(m, "fdModel")
       .def(py::init<const char *>(), R"mydelimiter(
     The default constructor for fdWaveModel, a multithreaded finite
