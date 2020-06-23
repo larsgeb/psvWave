@@ -6,20 +6,17 @@ matrix:
       python: "3.7"
       services:
         - docker
-
 env:
   global:
     - CIBW_SKIP="cp27-* cp33-* cp34-* cp35-*"
     - CC="gcc"
     - PYTHON=python3
     - PIP=pip3
-
 install:
   - $PIP install -e .[dev]
   - ls -la
   - find . -type f -iname '*.so' -print -delete
-
-  script:
+script:
   - $PIP install cibuildwheel==0.12.0
   - cibuildwheel --output-dir wheelhouse
   - ls wheelhouse
