@@ -6,9 +6,26 @@ import subprocess
 from sysconfig import get_paths, get_config_vars
 import versioneer
 
-from setuptools import setup, Extension, find_packages
+from setuptools import setup, Extension, find_packages, Command
 from setuptools.command.build_ext import build_ext
 from distutils.version import LooseVersion
+
+
+class CleanCommand(Command):
+    """Custom clean command to tidy up the project root."""
+
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        os.system(
+            "rm -vrf ./build ./dist ./*.pyc ./*.tgz ./*.egg-info ./*.so __pycache__/"
+        )
 
 
 class CMakeExtension(Extension):
@@ -109,6 +126,7 @@ with open("README.md", "r") as fh:
 
 cmd_classes = versioneer.get_cmdclass()
 cmd_classes["build_ext"] = CMakeBuild
+cmd_classes["clean"] = CleanCommand
 
 setup(
     version=versioneer.get_version(),
@@ -128,12 +146,12 @@ setup(
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.7",
-    install_requires=["numpy", "pybind11"],
+    install_requires=["numpy", "cmake", "pybind11"],
     extras_require={
-        "dev": ["black", "setuptools", "pybind11", "matplotlib", "versioneer"]
+        "dev": ["cmake", "black", "setuptools", "pybind11", "matplotlib", "versioneer"]
     },
     ext_modules=[CMakeExtension("__pyWave")],
     zip_safe=False,
     package_data={"pyWave": ["__pyWave" + get_config_vars()["EXT_SUFFIX"]]},
-    # include_package_data=True,
+    include_package_data=True,
 )
