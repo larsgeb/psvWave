@@ -48,13 +48,6 @@ ENDIF()
 set_target_properties(pyWave_cpp PROPERTIES PREFIX "")
 set_target_properties(pyWave_cpp PROPERTIES OUTPUT_NAME "__pyWave")
 
-set_target_properties( pyWave_cpp
-  PROPERTIES
-  ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/pyWave"
-  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/pyWave"
-  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/pyWave"
-)
-
 find_package(OpenMP)
 if (OPENMP_FOUND)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
