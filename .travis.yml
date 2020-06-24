@@ -11,9 +11,10 @@ addons:
       - ubuntu-toolchain-r-test
     packages:
       - g++-7
-      - python3.7-dev
 
 script:
+  - pyenv install 3.7
+  - pyenv global 3.7
   - wget -qO- https://bootstrap.pypa.io/get-pip.py | python
   - python --version
   - python -m pip install -e .[dev]
