@@ -115,14 +115,15 @@ setup(
     description="P-SV wave propagation in 2D for FWI",
     long_description=long_description,
     long_description_content_type="text/markdown",
+    url="https://github.com/larsgeb/forward-virieux",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 3 - Alpha",
-        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.7",
         "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
     ],
-    python_requires=">=3.5",
+    python_requires=">=3.7",
     install_requires=["numpy", "pybind11"],
     extras_require={
         "dev": ["black", "setuptools", "pybind11", "matplotlib", "versioneer"]
