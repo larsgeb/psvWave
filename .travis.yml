@@ -1,5 +1,5 @@
+os: linux
 dist: bionic
-sudo: false
 language: cpp
 python:
   - 3.7
@@ -15,8 +15,6 @@ jobs:
   include:
     - stage: installation
       script:
-        - pyenv install -l
-        - pyenv install 3.7 -f
         - pyenv global 3.7
         - wget -qO- https://bootstrap.pypa.io/get-pip.py | python
         - python --version
