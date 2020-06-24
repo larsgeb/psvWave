@@ -13,6 +13,7 @@ add_executable(forward_test tests/forward_test.cpp src/fdWaveModel.cpp src/conti
 add_library(pyWave_cpp SHARED src/pyWave.cpp src/fdWaveModel.cpp src/contiguous_arrays.h src/fdWaveModel.h)
 
 set_property(TARGET pyWave_cpp PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_target_properties(pyWave_cpp PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
 target_include_directories(forward_test PRIVATE ext/eigen)
 target_include_directories(forward_test PRIVATE ext/inih)
