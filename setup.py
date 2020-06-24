@@ -4,7 +4,7 @@ import sys
 import platform
 import subprocess
 from sysconfig import get_paths, get_config_vars
-from _version import get_versions as gv
+import versioneer
 
 from setuptools import setup, Extension, find_packages
 from setuptools.command.build_ext import build_ext
@@ -107,8 +107,12 @@ class CMakeBuild(build_ext):
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+cmd_classes = versioneer.get_cmdclass()
+cmd_classes["build_ext"] = CMakeBuild
+
 setup(
-    version=gv()["version"],
+    version=versioneer.get_version(),
+    cmdclass=cmd_classes,
     name="pyWave",
     author="Lars Gebraad",
     author_email="lars.gebraad@erdw.ethz.ch",
@@ -129,10 +133,7 @@ setup(
         "dev": ["black", "setuptools", "pybind11", "matplotlib", "versioneer"]
     },
     ext_modules=[CMakeExtension("__pyWave")],
-    cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False,
     package_data={"pyWave": ["__pyWave" + get_config_vars()["EXT_SUFFIX"]]},
-    include_package_data=True,
+    # include_package_data=True,
 )
-
-print("pyWave/__pyWave" + get_config_vars()["EXT_SUFFIX"])
