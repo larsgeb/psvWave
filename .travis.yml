@@ -13,7 +13,8 @@ addons:
       - g++-7
 
 script:
-  - pyenv install 3.7
+  - pyenv install -l
+  - pyenv install 3.7 -y
   - pyenv global 3.7
   - wget -qO- https://bootstrap.pypa.io/get-pip.py | python
   - python --version
