@@ -4,4 +4,3 @@ include versioneer.py
 include pyWave/_version.py
 include tests/*
 recursive-include ext *
-include *.so
