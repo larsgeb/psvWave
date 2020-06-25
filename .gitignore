@@ -2,6 +2,7 @@
 build
 *.npy
 *.mp4
+docs-source/xml
 
 # Created by .ignore support plugin (hsz.mobi)
 ### C++ template

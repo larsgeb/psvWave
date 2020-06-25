@@ -42,7 +42,7 @@ IF(DEFINED ENV{SUFFIX})
     set_target_properties(psvWave_cpp PROPERTIES SUFFIX $ENV{SUFFIX})
 ELSE()
     MESSAGE(STATUS "Using passed SUFFIX")
-    set_target_properties(psvWave_cpp PROPERTIES SUFFIX ${EXTENSION})
+    set_target_properties(psvWave_cpp PROPERTIES SUFFIX "${EXTENSION}")
 ENDIF()
 
 set_target_properties(psvWave_cpp PROPERTIES PREFIX "")
