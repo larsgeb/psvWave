@@ -24,7 +24,8 @@ class CleanCommand(Command):
 
     def run(self):
         os.system(
-            "rm -vrf ./build ./dist ./*.pyc ./*.tgz ./*.egg-info ./pyWave/*.so __pycache__/"
+            "rm -vrf ./build ./dist ./*.pyc ./*.tgz ./*.egg-info ./psvWave/*.so "
+            "__pycache__/"
         )
 
 
@@ -129,7 +130,7 @@ cmd_classes["clean"] = CleanCommand
 setup(
     version=versioneer.get_version(),
     cmdclass=cmd_classes,
-    name="pyWave",
+    name="psvWave",
     author="Lars Gebraad",
     author_email="lars.gebraad@erdw.ethz.ch",
     description="P-SV wave propagation in 2D for FWI",
@@ -156,6 +157,6 @@ setup(
             "numpy",
         ]
     },
-    ext_modules=[CMakeExtension("__pyWave", ".")],
+    ext_modules=[CMakeExtension("__psvWave_cpp", ".")],
     zip_safe=False,
 )

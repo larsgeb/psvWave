@@ -52,8 +52,7 @@ py::array_t<T> array_to_numpy(T *pointer, std::vector<ssize_t> shape) {
                                         shape, std::vector<size_t>{sizeof(T)}));
 }
 
-template <class T>
-void copy_data(T *destination, T *source, int size) {
+template <class T> void copy_data(T *destination, T *source, int size) {
 #pragma omp parallel for collapse(1)
   for (size_t i1 = 0; i1 < size; i1++) {
     destination[i1] = source[i1];
@@ -69,7 +68,7 @@ void copy_data_cast(T1 *destination, T2 *source, int size) {
 }
 
 class fdWaveModelExtended : public fdWaveModel {
- public:
+public:
   using fdWaveModel::fdWaveModel;
 
   py::tuple get_snapshots() {
@@ -373,7 +372,7 @@ class fdWaveModelExtended : public fdWaveModel {
   }
 };
 
-PYBIND11_MODULE(__pyWave, m) {
+PYBIND11_MODULE(__psvWave_cpp, m) {
   py::class_<fdWaveModelExtended>(m, "fdModel")
       .def(py::init<const char *>(), R"mydelimiter(
     The default constructor for fdWaveModel, a multithreaded finite

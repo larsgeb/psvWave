@@ -1,9 +1,9 @@
 from matplotlib import animation
-import pyWave
+import psvWave
 import matplotlib.pyplot as plt
 import numpy
 
-model = pyWave.fdModel(
+model = psvWave.fdModel(
     "../tests/test_configurations/forward_configuration_4_sources.ini"
 )
 

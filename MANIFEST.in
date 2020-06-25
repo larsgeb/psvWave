@@ -1,6 +1,6 @@
 include src/*
 include CMakeLists.txt
 include versioneer.py
-include pyWave/_version.py
+include psvWave/_version.py
 include tests/*
 recursive-include ext *
