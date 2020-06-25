@@ -1,14 +1,16 @@
-fdWaveModel class
+fdModel class
 =================
 
+The fdModel class 
+
 .. doxygenclass:: fdWaveModel
-    :project: forward-virieux
+    :project: psvWave
     :members: fdWaveModel, parse_configuration
     :undoc-members:
 
 .. toctree::
    :maxdepth: 2
-   :caption: Method groups:
+   :hidden:
 
    fdwavemodel.class.configuration-file.rst
-   fdwavemodel.class.simulation_methods.rst
+   fdwavemodel.class.methods.rst

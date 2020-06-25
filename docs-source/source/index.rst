@@ -1,15 +1,15 @@
-Documentation of forward-virieux
+Documentation of psvWave
 ================================
 
 
 
 .. toctree::
-   :maxdepth: 2
+   :hidden:
+   :maxdepth: 3
    :caption: Contents:
 
    typical-workflow.rst
-   fdwavemodel.class.rst
-   miscellaneous.methods.rst
+   cpp/index
 
 
 Indices and tables
