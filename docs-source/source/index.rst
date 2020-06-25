@@ -9,6 +9,7 @@ Documentation of psvWave
    :caption: Contents:
 
    typical-workflow.rst
+   python/index
    cpp/index
 
 

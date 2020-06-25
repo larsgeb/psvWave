@@ -1,5 +1,5 @@
 fdModel class
-=================
+=============
 
 The fdModel class 
 
@@ -12,5 +12,6 @@ The fdModel class
    :maxdepth: 2
    :hidden:
 
-   fdmodel.class.configuration-file.rst
-   fdmodel.class.methods.rst
+   configuration
+   methods
+   attributes
