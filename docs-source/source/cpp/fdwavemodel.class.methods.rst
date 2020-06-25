@@ -3,7 +3,7 @@ Methods for performing FWI
 
 Below is the documentation for the methods that are most relevant when performing 
 full-waveform inversion using the psv package in C++. These are all methods of 
-fdWaveModel instances.
+fdModel instances.
 
 .. doxygenfunction:: forward_simulate
    :project: psvWave

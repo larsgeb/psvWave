@@ -1,5 +1,5 @@
-fdWaveModel simulation methods
-==============================
+fdModel simulation methods
+==========================
 
 .. doxygenfunction:: forward_simulate
    :project: forward-virieux

@@ -8,7 +8,7 @@ Documentation of forward-virieux
    :caption: Contents:
 
    typical-workflow.rst
-   fdwavemodel.class.rst
+   fdmodel.class.rst
    miscellaneous.methods.rst
 
 

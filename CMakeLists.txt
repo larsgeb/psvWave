@@ -9,8 +9,8 @@ set(CMAKE_CXX_FLAGS "")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Wextra")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
-add_executable(forward_test tests/forward_test.cpp src/fdWaveModel.cpp src/contiguous_arrays.h src/fdWaveModel.h)
-add_library(psvWave_cpp SHARED src/psvWave.cpp src/fdWaveModel.cpp src/contiguous_arrays.h src/fdWaveModel.h)
+add_executable(forward_test tests/forward_test.cpp src/fdModel.cpp src/contiguous_arrays.h src/fdModel.h)
+add_library(psvWave_cpp SHARED src/psvWave.cpp src/fdModel.cpp src/contiguous_arrays.h src/fdModel.h)
 
 set_property(TARGET psvWave_cpp PROPERTY POSITION_INDEPENDENT_CODE ON)
 set_target_properties(psvWave_cpp PROPERTIES POSITION_INDEPENDENT_CODE TRUE)

@@ -1,8 +1,8 @@
 //
 // Created by Lars Gebraad on 25.01.19.
 //
-#include "fdWaveModel.h"
 #include "INIReader.h"
+#include "fdModel.h"
 #include <cmath>
 #include <fstream>
 #include <iomanip>
@@ -13,7 +13,7 @@
 
 #define PI 3.14159265
 
-fdWaveModel::fdWaveModel(const char *configuration_file_relative_path) {
+fdModel::fdModel(const char *configuration_file_relative_path) {
   // --- Initialization section ---
 
   // Parse configuration from supplied file
@@ -152,7 +152,7 @@ fdWaveModel::fdWaveModel(const char *configuration_file_relative_path) {
   }
 }
 
-fdWaveModel::~fdWaveModel() {
+fdModel::~fdModel() {
   deallocate_array(vx);
   deallocate_array(vz);
   deallocate_array(txx);
@@ -186,7 +186,7 @@ fdWaveModel::~fdWaveModel() {
   deallocate_array(accu_txz);
 }
 
-void fdWaveModel::parse_configuration(
+void fdModel::parse_configuration(
     const char *configuration_file_relative_path) {
   std::cout << "Loading configuration file: '"
             << configuration_file_relative_path << "'." << std::endl;
@@ -328,8 +328,8 @@ void fdWaveModel::parse_configuration(
 }
 
 // Forward modeller
-void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
-                                   bool output_wavefields) {
+void fdModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
+                               bool output_wavefields) {
 // Set dynamic physical fields to zero to reflect initial conditions.
 #pragma omp parallel for collapse(2)
   for (int ix = 0; ix < nx; ++ix) {
@@ -537,7 +537,7 @@ void fdWaveModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
   }
 }
 
-void fdWaveModel::adjoint_simulate(int i_shot, bool verbose) {
+void fdModel::adjoint_simulate(int i_shot, bool verbose) {
   // Reset dynamical fields
   for (int ix = 0; ix < nx; ++ix) {
     for (int iz = 0; iz < nz; ++iz) {
@@ -685,9 +685,9 @@ void fdWaveModel::adjoint_simulate(int i_shot, bool verbose) {
   }
 }
 
-void fdWaveModel::write_receivers() { write_receivers(std::string("")); }
+void fdModel::write_receivers() { write_receivers(std::string("")); }
 
-void fdWaveModel::write_receivers(const std::string prefix) {
+void fdModel::write_receivers(const std::string prefix) {
   std::string filename_ux;
   std::string filename_uz;
 
@@ -721,7 +721,7 @@ void fdWaveModel::write_receivers(const std::string prefix) {
   }
 }
 
-void fdWaveModel::write_sources() {
+void fdModel::write_sources() {
   std::string filename_sources;
   std::ofstream shot_file;
 
@@ -743,7 +743,7 @@ void fdWaveModel::write_sources() {
   }
 }
 
-void fdWaveModel::update_from_velocity() {
+void fdModel::update_from_velocity() {
 #pragma omp parallel for collapse(2)
   for (int ix = 0; ix < nx; ++ix) {
     for (int iz = 0; iz < nz; ++iz) {
@@ -756,7 +756,7 @@ void fdWaveModel::update_from_velocity() {
   }
 }
 
-void fdWaveModel::load_receivers(bool verbose) {
+void fdModel::load_receivers(bool verbose) {
   std::string filename_ux;
   std::string filename_uz;
 
@@ -825,7 +825,7 @@ void fdWaveModel::load_receivers(bool verbose) {
   }
 }
 
-void fdWaveModel::calculate_l2_misfit() {
+void fdModel::calculate_l2_misfit() {
   misfit = 0;
   for (int i_shot = 0; i_shot < n_shots; ++i_shot) {
     for (int i_receiver = 0; i_receiver < nr; ++i_receiver) {
@@ -843,7 +843,7 @@ void fdWaveModel::calculate_l2_misfit() {
   }
 }
 
-void fdWaveModel::calculate_l2_adjoint_sources() {
+void fdModel::calculate_l2_adjoint_sources() {
 #pragma omp parallel for collapse(3)
   for (int is = 0; is < n_shots; ++is) {
     for (int ir = 0; ir < nr; ++ir) {
@@ -855,7 +855,7 @@ void fdWaveModel::calculate_l2_adjoint_sources() {
   }
 }
 
-void fdWaveModel::map_kernels_to_velocity() {
+void fdModel::map_kernels_to_velocity() {
 #pragma omp parallel for collapse(2)
   for (int ix = 0; ix < nx; ++ix) {
     for (int iz = 0; iz < nz; ++iz) {
@@ -872,9 +872,8 @@ void fdWaveModel::map_kernels_to_velocity() {
   }
 }
 
-void fdWaveModel::load_model(const std::string &de_path,
-                             const std::string &vp_path,
-                             const std::string &vs_path, bool verbose) {
+void fdModel::load_model(const std::string &de_path, const std::string &vp_path,
+                         const std::string &vs_path, bool verbose) {
   std::ifstream de_file;
   std::ifstream vp_file;
   std::ifstream vs_file;
@@ -971,7 +970,7 @@ void fdWaveModel::load_model(const std::string &de_path,
     std::cout << std::endl;
 }
 
-void fdWaveModel::run_model(bool verbose, bool simulate_adjoint) {
+void fdModel::run_model(bool verbose, bool simulate_adjoint) {
   for (int i_shot = 0; i_shot < n_shots; ++i_shot) {
     forward_simulate(i_shot, true, verbose);
   }
@@ -986,7 +985,7 @@ void fdWaveModel::run_model(bool verbose, bool simulate_adjoint) {
   }
 }
 
-void fdWaveModel::reset_kernels() {
+void fdModel::reset_kernels() {
   for (int ix = 0; ix < nx; ++ix) {
     for (int iz = 0; iz < nz; ++iz) {
       lambda_kernel[ix][iz] = 0.0;
@@ -996,7 +995,7 @@ void fdWaveModel::reset_kernels() {
   }
 }
 
-void fdWaveModel::write_kernels() {
+void fdModel::write_kernels() {
   std::string filename_kernel_vp = "kernel_vp.txt";
   ;
   std::string filename_kernel_vs = "kernel_vs.txt";
@@ -1023,7 +1022,7 @@ void fdWaveModel::write_kernels() {
   file_kernel_density.close();
 }
 
-dynamic_vector fdWaveModel::get_model_vector() {
+dynamic_vector fdModel::get_model_vector() {
   // Assert that the chosen parametrization makes full blocks (i.e. that we
   // don't have 3 horizontal subdivisions for 20 points, which would result in a
   // non-rounded number for points per cell)
@@ -1072,7 +1071,7 @@ dynamic_vector fdWaveModel::get_model_vector() {
   return m;
 }
 
-void fdWaveModel::set_model_vector(dynamic_vector m) {
+void fdModel::set_model_vector(dynamic_vector m) {
   assert(nx_free_parameters % basis_gridpoints_x == 0 and
          nz_free_parameters % basis_gridpoints_z == 0);
 
@@ -1109,7 +1108,7 @@ void fdWaveModel::set_model_vector(dynamic_vector m) {
   update_from_velocity();
 }
 
-dynamic_vector fdWaveModel::get_gradient_vector() {
+dynamic_vector fdModel::get_gradient_vector() {
   // Assert that the chosen parametrization makes full blocks (i.e. that we
   // don't have 3 horizontal subdivisions for 20 points, which would result in a
   // non-rounded number for points per cell)
@@ -1160,8 +1159,8 @@ dynamic_vector fdWaveModel::get_gradient_vector() {
   return g;
 }
 
-dynamic_vector fdWaveModel::load_vector(const std::string &model_vector_path,
-                                        bool verbose) {
+dynamic_vector fdModel::load_vector(const std::string &model_vector_path,
+                                    bool verbose) {
   int n_free_per_par = nx_free_parameters * nz_free_parameters;
 
   dynamic_vector m = dynamic_vector(n_free_per_par * 3, 1);

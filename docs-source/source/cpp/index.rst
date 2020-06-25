@@ -5,5 +5,5 @@ C++ API reference
    :maxdepth: 2
    :caption: Overview of submodules
 
-   fdwavemodel.class.rst
+   fdmodel.class.rst
    miscellaneous.methods.rst

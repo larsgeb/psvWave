@@ -2,8 +2,8 @@
 // Created by lars on 25.01.19.
 //
 
-#ifndef FDWAVEMODEL_H
-#define FDWAVEMODEL_H
+#ifndef FDMODEL_H
+#define FDMODEL_H
 
 #include <string>
 
@@ -94,7 +94,7 @@ public:
  * schemes.
  *
  */
-class fdWaveModel { // TODO restructure public vs private methods and fields
+class fdModel { // TODO restructure public vs private methods and fields
 public:
   // ---- CONSTRUCTORS AND DESTRUCTORS ----
   /** \brief Constructor for modelling class.
@@ -109,7 +109,7 @@ public:
    * parse_configuration() method.
    *
    */
-  explicit fdWaveModel(const char *configuration_file_relative_path);
+  explicit fdModel(const char *configuration_file_relative_path);
 
   /** \brief Destructor for the class.
    *
@@ -117,11 +117,11 @@ public:
    * constructor, freeing all memory.
    *
    */
-  ~fdWaveModel();
+  ~fdModel();
 
   // ---- METHODS ----
   /** \brief Method that parses .ini configuration file. Only used in
-   * fdWaveModel().
+   * fdModel().
    *
    * @param configuration_file_relative_path Relative path to the configuration
    * .ini file.
@@ -483,4 +483,4 @@ void cross_correlate(const real_simulation *signal1,
 
 std::string zero_pad_number(int num, int pad);
 
-#endif // FDWAVEMODEL_H
+#endif // FDMODEL_H

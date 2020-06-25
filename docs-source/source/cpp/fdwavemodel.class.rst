@@ -3,14 +3,14 @@ fdModel class
 
 The fdModel class 
 
-.. doxygenclass:: fdWaveModel
+.. doxygenclass:: fdModel
     :project: psvWave
-    :members: fdWaveModel, parse_configuration
+    :members: fdModel, parse_configuration
     :undoc-members:
 
 .. toctree::
    :maxdepth: 2
    :hidden:
 
-   fdwavemodel.class.configuration-file.rst
-   fdwavemodel.class.methods.rst
+   fdmodel.class.configuration-file.rst
+   fdmodel.class.methods.rst

@@ -1,2 +1,2 @@
-Configuration files for fdWaveModel
-===================================
+Configuration files for fdModel
+===============================

@@ -3,7 +3,7 @@
 //
 
 // Includes
-#include "../src/fdWaveModel.h"
+#include "../src/fdModel.h"
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
 
   auto configuration_file = argv[1];
 
-  auto *model = new fdWaveModel(configuration_file);
+  auto *model = new fdModel(configuration_file);
 
   auto startTime = omp_get_wtime();
   int n_tests = 5;

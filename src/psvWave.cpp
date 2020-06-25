@@ -8,7 +8,7 @@
 #include <thread>
 #include <vector>
 
-#include "fdWaveModel.h"
+#include "fdModel.h"
 
 namespace py = pybind11;
 
@@ -67,9 +67,9 @@ void copy_data_cast(T1 *destination, T2 *source, int size) {
   }
 }
 
-class fdWaveModelExtended : public fdWaveModel {
+class fdModelExtended : public fdModel {
 public:
-  using fdWaveModel::fdWaveModel;
+  using fdModel::fdModel;
 
   py::tuple get_snapshots() {
     std::vector<ssize_t> shape = {n_shots, snapshots, nx, nz};
@@ -373,9 +373,9 @@ public:
 };
 
 PYBIND11_MODULE(__psvWave_cpp, m) {
-  py::class_<fdWaveModelExtended>(m, "fdModel")
+  py::class_<fdModelExtended>(m, "fdModel")
       .def(py::init<const char *>(), R"mydelimiter(
-    The default constructor for fdWaveModel, a multithreaded finite
+    The default constructor for fdModel, a multithreaded finite
     difference solver for the elastic wave equation, built for FWI.
 
     Parameters
@@ -385,50 +385,49 @@ PYBIND11_MODULE(__psvWave_cpp, m) {
         FWI problem.
 )mydelimiter")
       .def("forward_simulate",
-           &fdWaveModelExtended::forward_simulate_explicit_threads,
+           &fdModelExtended::forward_simulate_explicit_threads,
            py::arg("i_shot"), py::arg("store_fields") = true,
            py::arg("verbose") = false, py::arg("output_wavefields") = false,
            py::arg("omp_threads_override") = 0)
-      .def_readonly("n_shots", &fdWaveModelExtended::n_shots)
-      .def_readonly("n_sources", &fdWaveModelExtended::n_sources)
-      .def("get_model_vector", &fdWaveModelExtended::get_model_vector)
-      .def("set_model_vector", &fdWaveModelExtended::set_model_vector)
-      .def("get_gradient_vector", &fdWaveModelExtended::get_gradient_vector)
-      .def("load_vector", &fdWaveModelExtended::load_vector)
-      .def("get_snapshots", &fdWaveModelExtended::get_snapshots,
+      .def_readonly("n_shots", &fdModelExtended::n_shots)
+      .def_readonly("n_sources", &fdModelExtended::n_sources)
+      .def("get_model_vector", &fdModelExtended::get_model_vector)
+      .def("set_model_vector", &fdModelExtended::set_model_vector)
+      .def("get_gradient_vector", &fdModelExtended::get_gradient_vector)
+      .def("load_vector", &fdModelExtended::load_vector)
+      .def("get_snapshots", &fdModelExtended::get_snapshots,
            py::return_value_policy::move)
-      .def_readonly("dt", &fdWaveModelExtended::dt)
-      .def_readonly("dz", &fdWaveModelExtended::dz)
-      .def_readonly("dx", &fdWaveModelExtended::dx)
-      .def_readonly("time_step", &fdWaveModelExtended::dt)
-      .def_readonly("free_parameters", &fdWaveModelExtended::free_parameters)
-      .def_readonly("snapshot_interval",
-                    &fdWaveModelExtended::snapshot_interval)
-      .def_readonly("snapshots", &fdWaveModelExtended::snapshots)
-      .def("get_extent", &fdWaveModelExtended::get_extent)
-      .def("get_coordinates", &fdWaveModelExtended::get_coordinates)
-      .def("get_parameter_fields", &fdWaveModelExtended::get_parameter_fields)
-      .def("get_kernels", &fdWaveModelExtended::get_kernels)
-      .def("set_parameter_fields", &fdWaveModelExtended::set_parameter_fields)
-      .def("get_synthetic_data", &fdWaveModelExtended::get_synthetic_data)
-      .def("get_observed_data", &fdWaveModelExtended::get_observed_data)
-      .def("set_synthetic_data", &fdWaveModelExtended::set_synthetic_data)
-      .def("set_observed_data", &fdWaveModelExtended::set_observed_data)
-      .def("get_receivers", &fdWaveModelExtended::get_receivers,
+      .def_readonly("dt", &fdModelExtended::dt)
+      .def_readonly("dz", &fdModelExtended::dz)
+      .def_readonly("dx", &fdModelExtended::dx)
+      .def_readonly("time_step", &fdModelExtended::dt)
+      .def_readonly("free_parameters", &fdModelExtended::free_parameters)
+      .def_readonly("snapshot_interval", &fdModelExtended::snapshot_interval)
+      .def_readonly("snapshots", &fdModelExtended::snapshots)
+      .def("get_extent", &fdModelExtended::get_extent)
+      .def("get_coordinates", &fdModelExtended::get_coordinates)
+      .def("get_parameter_fields", &fdModelExtended::get_parameter_fields)
+      .def("get_kernels", &fdModelExtended::get_kernels)
+      .def("set_parameter_fields", &fdModelExtended::set_parameter_fields)
+      .def("get_synthetic_data", &fdModelExtended::get_synthetic_data)
+      .def("get_observed_data", &fdModelExtended::get_observed_data)
+      .def("set_synthetic_data", &fdModelExtended::set_synthetic_data)
+      .def("set_observed_data", &fdModelExtended::set_observed_data)
+      .def("get_receivers", &fdModelExtended::get_receivers,
            py::arg("in_units") = true,
            py::arg("include_absorbing_boundary_as_index") = true)
-      .def("calculate_l2_misfit", &fdWaveModelExtended::calculate_l2_misfit)
+      .def("calculate_l2_misfit", &fdModelExtended::calculate_l2_misfit)
       .def("calculate_l2_adjoint_sources",
-           &fdWaveModelExtended::calculate_l2_adjoint_sources)
-      .def_readonly("n_shots", &fdWaveModelExtended::n_shots)
-      .def_readonly("misfit", &fdWaveModelExtended::misfit)
-      .def("reset_kernels", &fdWaveModelExtended::reset_kernels)
+           &fdModelExtended::calculate_l2_adjoint_sources)
+      .def_readonly("n_shots", &fdModelExtended::n_shots)
+      .def_readonly("misfit", &fdModelExtended::misfit)
+      .def("reset_kernels", &fdModelExtended::reset_kernels)
       .def("adjoint_simulate",
-           &fdWaveModelExtended::adjoint_simulate_explicit_threads,
+           &fdModelExtended::adjoint_simulate_explicit_threads,
            py::arg("i_shot"), py::arg("verbose") = false,
            py::arg("omp_threads_override") = 0)
       .def("map_kernels_to_velocity",
-           &fdWaveModelExtended::map_kernels_to_velocity);
+           &fdModelExtended::map_kernels_to_velocity);
 
   ;
 }
