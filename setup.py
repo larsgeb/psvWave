@@ -11,6 +11,10 @@ from setuptools.command.build_ext import build_ext
 from distutils.version import LooseVersion
 
 
+def install(package):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+
+
 class CleanCommand(Command):
     """Custom clean command to tidy up the project root."""
 
@@ -24,7 +28,7 @@ class CleanCommand(Command):
 
     def run(self):
         os.system(
-            "rm -vrf ./build ./dist ./*.pyc ./*.tgz ./*.egg-info ./*.so __pycache__/"
+            "rm -vrf ./build ./dist ./*.pyc ./*.tgz ./*.egg-info ./pyWave/*.so __pycache__/"
         )
 
 
@@ -36,6 +40,10 @@ class CMakeExtension(Extension):
 
 class CMakeBuild(build_ext):
     def run(self):
+
+        install("cmake")
+        install("pybind11")
+
         try:
             out = subprocess.check_output(["cmake", "--version"])
             print(out)
@@ -89,9 +97,6 @@ class CMakeBuild(build_ext):
         else:
             cmake_args += [
                 "-DCMAKE_BUILD_TYPE=" + cfg,
-                "-DPYBIND_INCLUDES=" + pybind_includes,
-                "-DPYTHON_INCLUDES=" + python_includes,
-                "-DEXTENSION=" + extension,
                 "-O3",
             ]
             build_args += ["--", "-j2"]
@@ -148,10 +153,8 @@ setup(
     python_requires=">=3.7",
     install_requires=["numpy", "cmake", "pybind11"],
     extras_require={
-        "dev": ["cmake", "black", "setuptools", "pybind11", "matplotlib", "versioneer"]
+        "dev": ["cmake", "black", "setuptools", "pybind11", "matplotlib", "versioneer", "numpy"]
     },
-    ext_modules=[CMakeExtension("__pyWave")],
+    ext_modules=[CMakeExtension("__pyWave", ".")],
     zip_safe=False,
-    package_data={"pyWave": ["__pyWave" + get_config_vars()["EXT_SUFFIX"]]},
-    include_package_data=True,
 )

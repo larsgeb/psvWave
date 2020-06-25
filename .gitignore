@@ -1,5 +1,8 @@
 .idea
 build
+*.npy
+*.mp4
+
 # Created by .ignore support plugin (hsz.mobi)
 ### C++ template
 # Prerequisites
