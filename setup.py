@@ -11,10 +11,6 @@ from setuptools.command.build_ext import build_ext
 from distutils.version import LooseVersion
 
 
-def install(package):
-    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
-
-
 class CleanCommand(Command):
     """Custom clean command to tidy up the project root."""
 
@@ -40,9 +36,6 @@ class CMakeExtension(Extension):
 
 class CMakeBuild(build_ext):
     def run(self):
-
-        install("cmake")
-        install("pybind11")
 
         try:
             out = subprocess.check_output(["cmake", "--version"])
@@ -153,7 +146,15 @@ setup(
     python_requires=">=3.7",
     install_requires=["numpy", "cmake", "pybind11"],
     extras_require={
-        "dev": ["cmake", "black", "setuptools", "pybind11", "matplotlib", "versioneer", "numpy"]
+        "dev": [
+            "cmake",
+            "black",
+            "setuptools",
+            "pybind11",
+            "matplotlib",
+            "versioneer",
+            "numpy",
+        ]
     },
     ext_modules=[CMakeExtension("__pyWave", ".")],
     zip_safe=False,
