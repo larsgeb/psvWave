@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy
 
 model = pyWave.fdModel(
-    "../tests/test_configurations/forward_configuration.ini"
+    "../tests/test_configurations/forward_configuration_4_sources.ini"
 )
 
 # Create target model ---------------------------------------------------------
@@ -30,14 +30,14 @@ circle = ((IX - x_middle) ** 2 + (IZ - z_middle) ** 2) ** 0.5 < 15
 vs = vs * (1 - 0.1 * circle)
 vp = vp * (1 - 0.1 * circle)
 
-# cmap = plt.get_cmap("seismic")
-# plt.subplot(311)
-# plt.imshow(vp.T, extent=extent, vmin=1600, vmax=2400, cmap=cmap)
-# plt.subplot(312)
-# plt.imshow(vs.T, extent=extent, vmin=600, vmax=1000, cmap=cmap)
-# plt.subplot(313)
-# plt.imshow(rho.T, extent=extent, vmin=1200, vmax=1800, cmap=cmap)
-# plt.show()
+cmap = plt.get_cmap("seismic")
+plt.subplot(311)
+plt.imshow(vp.T, extent=extent, vmin=1600, vmax=2400, cmap=cmap)
+plt.subplot(312)
+plt.imshow(vs.T, extent=extent, vmin=600, vmax=1000, cmap=cmap)
+plt.subplot(313)
+plt.imshow(rho.T, extent=extent, vmin=1200, vmax=1800, cmap=cmap)
+plt.show()
 
 vp_target = vp
 vs_target = vs
@@ -52,13 +52,20 @@ model.set_parameter_fields(vp_target, vs_target, rho_target)
 # Create true data ------------------------------------------------------------
 
 for i_shot in range(model.n_shots):
-    model.forward_simulate(i_shot)
+    model.forward_simulate(i_shot, omp_threads_override=6)
 
 # Cheating of course, as this is synthetically generated data.
 ux_obs, uz_obs = model.get_synthetic_data()
+
+# numpy.random.seed(0)
+# std = 10.0
+# ux_obs += std * numpy.random.randn(*ux_obs.shape)
+# uz_obs += std * numpy.random.randn(*uz_obs.shape)
+
 numpy.save("ux_obs", ux_obs)
 numpy.save("uz_obs", uz_obs)
 model.set_observed_data(ux_obs, uz_obs)
+
 
 # Reverting the model to the starting model -----------------------------------
 
@@ -69,7 +76,7 @@ rho = rho_starting
 model.set_parameter_fields(vp_starting, vs_starting, rho_starting)
 
 for i_shot in range(model.n_shots):
-    model.forward_simulate(i_shot)
+    model.forward_simulate(i_shot, omp_threads_override=6)
 
 ux, uz = model.get_synthetic_data()
 ux_obs, uz_obs = model.get_observed_data()
@@ -85,7 +92,7 @@ for i in range(ux_obs.shape[1]):
 
 plt.plot(m_ux[0, :, :].T, "r", label="synthetic", alpha=0.5)
 plt.plot(m_ux_obs[0, :, :].T, "k", label="observed", alpha=0.5)
-plt.close()
+plt.show()
 
 # Perform adjoint simulation --------------------------------------------------
 
@@ -96,7 +103,7 @@ print(f"Data misfit: {model.misfit:.2f}")
 model.calculate_l2_adjoint_sources()
 model.reset_kernels()
 for i_shot in range(model.n_shots):
-    model.adjoint_simulate(i_shot)
+    model.adjoint_simulate(i_shot, omp_threads_override=6)
 model.map_kernels_to_velocity()
 
 g_vp, g_vs, g_rho = model.get_kernels()
@@ -123,7 +130,7 @@ for i in range(3):
     plt.colorbar()
 
 plt.tight_layout()
-plt.close()
+plt.show()
 
 # Start iterating -------------------------------------------------------------
 
@@ -133,20 +140,24 @@ print("Starting gradient descent")
 
 fields_during_iteration = []
 
-iterations = 20
+iterations = 15
 
 try:
     for i in range(iterations):
 
         g = model.get_gradient_vector()
-        m -= 0.1 * g
+
+        # Amplify Vp gradient
+        g[0:10800] *= 1000
+
+        m -= 0.2 * g
         model.set_model_vector(m)
 
         fields_during_iteration.append(list(model.get_parameter_fields()))
 
         # Simulate forward
         for i_shot in range(model.n_shots):
-            model.forward_simulate(i_shot)
+            model.forward_simulate(i_shot, omp_threads_override=6)
 
         # Calculate misfit and adjoint sources
         model.calculate_l2_misfit()
@@ -156,7 +167,7 @@ try:
         # Simulate adjoint
         model.reset_kernels()
         for i_shot in range(model.n_shots):
-            model.adjoint_simulate(i_shot)
+            model.adjoint_simulate(i_shot, omp_threads_override=6)
         model.map_kernels_to_velocity()
 except KeyboardInterrupt:
     m = model.get_model_vector()
@@ -194,7 +205,6 @@ def animate(j):
 anim = animation.FuncAnimation(fig, animate, frames=iterations, interval=10)
 plt.show()
 
-exit(0)
 # Bonus: Animating a wavefield ------------------------------------------------
 
 fig = plt.figure(figsize=(4, 10))
@@ -228,11 +238,7 @@ def animate(i):
 
     ax.text(-5, -5, f"Time: {i * dt * snapshot_interval:.3f}")
     im1 = ax.imshow(
-        z1,
-        vmin=-abswave,
-        vmax=abswave,
-        cmap=plt.get_cmap("PRGn"),
-        extent=extent,
+        z1, vmin=-abswave, vmax=abswave, cmap=plt.get_cmap("PRGn"), extent=extent,
     )
     ax.invert_yaxis()
 
