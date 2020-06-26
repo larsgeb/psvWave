@@ -3,7 +3,7 @@ $(document).ready(function () {
     $(obj).addClass("field-list");
   });
 
-  $("p > .docutils").each(function (i, obj) {
+  $("ul.breatheparameterlist > li > p > .docutils").each(function (i, obj) {
     var text = obj.innerText;
     var parent = obj.parentNode;
 

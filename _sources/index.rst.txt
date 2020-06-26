@@ -1,21 +1,14 @@
-Documentation of psvWave
-================================
-
-
+Homepage
+========
 
 .. toctree::
-   :maxdepth: 1
-   :hidden:
-   :caption: Contents:
+   :maxdepth: 3
+   :caption: Table of contents
 
-   typical-workflow.rst
+   self
+   typical-workflow
    python/index
    cpp/index
+   genindex
 
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+.. mdinclude:: ../../README.md

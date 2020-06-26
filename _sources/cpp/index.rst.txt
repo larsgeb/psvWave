@@ -1,12 +1,6 @@
 C++ API reference
 =================
 
-.. video:: ../_static/video_slow.mp4
-   :width: 400
-   :height: 800
-   :autoplay:
-   :nocontrols:
-
 The true bulk fo this package is written in the class fdModel.
 This class takes care of the wavefield simulations.
 Additionally, it is able to backpropagate a wavefield.

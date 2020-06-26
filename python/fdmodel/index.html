@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>psvWave.fdModel &mdash; psvWave 8c15bf4617d9489a7b0615d1fcb12837c4661f4a documentation</title>
+  <title>psvWave.fdModel &mdash; psvWave de1b8a96f3e669a31aa56e650d7ffd15d17dd01e documentation</title>
   
 
   
@@ -37,7 +37,7 @@
     
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Methods for performing FWI" href="methods.html" />
+    <link rel="next" title="Configuration files" href="../configuration.html" />
     <link rel="prev" title="Python API reference" href="../index.html" /> 
 </head>
 
@@ -62,7 +62,7 @@
             
             
               <div class="version">
-                0.1.6
+                0.1.6b
               </div>
             
           
@@ -87,19 +87,17 @@
               
             
             
-              <p class="caption"><span class="caption-text">Contents:</span></p>
+              <p class="caption"><span class="caption-text">Table of contents</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Homepage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../typical-workflow.html">Typical workflow</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../index.html">Python API reference</a><ul class="current">
-<li class="toctree-l2 current"><a class="current reference internal" href="#">psvWave.fdModel</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="methods.html">Methods for performing FWI</a></li>
-<li class="toctree-l3"><a class="reference internal" href="attributes.html">Attributes of psvWave.fdModel</a></li>
-</ul>
-</li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">psvWave.fdModel</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../configuration.html">Configuration files</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../cpp/index.html">C++ API reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../genindex.html">Index</a></li>
 </ul>
 
             
@@ -178,14 +176,246 @@
 <dd class="field-odd"><p><strong>configuration_file_path</strong> – Path to the desired configuration.</p>
 </dd>
 </dl>
+<dl class="py method">
+<dt id="psvWave.fdModel.adjoint_simulate">
+<code class="sig-name descname">adjoint_simulate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">i_shot</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="p">:</span> <span class="n">bool</span></em>, <em class="sig-param"><span class="n">omp_threads_override</span><span class="p">:</span> <span class="n">int</span></em><span class="sig-paren">)</span><a class="headerlink" href="#psvWave.fdModel.adjoint_simulate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adjoint simulate the wavefield for a given shot. This additionally correlates the adjoint wavefields for this shot with those stored in the snapshots to calculate the sensitivity kernel in Lamé’s parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>i_shot</strong> (<em>int</em>) – Integer representing which shot will be simulated.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – Boolean controlling the verbosity of the simulation.</p></li>
+<li><p><strong>omp_threads_override</strong> (<em>int</em>) – Integer determining the amounts of threads that will be used. Defaults to the environment variable if not passed / 0.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="methods.html">Methods for performing FWI</a></li>
-<li class="toctree-l1"><a class="reference internal" href="attributes.html">Attributes of psvWave.fdModel</a></li>
+<dl class="py method">
+<dt id="psvWave.fdModel.calculate_l2_adjoint_sources">
+<code class="sig-name descname">calculate_l2_adjoint_sources</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#psvWave.fdModel.calculate_l2_adjoint_sources" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the adjoint sources corresponding to the L2 misfit w.r.t. the observed data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="psvWave.fdModel.calculate_l2_misfit">
+<code class="sig-name descname">calculate_l2_misfit</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#psvWave.fdModel.calculate_l2_misfit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate L2 misfit for simulated waveforms w.r.t. observed data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="psvWave.fdModel.dt">
+<em class="property">property </em><code class="sig-name descname">dt</code><a class="headerlink" href="#psvWave.fdModel.dt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Time discretization</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="psvWave.fdModel.dx">
+<em class="property">property </em><code class="sig-name descname">dx</code><a class="headerlink" href="#psvWave.fdModel.dx" title="Permalink to this definition">¶</a></dt>
+<dd><p>Horizontal discretization</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="psvWave.fdModel.dz">
+<em class="property">property </em><code class="sig-name descname">dz</code><a class="headerlink" href="#psvWave.fdModel.dz" title="Permalink to this definition">¶</a></dt>
+<dd><p>Vertical discretization</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="psvWave.fdModel.forward_simulate">
+<code class="sig-name descname">forward_simulate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">i_shot</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">store_fields</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em>, <em class="sig-param"><span class="n">output_wavefields</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em>, <em class="sig-param"><span class="n">omp_threads_override</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#psvWave.fdModel.forward_simulate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run forward simulations for a given ‘shot’.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>i_shot</strong> (<em>int</em>) – Integer representing which shot will be simulated.</p></li>
+<li><p><strong>store_fields</strong> (<em>int</em>) – Boolean controlling whether or not wavefields are stored, defaults to <cite>True</cite>.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – Boolean controlling the verbosity of the simulation.</p></li>
+<li><p><strong>output_wavefields</strong> (<em>boolean</em>) – Boolean controlling whether or not wavefields are written to disk.</p></li>
+<li><p><strong>omp_threads_override</strong> (<em>int</em>) – Integer determining the amounts of threads that will be used. Defaults to the environment variable if not passed / 0.</p></li>
 </ul>
-</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="psvWave.fdModel.free_parameters">
+<em class="property">property </em><code class="sig-name descname">free_parameters</code><a class="headerlink" href="#psvWave.fdModel.free_parameters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Total free parameters in the model, vp, vs, rho combined.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="psvWave.fdModel.get_coordinates">
+<code class="sig-name descname">get_coordinates</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#psvWave.fdModel.get_coordinates" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="psvWave.fdModel.get_extent">
+<code class="sig-name descname">get_extent</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#psvWave.fdModel.get_extent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="psvWave.fdModel.get_gradient_vector">
+<code class="sig-name descname">get_gradient_vector</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#psvWave.fdModel.get_gradient_vector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the computed gradient vector. Should be retreived only after all the following functions are run:</p>
+<ol class="arabic simple">
+<li><p><a class="reference internal" href="#psvWave.fdModel.set_model_vector" title="psvWave.fdModel.set_model_vector"><code class="xref py py-meth docutils literal notranslate"><span class="pre">set_model_vector()</span></code></a>, to set a new model for which    to calculate the gradient.</p></li>
+<li><p>For each shot, <a class="reference internal" href="#psvWave.fdModel.forward_simulate" title="psvWave.fdModel.forward_simulate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">forward_simulate()</span></code></a>, to simulate    the forward wavefields.</p></li>
+<li><p><a class="reference internal" href="#psvWave.fdModel.calculate_l2_misfit" title="psvWave.fdModel.calculate_l2_misfit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">calculate_l2_misfit()</span></code></a> to calculate the L2 misfit    of the synthetic waveforms w.r.t. the data.</p></li>
+<li><p><a class="reference internal" href="#psvWave.fdModel.calculate_l2_adjoint_sources" title="psvWave.fdModel.calculate_l2_adjoint_sources"><code class="xref py py-meth docutils literal notranslate"><span class="pre">calculate_l2_adjoint_sources()</span></code></a> to calculate the    adjoint sources corresponding to the current model.</p></li>
+<li><p><a class="reference internal" href="#psvWave.fdModel.calculate_l2_adjoint_sources" title="psvWave.fdModel.calculate_l2_adjoint_sources"><code class="xref py py-meth docutils literal notranslate"><span class="pre">calculate_l2_adjoint_sources()</span></code></a> to calculate the    adjoint sources corresponding to the current model.</p></li>
+<li><p><a class="reference internal" href="#psvWave.fdModel.adjoint_simulate" title="psvWave.fdModel.adjoint_simulate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">adjoint_simulate()</span></code></a> to simulate the adjoint    (backward) wavefield.</p></li>
+<li><p><a class="reference internal" href="#psvWave.fdModel.reset_kernels" title="psvWave.fdModel.reset_kernels"><code class="xref py py-meth docutils literal notranslate"><span class="pre">reset_kernels()</span></code></a> to empty the current kernels.</p></li>
+<li><p>For each shot <a class="reference internal" href="#psvWave.fdModel.adjoint_simulate" title="psvWave.fdModel.adjoint_simulate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">adjoint_simulate()</span></code></a> to simulate the    adjoint (backward) wavefield exactly once. Simulating one of the shots    twice will result in incorrect kernels.</p></li>
+<li><p><a class="reference internal" href="#psvWave.fdModel.map_kernels_to_velocity" title="psvWave.fdModel.map_kernels_to_velocity"><code class="xref py py-meth docutils literal notranslate"><span class="pre">map_kernels_to_velocity()</span></code></a> to map the    sensitivities in Lamé’s parameters (lambda, mu, rho) to velocity (vp,    vs, rho).</p></li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Current gradient vector.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="psvWave.fdModel.get_kernels">
+<code class="sig-name descname">get_kernels</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#psvWave.fdModel.get_kernels" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="psvWave.fdModel.get_model_vector">
+<code class="sig-name descname">get_model_vector</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#psvWave.fdModel.get_model_vector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the current model in the model as a numpy vector, flattened.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Current model vector containing P-wave speed, S-wave speed, and density.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="psvWave.fdModel.get_observed_data">
+<code class="sig-name descname">get_observed_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#psvWave.fdModel.get_observed_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="psvWave.fdModel.get_parameter_fields">
+<code class="sig-name descname">get_parameter_fields</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#psvWave.fdModel.get_parameter_fields" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="psvWave.fdModel.get_receivers">
+<code class="sig-name descname">get_receivers</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">in_units</span><span class="p">:</span> <span class="n">bool</span></em>, <em class="sig-param"><span class="n">include_absorbing_boundary_as_index</span><span class="p">:</span> <span class="n">bool</span></em><span class="sig-paren">)</span> &#x2192; Tuple<span class="p">[</span>numpy.ndarray<span class="p">, </span>numpy<span class="p">, </span>ndarray<span class="p">]</span><a class="headerlink" href="#psvWave.fdModel.get_receivers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the receiver array coordinates either in meters or grid indices.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_units</strong> (<em>bool</em>) – Boolean controlling if the returned coordinates are physical distance from origin or grid indices.</p></li>
+<li><p><strong>include_absorbing_boundary_as_index</strong> (<em>bool</em>) – Boolean controlling whether or not to place the origin at the edge of the absording boundary or within it.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A tuple of 2 numpy.ndarray’s for horizontal and vertical coordinate, each of shape (n_receivers, 1).</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Tuple[numpy.ndarray, numpy,ndarray]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="psvWave.fdModel.get_snapshots">
+<code class="sig-name descname">get_snapshots</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; Tuple<span class="p">[</span>numpy.ndarray<span class="p">, </span>numpy.ndarray<span class="p">, </span>numpy.ndarray<span class="p">, </span>numpy.ndarray<span class="p">, </span>numpy.ndarray<span class="p">]</span><a class="headerlink" href="#psvWave.fdModel.get_snapshots" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get snapshots of all the dynamical fields generated across all the shots.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="psvWave.fdModel.get_synthetic_data">
+<code class="sig-name descname">get_synthetic_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#psvWave.fdModel.get_synthetic_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="psvWave.fdModel.load_vector">
+<code class="sig-name descname">load_vector</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">relative_path</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="p">:</span> <span class="n">bool</span></em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="headerlink" href="#psvWave.fdModel.load_vector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads a vector of shape (free_parameters, 1) from a text file. Read in precision <cite>real_simulation</cite>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="psvWave.fdModel.map_kernels_to_velocity">
+<code class="sig-name descname">map_kernels_to_velocity</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#psvWave.fdModel.map_kernels_to_velocity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform sensitivity kernels in Lamé parametrization (lambda, mu, rho) to velocity parametrization (vp, vs, rho).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="psvWave.fdModel.misfit">
+<em class="property">property </em><code class="sig-name descname">misfit</code><a class="headerlink" href="#psvWave.fdModel.misfit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Current misfit in the model.</p>
+<p>This value is updated after <a class="reference internal" href="#psvWave.fdModel.calculate_l2_misfit" title="psvWave.fdModel.calculate_l2_misfit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">calculate_l2_misfit()</span></code></a> is run.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="psvWave.fdModel.n_shots">
+<em class="property">property </em><code class="sig-name descname">n_shots</code><a class="headerlink" href="#psvWave.fdModel.n_shots" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of shots</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="psvWave.fdModel.n_sources">
+<em class="property">property </em><code class="sig-name descname">n_sources</code><a class="headerlink" href="#psvWave.fdModel.n_sources" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of sources across shots. Does not indicate how many per shot.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="psvWave.fdModel.reset_kernels">
+<code class="sig-name descname">reset_kernels</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#psvWave.fdModel.reset_kernels" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reset kernel accumulators to zero. Important for adjoint simulations, as they simply keep accumulating wavefield correlations across shots and iterations otherwise. Making this manual allows for flexibility (e.g. different misfit per shot).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="psvWave.fdModel.set_model_vector">
+<code class="sig-name descname">set_model_vector</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">m</span><span class="p">:</span> <span class="n">numpy.ndarray</span></em><span class="sig-paren">)</span><a class="headerlink" href="#psvWave.fdModel.set_model_vector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update the model (vp, vs, rho) in the class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>m</strong> (<em>numpy.ndarray</em>) – vector of shape (free_parameters, 1).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="psvWave.fdModel.set_observed_data">
+<code class="sig-name descname">set_observed_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#psvWave.fdModel.set_observed_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="psvWave.fdModel.set_parameter_fields">
+<code class="sig-name descname">set_parameter_fields</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#psvWave.fdModel.set_parameter_fields" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="psvWave.fdModel.set_synthetic_data">
+<code class="sig-name descname">set_synthetic_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#psvWave.fdModel.set_synthetic_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="psvWave.fdModel.snapshot_interval">
+<em class="property">property </em><code class="sig-name descname">snapshot_interval</code><a class="headerlink" href="#psvWave.fdModel.snapshot_interval" title="Permalink to this definition">¶</a></dt>
+<dd><p>The interval of timesteps between snapshots.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="psvWave.fdModel.snapshots">
+<em class="property">property </em><code class="sig-name descname">snapshots</code><a class="headerlink" href="#psvWave.fdModel.snapshots" title="Permalink to this definition">¶</a></dt>
+<dd><p>The total amount of snapshots per shot.</p>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 
 
@@ -196,7 +426,7 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="methods.html" class="btn btn-neutral float-right" title="Methods for performing FWI" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="../configuration.html" class="btn btn-neutral float-right" title="Configuration files" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="../index.html" class="btn btn-neutral float-left" title="Python API reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>

@@ -2,10 +2,8 @@ psvWave.fdModel
 ===============
 
 .. autoclass:: psvWave.fdModel
-
-.. toctree::
-   :maxdepth: 2
-
-   methods
-   attributes
-
+   :exclude-members: __init__, __module__
+   :members:
+   :undoc-members:
+   :private-members:
+   :special-members:
