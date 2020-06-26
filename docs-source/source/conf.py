@@ -17,18 +17,17 @@ import sys
 import psvWave
 
 sys.path.insert(0, os.path.abspath("../.."))
-sys.path.append("../ext/breathe")
 
 # -- Project information -----------------------------------------------------
 
 project = "psvWave"
-copyright = "2020, Lars Gebraad"
+copyright = "2018-2020, Lars Gebraad"
 author = "Lars Gebraad"
 
 # The short X.Y version
 version = psvWave.__version__
 # The full version, including alpha/beta/rc tags
-release = ""
+release = psvWave.__full_revisionid__
 
 # -- General configuration ---------------------------------------------------
 
@@ -46,25 +45,13 @@ extensions = [
     "sphinx.ext.githubpages",
     "sphinx.ext.mathjax",
     "breathe",
-    "exhale",
 ]
 
 breathe_domain_by_extension = {"h": "cpp"}
 
 breathe_projects = {"psvWave": "../../docs-source/xml"}
 
-exhale_args = {
-    # These arguments are required
-    "containmentFolder": "./api",
-    "rootFileName": "index.rst",
-    "rootFileTitle": "Library API",
-    "doxygenStripFromPath": "..",
-    # Suggested optional arguments
-    "createTreeView": True,
-    # TIP: if using the sphinx-bootstrap-theme, you need
-    # "treeViewIsBootstrap": True,
-}
-
+breathe_default_project = "psvWave"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -109,7 +96,11 @@ html_theme = "sphinx_rtd_theme"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = []
+html_static_path = ["_static"]
+
+html_js_files = [
+    "add_class.js",
+]
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
