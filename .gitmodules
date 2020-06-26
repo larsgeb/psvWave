@@ -1,9 +1,6 @@
 [submodule "ext/inih"]
 	path = ext/inih
 	url = https://github.com/larsgeb/inih.git
-[submodule "ext/breathe"]
-	path = ext/breathe
-	url = https://github.com/michaeljones/breathe.git
 [submodule "ext/eigen"]
 	path = ext/eigen
 	url = https://gitlab.com/libeigen/eigen.git
