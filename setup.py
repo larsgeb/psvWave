@@ -159,6 +159,7 @@ setup(
             "sphinx",
             "sphinx_rtd_theme",
             "breathe",
+            "m2r @ git+https://github.com/crossnox/m2r@dev#egg=m2r",
         ]
     },
     ext_modules=[CMakeExtension("__psvWave_cpp", ".")],
