@@ -16,8 +16,7 @@ namespace py = pybind11;
 #include <iterator>
 #include <vector>
 
-template <typename T>
-std::ostream &operator<<(std::ostream &os, std::vector<T> vec) {
+template <typename T> std::ostream &operator<<(std::ostream &os, std::vector<T> vec) {
   os << "{ ";
   std::copy(vec.begin(), vec.end(), std::ostream_iterator<T>(os, " "));
   os << "}";
@@ -41,15 +40,15 @@ py::array_t<T> array_to_numpy(T ***pointer, std::vector<ssize_t> shape) {
 }
 template <class T>
 py::array_t<T> array_to_numpy(T **pointer, std::vector<ssize_t> shape) {
-  return py::array_t<T>(py::buffer_info(
-      *pointer, sizeof(T), py::format_descriptor<T>::format(), 2, shape,
-      std::vector<size_t>{shape[1] * sizeof(T), sizeof(T)}));
+  return py::array_t<T>(
+      py::buffer_info(*pointer, sizeof(T), py::format_descriptor<T>::format(), 2, shape,
+                      std::vector<size_t>{shape[1] * sizeof(T), sizeof(T)}));
 }
 template <class T>
 py::array_t<T> array_to_numpy(T *pointer, std::vector<ssize_t> shape) {
   return py::array_t<T>(py::buffer_info(pointer, sizeof(T),
-                                        py::format_descriptor<T>::format(), 1,
-                                        shape, std::vector<size_t>{sizeof(T)}));
+                                        py::format_descriptor<T>::format(), 1, shape,
+                                        std::vector<size_t>{sizeof(T)}));
 }
 
 template <class T> void copy_data(T *destination, T *source, int size) {
@@ -81,36 +80,35 @@ public:
 
   py::tuple get_extent(bool include_absorbing_boundary = true) {
     if (include_absorbing_boundary) {
-      return py::make_tuple(-np_boundary, dx * (nx_inner + np_boundary),
-                            -np_boundary, dz * (nz_inner + np_boundary));
+      return py::make_tuple(-np_boundary, dx * (nx_inner + np_boundary), -np_boundary,
+                            dz * (nz_inner + np_boundary));
     } else {
       return py::make_tuple(0, dx * nx_inner, 0, dz * nz_inner);
     }
   };
 
-  void forward_simulate_explicit_threads(int i_shot, bool store_fields,
-                                         bool verbose, bool output_wavefields,
+  void forward_simulate_explicit_threads(int i_shot, bool store_fields, bool verbose,
+                                         bool output_wavefields,
                                          int omp_threads_override) {
     const auto old_limit = omp_get_max_threads();
     const auto optimal = std::thread::hardware_concurrency();
 
     if (verbose) {
       std::cout << "OpenMP info:" << std::endl
-                << "  Original thread limit: " << omp_get_max_threads()
-                << std::endl
+                << "  Original thread limit: " << omp_get_max_threads() << std::endl
                 << "  Hardware concurrency: " << optimal << std::endl;
     }
 
     if (omp_threads_override != 0) {
       if (verbose) {
-        std::cout << "  Setting override number of threads: "
-                  << omp_threads_override << std::endl;
+        std::cout << "  Setting override number of threads: " << omp_threads_override
+                  << std::endl;
       }
       omp_set_num_threads(omp_threads_override);
     } else {
       if (verbose) {
-        std::cout << "  Setting original number of threads: "
-                  << omp_get_max_threads() << std::endl;
+        std::cout << "  Setting original number of threads: " << omp_get_max_threads()
+                  << std::endl;
       }
       omp_set_num_threads(omp_get_max_threads());
     }
@@ -122,8 +120,7 @@ public:
     forward_simulate(i_shot, store_fields, verbose, output_wavefields);
 
     if (verbose) {
-      std::cout << "  Resetting threads to: " << old_limit << std::endl
-                << std::endl;
+      std::cout << "  Resetting threads to: " << old_limit << std::endl << std::endl;
     }
     omp_set_num_threads(old_limit);
   }
@@ -135,21 +132,20 @@ public:
 
     if (verbose) {
       std::cout << "OpenMP info:" << std::endl
-                << "  Original thread limit: " << omp_get_max_threads()
-                << std::endl
+                << "  Original thread limit: " << omp_get_max_threads() << std::endl
                 << "  Hardware concurrency: " << optimal << std::endl;
     }
 
     if (omp_threads_override != 0) {
       if (verbose) {
-        std::cout << "  Setting override number of threads: "
-                  << omp_threads_override << std::endl;
+        std::cout << "  Setting override number of threads: " << omp_threads_override
+                  << std::endl;
       }
       omp_set_num_threads(omp_threads_override);
     } else {
       if (verbose) {
-        std::cout << "  Setting original number of threads: "
-                  << omp_get_max_threads() << std::endl;
+        std::cout << "  Setting original number of threads: " << omp_get_max_threads()
+                  << std::endl;
       }
       omp_set_num_threads(omp_get_max_threads());
     }
@@ -161,8 +157,7 @@ public:
     adjoint_simulate(i_shot, verbose);
 
     if (verbose) {
-      std::cout << "  Resetting threads to: " << old_limit << std::endl
-                << std::endl;
+      std::cout << "  Resetting threads to: " << old_limit << std::endl << std::endl;
     }
     omp_set_num_threads(old_limit);
   }
@@ -218,16 +213,13 @@ public:
 
     // Verify the buffer shape
     if (!(_vp_buffer.shape == shape)) {
-      throw py::value_error(
-          "The input ndarray _vp does not have the right shape.");
+      throw py::value_error("The input ndarray _vp does not have the right shape.");
     };
     if (!(_vs_buffer.shape == shape)) {
-      throw py::value_error(
-          "The input ndarray _vs does not have the right shape.");
+      throw py::value_error("The input ndarray _vs does not have the right shape.");
     };
     if (!(_rho_buffer.shape == shape)) {
-      throw py::value_error(
-          "The input ndarray _rho does not have the right shape.");
+      throw py::value_error("The input ndarray _rho does not have the right shape.");
     };
 
     // Get the total size of the buffer
@@ -248,20 +240,16 @@ public:
   }
 
   py::tuple get_kernels() {
-    auto array_vp_kernel =
-        array_to_numpy(vp_kernel, std::vector<ssize_t>{nx, nz});
-    auto array_vs_kernel =
-        array_to_numpy(vs_kernel, std::vector<ssize_t>{nx, nz});
+    auto array_vp_kernel = array_to_numpy(vp_kernel, std::vector<ssize_t>{nx, nz});
+    auto array_vs_kernel = array_to_numpy(vs_kernel, std::vector<ssize_t>{nx, nz});
     auto array_rho_kernel =
         array_to_numpy(density_v_kernel, std::vector<ssize_t>{nx, nz});
     return py::make_tuple(array_vp_kernel, array_vs_kernel, array_rho_kernel);
   }
 
   py::tuple get_synthetic_data() {
-    auto array_rtf_ux =
-        array_to_numpy(rtf_ux, std::vector<ssize_t>{n_shots, nr, nt});
-    auto array_rtf_uz =
-        array_to_numpy(rtf_uz, std::vector<ssize_t>{n_shots, nr, nt});
+    auto array_rtf_ux = array_to_numpy(rtf_ux, std::vector<ssize_t>{n_shots, nr, nt});
+    auto array_rtf_uz = array_to_numpy(rtf_uz, std::vector<ssize_t>{n_shots, nr, nt});
     return py::make_tuple(array_rtf_ux, array_rtf_uz);
   }
 
@@ -273,25 +261,20 @@ public:
     return py::make_tuple(array_rtf_ux_true, array_rtf_uz_true);
   }
 
-  py::tuple get_receivers(bool in_units,
-                          bool include_absorbing_boundary_as_index) {
+  py::tuple get_receivers(bool in_units, bool include_absorbing_boundary_as_index) {
     // Create new arrays
-    py::array_t<real_simulation> x_receivers(
-        py::buffer_info(nullptr, sizeof(real_simulation),
-                        py::format_descriptor<real_simulation>::format(), 1,
-                        std::vector<ssize_t>{nr},
-                        std::vector<size_t>{sizeof(real_simulation)}));
-    py::array_t<real_simulation> z_receivers(
-        py::buffer_info(nullptr, sizeof(real_simulation),
-                        py::format_descriptor<real_simulation>::format(), 1,
-                        std::vector<ssize_t>{nr},
-                        std::vector<size_t>{sizeof(real_simulation)}));
+    py::array_t<real_simulation> x_receivers(py::buffer_info(
+        nullptr, sizeof(real_simulation),
+        py::format_descriptor<real_simulation>::format(), 1, std::vector<ssize_t>{nr},
+        std::vector<size_t>{sizeof(real_simulation)}));
+    py::array_t<real_simulation> z_receivers(py::buffer_info(
+        nullptr, sizeof(real_simulation),
+        py::format_descriptor<real_simulation>::format(), 1, std::vector<ssize_t>{nr},
+        std::vector<size_t>{sizeof(real_simulation)}));
 
-    copy_data_cast((real_simulation *)x_receivers.request().ptr, ix_receivers,
-                   nr);
+    copy_data_cast((real_simulation *)x_receivers.request().ptr, ix_receivers, nr);
 
-    copy_data_cast((real_simulation *)z_receivers.request().ptr, iz_receivers,
-                   nr);
+    copy_data_cast((real_simulation *)z_receivers.request().ptr, iz_receivers, nr);
 
     if (!include_absorbing_boundary_as_index || in_units) {
       for (int ir = 0; ir < nr; ir++) {
@@ -318,17 +301,14 @@ public:
 
     // Verify the buffer shape
     if (!(ux_buffer.shape == shape)) {
-      throw py::value_error(
-          "The input ndarray ux does not have the right shape.");
+      throw py::value_error("The input ndarray ux does not have the right shape.");
     };
     if (!(uz_buffer.shape == shape)) {
-      throw py::value_error(
-          "The input ndarray uz does not have the right shape.");
+      throw py::value_error("The input ndarray uz does not have the right shape.");
     };
 
     // Get the total size of the buffer
-    int buffer_size =
-        ux_buffer.shape[0] * ux_buffer.shape[1] * ux_buffer.shape[2];
+    int buffer_size = ux_buffer.shape[0] * ux_buffer.shape[1] * ux_buffer.shape[2];
 
     // Get pointer to the start of the (contiguous) buffer
     real_simulation *ptr_ux = (real_simulation *)ux_buffer.ptr;
@@ -350,17 +330,14 @@ public:
 
     // Verify the buffer shape
     if (!(ux_buffer.shape == shape)) {
-      throw py::value_error(
-          "The input ndarray ux does not have the right shape.");
+      throw py::value_error("The input ndarray ux does not have the right shape.");
     };
     if (!(uz_buffer.shape == shape)) {
-      throw py::value_error(
-          "The input ndarray ux does not have the right shape.");
+      throw py::value_error("The input ndarray ux does not have the right shape.");
     };
 
     // Get the total size of the buffer
-    int buffer_size =
-        ux_buffer.shape[0] * ux_buffer.shape[1] * ux_buffer.shape[2];
+    int buffer_size = ux_buffer.shape[0] * ux_buffer.shape[1] * ux_buffer.shape[2];
 
     // Get pointer to the start of the (contiguous) buffer
     real_simulation *ux_ptr = (real_simulation *)ux_buffer.ptr;
@@ -373,26 +350,49 @@ public:
 };
 
 PYBIND11_MODULE(__psvWave_cpp, m) {
-  py::class_<fdModelExtended>(m, "fdModel")
-      .def(py::init<const char *>(), R"mydelimiter(
-    The default constructor for fdModel, a multithreaded finite
-    difference solver for the elastic wave equation, built for FWI.
+  py::options options;
+  options.disable_function_signatures();
 
-    Parameters
-    ----------
-    pathToIni : str
-        String that contains the path to the .ini file describing the 
-        FWI problem.
+  py::class_<fdModelExtended>(m, "fdModel",
+                              R"mydelimiter(fdModel(configuration_file_path: str)
+      Class to simulate P-SV wave phyiscs and its adjoint state.
+
+      :param configuration_file_path: Path to the desired configuration.
 )mydelimiter")
-      .def("forward_simulate",
-           &fdModelExtended::forward_simulate_explicit_threads,
+      .def(py::init<const char *>())
+      .def("forward_simulate", &fdModelExtended::forward_simulate_explicit_threads,
            py::arg("i_shot"), py::arg("store_fields") = true,
            py::arg("verbose") = false, py::arg("output_wavefields") = false,
-           py::arg("omp_threads_override") = 0)
+           py::arg("omp_threads_override") = 0,
+           "forward_simulate(i_shot: int, store_fields: bool = True, verbose: bool = "
+           "False, output_wavefields: bool = False, omp_threads_override: int = 0)\n"
+           "\n"
+           "Run forward simulations for a given 'shot'.\n"
+           "\n"
+           ":param i_shot: Integer representing which shot will be simulated.\n"
+           ":type  i_shot: int\n"
+           ":param store_fields: Boolean controlling whether or not wavefields are "
+           "stored, defaults to `True`.\n"
+           ":type  store_fields: int\n"
+           //   ":param verbose: Boolean controlling the verbosity of the simulation.\n"
+           //   ":param output_wavefields: Boolean controlling whether or not wavefields
+           //   are " "written to disk.\n"
+           //   ":param omp_threads_override: Integer determining the amounts of threads
+           //   " "that will be used. Defaults to the environment variable if not
+           //   passed."
+           )
       .def_readonly("n_shots", &fdModelExtended::n_shots)
       .def_readonly("n_sources", &fdModelExtended::n_sources)
-      .def("get_model_vector", &fdModelExtended::get_model_vector)
-      .def("set_model_vector", &fdModelExtended::set_model_vector)
+      .def("get_model_vector", &fdModelExtended::get_model_vector,
+           "get_model_vector()\n")
+      .def("set_model_vector", &fdModelExtended::set_model_vector,
+           "set_model_vector(numpy.ndarray: m)\n"
+           "\n"
+           "Update the model (vp, vs, rho) in the class.\n"
+           "\n"
+           ":param m: vector of shape (free_parameters, 1).\n"
+           ":type m: numpy.ndarray\n"
+           "\n")
       .def("get_gradient_vector", &fdModelExtended::get_gradient_vector)
       .def("load_vector", &fdModelExtended::load_vector)
       .def("get_snapshots", &fdModelExtended::get_snapshots,
@@ -413,8 +413,7 @@ PYBIND11_MODULE(__psvWave_cpp, m) {
       .def("get_observed_data", &fdModelExtended::get_observed_data)
       .def("set_synthetic_data", &fdModelExtended::set_synthetic_data)
       .def("set_observed_data", &fdModelExtended::set_observed_data)
-      .def("get_receivers", &fdModelExtended::get_receivers,
-           py::arg("in_units") = true,
+      .def("get_receivers", &fdModelExtended::get_receivers, py::arg("in_units") = true,
            py::arg("include_absorbing_boundary_as_index") = true)
       .def("calculate_l2_misfit", &fdModelExtended::calculate_l2_misfit)
       .def("calculate_l2_adjoint_sources",
@@ -422,12 +421,10 @@ PYBIND11_MODULE(__psvWave_cpp, m) {
       .def_readonly("n_shots", &fdModelExtended::n_shots)
       .def_readonly("misfit", &fdModelExtended::misfit)
       .def("reset_kernels", &fdModelExtended::reset_kernels)
-      .def("adjoint_simulate",
-           &fdModelExtended::adjoint_simulate_explicit_threads,
+      .def("adjoint_simulate", &fdModelExtended::adjoint_simulate_explicit_threads,
            py::arg("i_shot"), py::arg("verbose") = false,
            py::arg("omp_threads_override") = 0)
-      .def("map_kernels_to_velocity",
-           &fdModelExtended::map_kernels_to_velocity);
+      .def("map_kernels_to_velocity", &fdModelExtended::map_kernels_to_velocity);
 
   ;
 }
