@@ -1,3 +1,5 @@
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
 #include <pybind11/eigen.h>
 #include <pybind11/pybind11.h>
 #include <stddef.h>
@@ -428,3 +430,5 @@ PYBIND11_MODULE(__psvWave_cpp, m) {
 
   ;
 }
+
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
