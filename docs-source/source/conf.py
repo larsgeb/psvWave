@@ -46,11 +46,25 @@ extensions = [
     "sphinx.ext.githubpages",
     "sphinx.ext.mathjax",
     "breathe",
+    "exhale",
 ]
 
 breathe_domain_by_extension = {"h": "cpp"}
 
 breathe_projects = {"psvWave": "../../docs-source/xml"}
+
+exhale_args = {
+    # These arguments are required
+    "containmentFolder": "./api",
+    "rootFileName": "index.rst",
+    "rootFileTitle": "Library API",
+    "doxygenStripFromPath": "..",
+    # Suggested optional arguments
+    "createTreeView": True,
+    # TIP: if using the sphinx-bootstrap-theme, you need
+    # "treeViewIsBootstrap": True,
+}
+
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

@@ -4,8 +4,8 @@ Documentation of psvWave
 
 
 .. toctree::
+   :maxdepth: 1
    :hidden:
-   :maxdepth: 3
    :caption: Contents:
 
    typical-workflow.rst

@@ -2,8 +2,9 @@ C++ API reference
 =================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Overview of submodules
+   :hidden:
 
    fdmodel/index
    miscellaneous
