@@ -5,13 +5,7 @@ The fdModel class
 
 .. doxygenclass:: fdModel
     :project: psvWave
-    :members: fdModel, parse_configuration
+    :members: 
     :undoc-members:
 
-.. toctree::
-   :maxdepth: 2
-   :hidden:
 
-   configuration
-   methods
-   attributes

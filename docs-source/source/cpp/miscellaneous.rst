@@ -1,8 +1,9 @@
-Miscellaneous methods
-=====================
+Miscellaneous methods and definitions
+=====================================
 
 .. role:: raw-html(raw)
     :format: html
+
 
 Making contiguous arrays
 ************************
