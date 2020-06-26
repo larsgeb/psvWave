@@ -357,9 +357,9 @@ PYBIND11_MODULE(__psvWave_cpp, m) {
 
   py::class_<fdModelExtended>(m, "fdModel",
                               R"mydelimiter(fdModel(configuration_file_path: str)
-      Class to simulate P-SV wave phyiscs and its adjoint state.
+    Class to simulate P-SV wave phyiscs and its adjoint state.
 
-      :param configuration_file_path: Path to the desired configuration.
+    :param configuration_file_path: Path to the desired configuration.
 )mydelimiter")
       .def(py::init<const char *>())
       .def("forward_simulate", &fdModelExtended::forward_simulate_explicit_threads,
@@ -376,36 +376,82 @@ PYBIND11_MODULE(__psvWave_cpp, m) {
            ":param store_fields: Boolean controlling whether or not wavefields are "
            "stored, defaults to `True`.\n"
            ":type  store_fields: int\n"
-           //   ":param verbose: Boolean controlling the verbosity of the simulation.\n"
-           //   ":param output_wavefields: Boolean controlling whether or not wavefields
-           //   are " "written to disk.\n"
-           //   ":param omp_threads_override: Integer determining the amounts of threads
-           //   " "that will be used. Defaults to the environment variable if not
-           //   passed."
-           )
-      .def_readonly("n_shots", &fdModelExtended::n_shots)
-      .def_readonly("n_sources", &fdModelExtended::n_sources)
+           ":param verbose: Boolean controlling the verbosity of the simulation.\n"
+           ":type  verbose: bool\n"
+           ":param output_wavefields: Boolean controlling whether or not wavefields "
+           "are written to disk.\n"
+           ":type  output_wavefields: boolean\n"
+           ":param omp_threads_override: Integer determining the amounts of threads "
+           "that will be used. Defaults to the environment variable if not passed / "
+           "0.\n"
+           ":type  omp_threads_override: int\n")
+      .def_readonly(
+          "n_sources", &fdModelExtended::n_sources,
+          "Number of sources across shots. Does not indicate how many per shot.")
       .def("get_model_vector", &fdModelExtended::get_model_vector,
-           "get_model_vector()\n")
+           "get_model_vector() -> numpy.ndarray\n"
+           "\n"
+           "Get the current model in the model as a numpy vector, flattened.\n"
+           "\n"
+           ":returns: Current model vector containing P-wave speed, S-wave speed, and "
+           "density.\n"
+           ":rtype: numpy.ndarray")
       .def("set_model_vector", &fdModelExtended::set_model_vector,
-           "set_model_vector(numpy.ndarray: m)\n"
+           "set_model_vector(m: numpy.ndarray)\n"
            "\n"
            "Update the model (vp, vs, rho) in the class.\n"
            "\n"
            ":param m: vector of shape (free_parameters, 1).\n"
            ":type m: numpy.ndarray\n"
            "\n")
-      .def("get_gradient_vector", &fdModelExtended::get_gradient_vector)
-      .def("load_vector", &fdModelExtended::load_vector)
+      .def("get_gradient_vector", &fdModelExtended::get_gradient_vector,
+           "get_gradient_vector() -> numpy.ndarray\n"
+           "\n"
+           "Returns the computed gradient vector. Should be retreived only after all "
+           "the following functions are run:\n"
+           "\n"
+           "1. :meth:`~psvWave.fdModel.set_model_vector`, to set a new model for which "
+           "   to calculate the gradient.\n"
+           "2. For each shot, :meth:`~psvWave.fdModel.forward_simulate`, to simulate "
+           "   the forward wavefields.\n"
+           "3. :meth:`~psvWave.fdModel.calculate_l2_misfit` to calculate the L2 misfit "
+           "   of the synthetic waveforms w.r.t. the data.\n"
+           "4. :meth:`~psvWave.fdModel.calculate_l2_adjoint_sources` to calculate the "
+           "   adjoint sources corresponding to the current model.\n"
+           "5. :meth:`~psvWave.fdModel.calculate_l2_adjoint_sources` to calculate the "
+           "   adjoint sources corresponding to the current model.\n"
+           "6. :meth:`~psvWave.fdModel.adjoint_simulate` to simulate the adjoint "
+           "   (backward) wavefield.\n"
+           "7. :meth:`~psvWave.fdModel.reset_kernels` to empty the current kernels.\n"
+           "8. For each shot :meth:`~psvWave.fdModel.adjoint_simulate` to simulate the "
+           "   adjoint (backward) wavefield exactly once. Simulating one of the shots "
+           "   twice will result in incorrect kernels.\n"
+           "9. :meth:`~psvWave.fdModel.map_kernels_to_velocity` to map the "
+           "   sensitivities in Lamé's parameters (lambda, mu, rho) to velocity (vp, "
+           "   vs, rho).\n"
+           "\n"
+           ":returns: Current gradient vector.\n"
+           ":rtype: numpy.ndarray")
+      .def("load_vector", &fdModelExtended::load_vector,
+           "load_vector(relative_path: str, verbose: bool) -> numpy.ndarray\n"
+           "\n"
+           "Loads a vector of shape (free_parameters, 1) from a text file. Read in "
+           "precision `real_simulation`.\n")
       .def("get_snapshots", &fdModelExtended::get_snapshots,
-           py::return_value_policy::move)
-      .def_readonly("dt", &fdModelExtended::dt)
-      .def_readonly("dz", &fdModelExtended::dz)
-      .def_readonly("dx", &fdModelExtended::dx)
-      .def_readonly("time_step", &fdModelExtended::dt)
-      .def_readonly("free_parameters", &fdModelExtended::free_parameters)
-      .def_readonly("snapshot_interval", &fdModelExtended::snapshot_interval)
-      .def_readonly("snapshots", &fdModelExtended::snapshots)
+           py::return_value_policy::move,
+           "get_snapshots() -> Tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray, "
+           "numpy.ndarray, numpy.ndarray]\n"
+           "\n"
+           "Get snapshots of all the dynamical fields generated across all the shots.")
+      .def_readonly("dt", &fdModelExtended::dt, "Time discretization")
+      .def_readonly("dz", &fdModelExtended::dz, "Vertical discretization")
+      .def_readonly("dx", &fdModelExtended::dx, "Horizontal discretization")
+      .def_readonly("free_parameters", &fdModelExtended::free_parameters,
+                    "Total free parameters in the model, vp, vs, rho combined.")
+      .def_readonly("snapshot_interval", &fdModelExtended::snapshot_interval,
+                    "The interval of timesteps between snapshots.")
+      .def_readonly("snapshots", &fdModelExtended::snapshots,
+                    "The total amount of snapshots per shot.")
       .def("get_extent", &fdModelExtended::get_extent)
       .def("get_coordinates", &fdModelExtended::get_coordinates)
       .def("get_parameter_fields", &fdModelExtended::get_parameter_fields)
@@ -413,20 +459,72 @@ PYBIND11_MODULE(__psvWave_cpp, m) {
       .def("set_parameter_fields", &fdModelExtended::set_parameter_fields)
       .def("get_synthetic_data", &fdModelExtended::get_synthetic_data)
       .def("get_observed_data", &fdModelExtended::get_observed_data)
+      .def_readonly("n_shots", &fdModelExtended::n_shots, "Number of shots")
       .def("set_synthetic_data", &fdModelExtended::set_synthetic_data)
       .def("set_observed_data", &fdModelExtended::set_observed_data)
       .def("get_receivers", &fdModelExtended::get_receivers, py::arg("in_units") = true,
-           py::arg("include_absorbing_boundary_as_index") = true)
-      .def("calculate_l2_misfit", &fdModelExtended::calculate_l2_misfit)
+           py::arg("include_absorbing_boundary_as_index") = true,
+           "get_receivers(in_units: bool, include_absorbing_boundary_as_index: bool) "
+           "-> Tuple[numpy.ndarray, numpy,ndarray]\n"
+           "\n"
+           "Get the receiver array coordinates either in meters or grid indices. \n"
+           "\n"
+           ":param in_units: Boolean controlling if the returned coordinates are "
+           "physical distance from origin or grid indices.\n"
+           ":type  in_units: bool\n"
+           ":param include_absorbing_boundary_as_index: Boolean controlling whether or "
+           "not to place the origin at the edge of the absording boundary or within "
+           "it.\n"
+           ":type  include_absorbing_boundary_as_index: bool\n"
+           "\n"
+           ":returns: A tuple of 2 numpy.ndarray's for horizontal and vertical "
+           "coordinate, each of shape (n_receivers, 1). \n"
+           ":rtype: Tuple[numpy.ndarray, numpy,ndarray]")
+      .def("calculate_l2_misfit", &fdModelExtended::calculate_l2_misfit,
+           "calculate_l2_misfit()\n"
+           "\n"
+           "Calculate L2 misfit for simulated waveforms w.r.t. observed data.")
       .def("calculate_l2_adjoint_sources",
-           &fdModelExtended::calculate_l2_adjoint_sources)
-      .def_readonly("n_shots", &fdModelExtended::n_shots)
-      .def_readonly("misfit", &fdModelExtended::misfit)
-      .def("reset_kernels", &fdModelExtended::reset_kernels)
+           &fdModelExtended::calculate_l2_adjoint_sources,
+           "calculate_l2_adjoint_sources()\n"
+           "\n"
+           "Calculate the adjoint sources corresponding to the L2 misfit w.r.t. the "
+           "observed data.\n")
+      .def_readonly(
+          "misfit", &fdModelExtended::misfit,
+          "Current misfit in the model.\n"
+          "\n"
+          "This value is updated after :meth:`~psvWave.fdModel.calculate_l2_misfit` "
+          "is run.")
+      .def("reset_kernels", &fdModelExtended::reset_kernels,
+           "reset_kernels()\n"
+           "\n"
+           "Reset kernel accumulators to zero. Important for adjoint simulations, as "
+           "they simply keep accumulating wavefield correlations across shots and "
+           "iterations otherwise. Making this manual allows for flexibility (e.g. "
+           "different misfit per shot).\n")
       .def("adjoint_simulate", &fdModelExtended::adjoint_simulate_explicit_threads,
            py::arg("i_shot"), py::arg("verbose") = false,
-           py::arg("omp_threads_override") = 0)
-      .def("map_kernels_to_velocity", &fdModelExtended::map_kernels_to_velocity);
+           py::arg("omp_threads_override") = 0,
+           "adjoint_simulate(i_shot: int, verbose: bool, omp_threads_override: int)\n"
+           "\n"
+           "Adjoint simulate the wavefield for a given shot. This additionally "
+           "correlates the adjoint wavefields for this shot with those stored in the "
+           "snapshots to calculate the sensitivity kernel in Lamé's parameters.\n"
+           "\n"
+           ":param i_shot: Integer representing which shot will be simulated.\n"
+           ":type  i_shot: int\n"
+           ":param verbose: Boolean controlling the verbosity of the simulation.\n"
+           ":type  verbose: bool\n"
+           ":param omp_threads_override: Integer determining the amounts of threads "
+           "that will be used. Defaults to the environment variable if not passed / "
+           "0.\n"
+           ":type  omp_threads_override: int\n")
+      .def("map_kernels_to_velocity", &fdModelExtended::map_kernels_to_velocity,
+           "map_kernels_to_velocity()\n"
+           "\n"
+           "Transform sensitivity kernels in Lamé parametrization (lambda, mu, rho) to "
+           "velocity parametrization (vp, vs, rho).");
 
   ;
 }
