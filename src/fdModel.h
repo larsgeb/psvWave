@@ -346,8 +346,7 @@ public:
   int nx_free_parameters;
   int nz_free_parameters;
 
-  int basis_gridpoints_x =
-      1; // How many gridpoints there are in a basis function
+  int basis_gridpoints_x = 1; // How many gridpoints there are in a basis function
   int basis_gridpoints_z = 1;
   int free_parameters;
 
@@ -477,9 +476,8 @@ void parse_string_to_nested_int_vector(
  * @param length Size of both signal1 and signal2.
  * @param max_delay Maximum delay for which to compute the cross correlation.
  */
-void cross_correlate(const real_simulation *signal1,
-                     const real_simulation *signal2, real_simulation *r,
-                     int length, int max_delay = 1000);
+void cross_correlate(const real_simulation *signal1, const real_simulation *signal2,
+                     real_simulation *r, int length, int max_delay = 1000);
 
 std::string zero_pad_number(int num, int pad);
 

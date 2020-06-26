@@ -29,8 +29,7 @@ void allocate_array(T ****&pointer, int dim1, int dim2, int dim3, int dim4) {
   }
 }
 
-template <class T>
-void allocate_array(T ***&pointer, int dim1, int dim2, int dim3) {
+template <class T> void allocate_array(T ***&pointer, int dim1, int dim2, int dim3) {
 
   pointer = new T **[dim1];
   pointer[0] = new T *[dim1 * dim2];
@@ -60,9 +59,7 @@ template <class T> void allocate_array(T **&pointer, int dim1, int dim2) {
   }
 }
 
-template <class T> void allocate_array(T *&pointer, int dim1) {
-  pointer = new T[dim1];
-}
+template <class T> void allocate_array(T *&pointer, int dim1) { pointer = new T[dim1]; }
 template <class T> void deallocate_array(T *&pointer) { delete[] pointer; }
 template <class T> void deallocate_array(T **&pointer) {
   delete[] pointer[0];

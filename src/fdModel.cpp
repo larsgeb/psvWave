@@ -1,8 +1,8 @@
 //
 // Created by Lars Gebraad on 25.01.19.
 //
-#include "INIReader.h"
 #include "fdModel.h"
+#include "INIReader.h"
 #include <cmath>
 #include <fstream>
 #include <iomanip>
@@ -74,8 +74,7 @@ fdModel::fdModel(const char *configuration_file_relative_path) {
 
   // Assign source time function and time axis based on set-up
   for (int i_shot = 0; i_shot < n_shots; ++i_shot) {
-    for (int i_source = 0;
-         i_source < which_source_to_fire_in_which_shot[i_shot].size();
+    for (int i_source = 0; i_source < which_source_to_fire_in_which_shot[i_shot].size();
          ++i_source) {
       for (unsigned int it = 0; it < nt; ++it) {
         t[it] = it * dt;
@@ -92,14 +91,14 @@ fdModel::fdModel(const char *configuration_file_relative_path) {
   // Assign moment tensors based on rotation.
   for (int i_source = 0; i_source < n_sources;
        ++i_source) { // todo allow for more complex moment tensors
-    moment[i_source][0][0] = static_cast<real_simulation>(
-        cos(moment_angles[i_source] * PI / 180.0) * 1e15);
-    moment[i_source][0][1] = static_cast<real_simulation>(
-        -sin(moment_angles[i_source] * PI / 180.0) * 1e15);
-    moment[i_source][1][0] = static_cast<real_simulation>(
-        -sin(moment_angles[i_source] * PI / 180.0) * 1e15);
-    moment[i_source][1][1] = static_cast<real_simulation>(
-        -cos(moment_angles[i_source] * PI / 180.0) * 1e15);
+    moment[i_source][0][0] =
+        static_cast<real_simulation>(cos(moment_angles[i_source] * PI / 180.0) * 1e15);
+    moment[i_source][0][1] =
+        static_cast<real_simulation>(-sin(moment_angles[i_source] * PI / 180.0) * 1e15);
+    moment[i_source][1][0] =
+        static_cast<real_simulation>(-sin(moment_angles[i_source] * PI / 180.0) * 1e15);
+    moment[i_source][1][1] =
+        static_cast<real_simulation>(-cos(moment_angles[i_source] * PI / 180.0) * 1e15);
   }
 
 // Set all fields to background value so as to at least initialize.
@@ -117,8 +116,7 @@ fdModel::fdModel(const char *configuration_file_relative_path) {
 
 // Initialize Gaussian taper by ...
 #pragma omp parallel for collapse(2)
-  for (int ix = 0; ix < nx;
-       ++ix) { // ... starting with zero taper in every point, ...
+  for (int ix = 0; ix < nx; ++ix) { // ... starting with zero taper in every point, ...
     for (int iz = 0; iz < nz; ++iz) {
       taper[ix][iz] = 0.0;
     }
@@ -128,9 +126,8 @@ fdModel::fdModel(const char *configuration_file_relative_path) {
                // adding one to every point ...
 #pragma omp parallel for collapse(2)
     for (int ix = id; ix < nx - id; ++ix) {
-      for (int iz = id; iz < nz - id;
-           ++iz) { // (hardcoded free surface boundaries by not moving iz
-                   // < nz)
+      for (int iz = id; iz < nz - id; ++iz) { // (hardcoded free surface boundaries by
+                                              // not moving iz < nz)
         taper[ix][iz]++;
       }
     }
@@ -147,8 +144,7 @@ fdModel::fdModel(const char *configuration_file_relative_path) {
 
   // Check if the amount of snapshots satisfies the other parameters.
   if (floor(double(nt) / snapshot_interval) != snapshots) {
-    throw std::length_error(
-        "Snapshot interval and size of accumulator don't match!");
+    throw std::length_error("Snapshot interval and size of accumulator don't match!");
   }
 }
 
@@ -186,10 +182,9 @@ fdModel::~fdModel() {
   deallocate_array(accu_txz);
 }
 
-void fdModel::parse_configuration(
-    const char *configuration_file_relative_path) {
-  std::cout << "Loading configuration file: '"
-            << configuration_file_relative_path << "'." << std::endl;
+void fdModel::parse_configuration(const char *configuration_file_relative_path) {
+  std::cout << "Loading configuration file: '" << configuration_file_relative_path
+            << "'." << std::endl;
 
   INIReader reader(configuration_file_relative_path);
   if (reader.ParseError() < 0) {
@@ -232,8 +227,7 @@ void fdModel::parse_configuration(
   // Sources
   peak_frequency = reader.GetReal("sources", "peak_frequency", 50.0);
   t0 = reader.GetReal("sources", "source_timeshift", 0.005);
-  delay_cycles_per_shot =
-      reader.GetReal("sources", "delay_cycles_per_shot", 12);
+  delay_cycles_per_shot = reader.GetReal("sources", "delay_cycles_per_shot", 12);
   n_sources = reader.GetInteger("sources", "n_sources", 7);
   n_shots = reader.GetInteger("sources", "n_shots", 1);
   // Parse source setup.
@@ -249,11 +243,10 @@ void fdModel::parse_configuration(
   parse_string_to_vector(
       reader.Get("sources", "iz_sources", "{10, 10, 10, 10, 10, 10, 10};"),
       &iz_sources_vector);
-  parse_string_to_vector(reader.Get("sources", "moment_angles",
-                                    "{90, 81, 41, 300, 147, 252, 327};"),
-                         &moment_angles_vector);
-  if (ix_sources_vector.size() != n_sources or
-      iz_sources_vector.size() != n_sources or
+  parse_string_to_vector(
+      reader.Get("sources", "moment_angles", "{90, 81, 41, 300, 147, 252, 327};"),
+      &moment_angles_vector);
+  if (ix_sources_vector.size() != n_sources or iz_sources_vector.size() != n_sources or
       moment_angles_vector.size() != n_sources) {
     std::cout << "Dimension mismatch between n_sources and sources.ix_sources, "
                  "sources.iz_sources or sources.moment_angles"
@@ -266,10 +259,10 @@ void fdModel::parse_configuration(
     moment_angles[i_source] = moment_angles_vector[i_source];
   }
   // Parse source stacking
-  parse_string_to_nested_int_vector(
-      reader.Get("sources", "which_source_to_fire_in_which_shot",
-                 "{{0, 1, 2, 3, 4, 5, 6}};"),
-      &which_source_to_fire_in_which_shot);
+  parse_string_to_nested_int_vector(reader.Get("sources",
+                                               "which_source_to_fire_in_which_shot",
+                                               "{{0, 1, 2, 3, 4, 5, 6}};"),
+                                    &which_source_to_fire_in_which_shot);
   if (which_source_to_fire_in_which_shot.size() != n_shots) {
     std::cout << "Mismatch between n_shots and "
                  "sources.which_source_to_fire_in_which_shot"
@@ -370,20 +363,16 @@ void fdModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
     for (int i_receiver = 0; i_receiver < nr; ++i_receiver) {
       if (it == 0) {
         rtf_ux[i_shot][i_receiver][it] =
-            dt * vx[ix_receivers[i_receiver]][iz_receivers[i_receiver]] /
-            (dx * dz);
+            dt * vx[ix_receivers[i_receiver]][iz_receivers[i_receiver]] / (dx * dz);
         rtf_uz[i_shot][i_receiver][it] =
-            dt * vz[ix_receivers[i_receiver]][iz_receivers[i_receiver]] /
-            (dx * dz);
+            dt * vz[ix_receivers[i_receiver]][iz_receivers[i_receiver]] / (dx * dz);
       } else {
         rtf_ux[i_shot][i_receiver][it] =
             rtf_ux[i_shot][i_receiver][it - 1] +
-            dt * vx[ix_receivers[i_receiver]][iz_receivers[i_receiver]] /
-                (dx * dz);
+            dt * vx[ix_receivers[i_receiver]][iz_receivers[i_receiver]] / (dx * dz);
         rtf_uz[i_shot][i_receiver][it] =
             rtf_uz[i_shot][i_receiver][it - 1] +
-            dt * vz[ix_receivers[i_receiver]][iz_receivers[i_receiver]] /
-                (dx * dz);
+            dt * vz[ix_receivers[i_receiver]][iz_receivers[i_receiver]] / (dx * dz);
       }
     }
 
@@ -411,39 +400,36 @@ void fdModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
                                      (c1 * (vz[ix][iz] - vz[ix][iz - 1]) +
                                       c2 * (vz[ix][iz - 2] - vz[ix][iz + 1])) /
                                      dz));
-        txz[ix][iz] =
-            taper[ix][iz] *
-            (txz[ix][iz] + dt * mu[ix][iz] *
-                               ((c1 * (vx[ix][iz + 1] - vx[ix][iz]) +
-                                 c2 * (vx[ix][iz - 1] - vx[ix][iz + 2])) /
-                                    dz +
-                                (c1 * (vz[ix][iz] - vz[ix - 1][iz]) +
-                                 c2 * (vz[ix - 2][iz] - vz[ix + 1][iz])) /
-                                    dx));
+        txz[ix][iz] = taper[ix][iz] *
+                      (txz[ix][iz] + dt * mu[ix][iz] *
+                                         ((c1 * (vx[ix][iz + 1] - vx[ix][iz]) +
+                                           c2 * (vx[ix][iz - 1] - vx[ix][iz + 2])) /
+                                              dz +
+                                          (c1 * (vz[ix][iz] - vz[ix - 1][iz]) +
+                                           c2 * (vz[ix - 2][iz] - vz[ix + 1][iz])) /
+                                              dx));
       }
     }
 // ... and time integrate dynamic fields for velocity.
 #pragma omp parallel for collapse(2)
     for (int ix = 2; ix < nx - 2; ++ix) {
       for (int iz = 2; iz < nz - 2; ++iz) {
-        vx[ix][iz] =
-            taper[ix][iz] *
-            (vx[ix][iz] + b_vx[ix][iz] * dt *
-                              ((c1 * (txx[ix][iz] - txx[ix - 1][iz]) +
-                                c2 * (txx[ix - 2][iz] - txx[ix + 1][iz])) /
-                                   dx +
-                               (c1 * (txz[ix][iz] - txz[ix][iz - 1]) +
-                                c2 * (txz[ix][iz - 2] - txz[ix][iz + 1])) /
-                                   dz));
-        vz[ix][iz] =
-            taper[ix][iz] *
-            (vz[ix][iz] + b_vz[ix][iz] * dt *
-                              ((c1 * (txz[ix + 1][iz] - txz[ix][iz]) +
-                                c2 * (txz[ix - 1][iz] - txz[ix + 2][iz])) /
-                                   dx +
-                               (c1 * (tzz[ix][iz + 1] - tzz[ix][iz]) +
-                                c2 * (tzz[ix][iz - 1] - tzz[ix][iz + 2])) /
-                                   dz));
+        vx[ix][iz] = taper[ix][iz] *
+                     (vx[ix][iz] + b_vx[ix][iz] * dt *
+                                       ((c1 * (txx[ix][iz] - txx[ix - 1][iz]) +
+                                         c2 * (txx[ix - 2][iz] - txx[ix + 1][iz])) /
+                                            dx +
+                                        (c1 * (txz[ix][iz] - txz[ix][iz - 1]) +
+                                         c2 * (txz[ix][iz - 2] - txz[ix][iz + 1])) /
+                                            dz));
+        vz[ix][iz] = taper[ix][iz] *
+                     (vz[ix][iz] + b_vz[ix][iz] * dt *
+                                       ((c1 * (txz[ix + 1][iz] - txz[ix][iz]) +
+                                         c2 * (txz[ix - 1][iz] - txz[ix + 2][iz])) /
+                                            dx +
+                                        (c1 * (tzz[ix][iz + 1] - tzz[ix][iz]) +
+                                         c2 * (tzz[ix][iz - 1] - tzz[ix][iz + 2])) /
+                                            dz));
       }
     }
 
@@ -454,21 +440,17 @@ void fdModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
       // | (x,x)-couple
       vx[ix_sources[i_source] - 1][iz_sources[i_source]] -=
           moment[i_source][0][0] * stf[i_source][it] * dt *
-          b_vz[ix_sources[i_source] - 1][iz_sources[i_source]] /
-          (dx * dx * dx * dx);
+          b_vz[ix_sources[i_source] - 1][iz_sources[i_source]] / (dx * dx * dx * dx);
       vx[ix_sources[i_source]][iz_sources[i_source]] +=
           moment[i_source][0][0] * stf[i_source][it] * dt *
-          b_vz[ix_sources[i_source]][iz_sources[i_source]] /
-          (dx * dx * dx * dx);
+          b_vz[ix_sources[i_source]][iz_sources[i_source]] / (dx * dx * dx * dx);
       // | (z,z)-couple
       vz[ix_sources[i_source]][iz_sources[i_source] - 1] -=
           moment[i_source][1][1] * stf[i_source][it] * dt *
-          b_vz[ix_sources[i_source]][iz_sources[i_source] - 1] /
-          (dz * dz * dz * dz);
+          b_vz[ix_sources[i_source]][iz_sources[i_source] - 1] / (dz * dz * dz * dz);
       vz[ix_sources[i_source]][iz_sources[i_source]] +=
           moment[i_source][1][1] * stf[i_source][it] * dt *
-          b_vz[ix_sources[i_source]][iz_sources[i_source]] /
-          (dz * dz * dz * dz);
+          b_vz[ix_sources[i_source]][iz_sources[i_source]] / (dz * dz * dz * dz);
       // | (x,z)-couple
       vx[ix_sources[i_source] - 1][iz_sources[i_source] + 1] +=
           0.25 * moment[i_source][0][1] * stf[i_source][it] * dt *
@@ -476,16 +458,14 @@ void fdModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
           (dx * dx * dx * dx);
       vx[ix_sources[i_source]][iz_sources[i_source] + 1] +=
           0.25 * moment[i_source][0][1] * stf[i_source][it] * dt *
-          b_vz[ix_sources[i_source]][iz_sources[i_source] + 1] /
-          (dx * dx * dx * dx);
+          b_vz[ix_sources[i_source]][iz_sources[i_source] + 1] / (dx * dx * dx * dx);
       vx[ix_sources[i_source] - 1][iz_sources[i_source] - 1] -=
           0.25 * moment[i_source][0][1] * stf[i_source][it] * dt *
           b_vz[ix_sources[i_source] - 1][iz_sources[i_source] - 1] /
           (dx * dx * dx * dx);
       vx[ix_sources[i_source]][iz_sources[i_source] - 1] -=
           0.25 * moment[i_source][0][1] * stf[i_source][it] * dt *
-          b_vz[ix_sources[i_source]][iz_sources[i_source] - 1] /
-          (dx * dx * dx * dx);
+          b_vz[ix_sources[i_source]][iz_sources[i_source] - 1] / (dx * dx * dx * dx);
       // | (z,x)-couple
       vz[ix_sources[i_source] + 1][iz_sources[i_source] - 1] +=
           0.25 * moment[i_source][1][0] * stf[i_source][it] * dt *
@@ -493,24 +473,20 @@ void fdModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
           (dz * dz * dz * dz);
       vz[ix_sources[i_source] + 1][iz_sources[i_source]] +=
           0.25 * moment[i_source][1][0] * stf[i_source][it] * dt *
-          b_vz[ix_sources[i_source] + 1][iz_sources[i_source]] /
-          (dz * dz * dz * dz);
+          b_vz[ix_sources[i_source] + 1][iz_sources[i_source]] / (dz * dz * dz * dz);
       vz[ix_sources[i_source] - 1][iz_sources[i_source] - 1] -=
           0.25 * moment[i_source][1][0] * stf[i_source][it] * dt *
           b_vz[ix_sources[i_source] - 1][iz_sources[i_source] - 1] /
           (dz * dz * dz * dz);
       vz[ix_sources[i_source] - 1][iz_sources[i_source]] -=
           0.25 * moment[i_source][1][0] * stf[i_source][it] * dt *
-          b_vz[ix_sources[i_source] - 1][iz_sources[i_source]] /
-          (dz * dz * dz * dz);
+          b_vz[ix_sources[i_source] - 1][iz_sources[i_source]] / (dz * dz * dz * dz);
     }
 
     if (it % 10 == 0 and output_wavefields) {
       // Write wavefields
-      std::string filename_vp =
-          "snapshots/vx" + zero_pad_number(it, 5) + ".txt";
-      std::string filename_vs =
-          "snapshots/vz" + zero_pad_number(it, 5) + ".txt";
+      std::string filename_vp = "snapshots/vx" + zero_pad_number(it, 5) + ".txt";
+      std::string filename_vs = "snapshots/vz" + zero_pad_number(it, 5) + ".txt";
 
       std::ofstream file_vx(filename_vp);
       std::ofstream file_vz(filename_vs);
@@ -572,12 +548,10 @@ void fdModel::adjoint_simulate(int i_shot, bool verbose) {
           lambda_kernel[ix][iz] +=
               snapshot_interval * dt *
               (((accu_txx[i_shot][it / snapshot_interval][ix][iz] -
-                 (accu_tzz[i_shot][it / snapshot_interval][ix][iz] *
-                  la[ix][iz]) /
+                 (accu_tzz[i_shot][it / snapshot_interval][ix][iz] * la[ix][iz]) /
                      lm[ix][iz]) +
                 (accu_tzz[i_shot][it / snapshot_interval][ix][iz] -
-                 (accu_txx[i_shot][it / snapshot_interval][ix][iz] *
-                  la[ix][iz]) /
+                 (accu_txx[i_shot][it / snapshot_interval][ix][iz] * la[ix][iz]) /
                      lm[ix][iz])) *
                ((txx[ix][iz] - (tzz[ix][iz] * la[ix][iz]) / lm[ix][iz]) +
                 (tzz[ix][iz] - (txx[ix][iz] * la[ix][iz]) / lm[ix][iz]))) /
@@ -588,18 +562,15 @@ void fdModel::adjoint_simulate(int i_shot, bool verbose) {
               snapshot_interval * dt * 2 *
               ((((txx[ix][iz] - (tzz[ix][iz] * la[ix][iz]) / lm[ix][iz]) *
                  (accu_txx[i_shot][it / snapshot_interval][ix][iz] -
-                  (accu_tzz[i_shot][it / snapshot_interval][ix][iz] *
-                   la[ix][iz]) /
+                  (accu_tzz[i_shot][it / snapshot_interval][ix][iz] * la[ix][iz]) /
                       lm[ix][iz])) +
                 ((tzz[ix][iz] - (txx[ix][iz] * la[ix][iz]) / lm[ix][iz]) *
                  (accu_tzz[i_shot][it / snapshot_interval][ix][iz] -
-                  (accu_txx[i_shot][it / snapshot_interval][ix][iz] *
-                   la[ix][iz]) /
+                  (accu_txx[i_shot][it / snapshot_interval][ix][iz] * la[ix][iz]) /
                       lm[ix][iz]))) /
                    ((lm[ix][iz] - ((la[ix][iz] * la[ix][iz]) / (lm[ix][iz]))) *
                     (lm[ix][iz] - ((la[ix][iz] * la[ix][iz]) / (lm[ix][iz])))) +
-               2 * (txz[ix][iz] *
-                    accu_txz[i_shot][it / snapshot_interval][ix][iz] /
+               2 * (txz[ix][iz] * accu_txz[i_shot][it / snapshot_interval][ix][iz] /
                     (4 * mu[ix][iz] * mu[ix][iz])));
         }
       }
@@ -629,50 +600,47 @@ void fdModel::adjoint_simulate(int i_shot, bool verbose) {
                                      (c1 * (vz[ix][iz] - vz[ix][iz - 1]) +
                                       c2 * (vz[ix][iz - 2] - vz[ix][iz + 1])) /
                                      dz));
-        txz[ix][iz] =
-            taper[ix][iz] *
-            (txz[ix][iz] - dt * mu[ix][iz] *
-                               ((c1 * (vx[ix][iz + 1] - vx[ix][iz]) +
-                                 c2 * (vx[ix][iz - 1] - vx[ix][iz + 2])) /
-                                    dz +
-                                (c1 * (vz[ix][iz] - vz[ix - 1][iz]) +
-                                 c2 * (vz[ix - 2][iz] - vz[ix + 1][iz])) /
-                                    dx));
+        txz[ix][iz] = taper[ix][iz] *
+                      (txz[ix][iz] - dt * mu[ix][iz] *
+                                         ((c1 * (vx[ix][iz + 1] - vx[ix][iz]) +
+                                           c2 * (vx[ix][iz - 1] - vx[ix][iz + 2])) /
+                                              dz +
+                                          (c1 * (vz[ix][iz] - vz[ix - 1][iz]) +
+                                           c2 * (vz[ix - 2][iz] - vz[ix + 1][iz])) /
+                                              dx));
       }
     }
 // Reverse time integrate dynamic fields for velocity
 #pragma omp parallel for collapse(2)
     for (int ix = 2; ix < nx - 2; ++ix) {
       for (int iz = 2; iz < nz - 2; ++iz) {
-        vx[ix][iz] =
-            taper[ix][iz] *
-            (vx[ix][iz] - b_vx[ix][iz] * dt *
-                              ((c1 * (txx[ix][iz] - txx[ix - 1][iz]) +
-                                c2 * (txx[ix - 2][iz] - txx[ix + 1][iz])) /
-                                   dx +
-                               (c1 * (txz[ix][iz] - txz[ix][iz - 1]) +
-                                c2 * (txz[ix][iz - 2] - txz[ix][iz + 1])) /
-                                   dz));
-        vz[ix][iz] =
-            taper[ix][iz] *
-            (vz[ix][iz] - b_vz[ix][iz] * dt *
-                              ((c1 * (txz[ix + 1][iz] - txz[ix][iz]) +
-                                c2 * (txz[ix - 1][iz] - txz[ix + 2][iz])) /
-                                   dx +
-                               (c1 * (tzz[ix][iz + 1] - tzz[ix][iz]) +
-                                c2 * (tzz[ix][iz - 1] - tzz[ix][iz + 2])) /
-                                   dz));
+        vx[ix][iz] = taper[ix][iz] *
+                     (vx[ix][iz] - b_vx[ix][iz] * dt *
+                                       ((c1 * (txx[ix][iz] - txx[ix - 1][iz]) +
+                                         c2 * (txx[ix - 2][iz] - txx[ix + 1][iz])) /
+                                            dx +
+                                        (c1 * (txz[ix][iz] - txz[ix][iz - 1]) +
+                                         c2 * (txz[ix][iz - 2] - txz[ix][iz + 1])) /
+                                            dz));
+        vz[ix][iz] = taper[ix][iz] *
+                     (vz[ix][iz] - b_vz[ix][iz] * dt *
+                                       ((c1 * (txz[ix + 1][iz] - txz[ix][iz]) +
+                                         c2 * (txz[ix - 1][iz] - txz[ix + 2][iz])) /
+                                            dx +
+                                        (c1 * (tzz[ix][iz + 1] - tzz[ix][iz]) +
+                                         c2 * (tzz[ix][iz - 1] - tzz[ix][iz + 2])) /
+                                            dz));
       }
     }
 
     // Inject adjoint sources
     for (int ir = 0; ir < nr; ++ir) {
       vx[ix_receivers[ir]][iz_receivers[ir]] +=
-          dt * b_vx[ix_receivers[ir]][iz_receivers[ir]] *
-          a_stf_ux[i_shot][ir][it] / (dx * dz);
+          dt * b_vx[ix_receivers[ir]][iz_receivers[ir]] * a_stf_ux[i_shot][ir][it] /
+          (dx * dz);
       vz[ix_receivers[ir]][iz_receivers[ir]] +=
-          dt * b_vz[ix_receivers[ir]][iz_receivers[ir]] *
-          a_stf_uz[i_shot][ir][it] / (dx * dz);
+          dt * b_vz[ix_receivers[ir]][iz_receivers[ir]] * a_stf_uz[i_shot][ir][it] /
+          (dx * dz);
     }
   }
 
@@ -695,18 +663,14 @@ void fdModel::write_receivers(const std::string prefix) {
   std::ofstream receiver_file_uz;
 
   for (int i_shot = 0; i_shot < n_shots; ++i_shot) {
-    filename_ux =
-        observed_data_folder + "/rtf_ux" + std::to_string(i_shot) + ".txt";
-    filename_uz =
-        observed_data_folder + "/rtf_uz" + std::to_string(i_shot) + ".txt";
+    filename_ux = observed_data_folder + "/rtf_ux" + std::to_string(i_shot) + ".txt";
+    filename_uz = observed_data_folder + "/rtf_uz" + std::to_string(i_shot) + ".txt";
 
     receiver_file_ux.open(filename_ux);
     receiver_file_uz.open(filename_uz);
 
-    receiver_file_ux.precision(std::numeric_limits<real_simulation>::digits10 +
-                               10);
-    receiver_file_uz.precision(std::numeric_limits<real_simulation>::digits10 +
-                               10);
+    receiver_file_ux.precision(std::numeric_limits<real_simulation>::digits10 + 10);
+    receiver_file_uz.precision(std::numeric_limits<real_simulation>::digits10 + 10);
 
     for (int i_receiver = 0; i_receiver < nr; ++i_receiver) {
       receiver_file_ux << std::endl;
@@ -726,8 +690,7 @@ void fdModel::write_sources() {
   std::ofstream shot_file;
 
   for (int i_shot = 0; i_shot < n_shots; ++i_shot) {
-    filename_sources =
-        stf_folder + "/sources_shot_" + std::to_string(i_shot) + ".txt";
+    filename_sources = stf_folder + "/sources_shot_" + std::to_string(i_shot) + ".txt";
 
     shot_file.open(filename_sources);
 
@@ -765,10 +728,8 @@ void fdModel::load_receivers(bool verbose) {
 
   for (int i_shot = 0; i_shot < n_shots; ++i_shot) {
     // Create filename from folder and shot.
-    filename_ux =
-        observed_data_folder + "/rtf_ux" + std::to_string(i_shot) + ".txt";
-    filename_uz =
-        observed_data_folder + "/rtf_uz" + std::to_string(i_shot) + ".txt";
+    filename_ux = observed_data_folder + "/rtf_ux" + std::to_string(i_shot) + ".txt";
+    filename_uz = observed_data_folder + "/rtf_uz" + std::to_string(i_shot) + ".txt";
 
     // Attempt to open the file by its filename.
     receiver_file_ux.open(filename_ux);
@@ -777,12 +738,10 @@ void fdModel::load_receivers(bool verbose) {
     // Check if the file actually exists
     if (verbose) {
       std::cout << "File for ux data at shot " << i_shot << " is "
-                << (receiver_file_ux.good() ? "good (exists at least)."
-                                            : "ungood.")
+                << (receiver_file_ux.good() ? "good (exists at least)." : "ungood.")
                 << std::endl;
       std::cout << "File for uz data at shot " << i_shot << " is "
-                << (receiver_file_uz.good() ? "good (exists at least)."
-                                            : "ungood.")
+                << (receiver_file_uz.good() ? "good (exists at least)." : "ungood.")
                 << std::endl;
     }
     if (!receiver_file_ux.good() or !receiver_file_uz.good()) {
@@ -830,14 +789,14 @@ void fdModel::calculate_l2_misfit() {
   for (int i_shot = 0; i_shot < n_shots; ++i_shot) {
     for (int i_receiver = 0; i_receiver < nr; ++i_receiver) {
       for (int it = 0; it < nt; ++it) {
-        misfit += 0.5 * dt *
-                  pow(rtf_ux_true[i_shot][i_receiver][it] -
-                          rtf_ux[i_shot][i_receiver][it],
-                      2);
-        misfit += 0.5 * dt *
-                  pow(rtf_uz_true[i_shot][i_receiver][it] -
-                          rtf_uz[i_shot][i_receiver][it],
-                      2);
+        misfit +=
+            0.5 * dt *
+            pow(rtf_ux_true[i_shot][i_receiver][it] - rtf_ux[i_shot][i_receiver][it],
+                2);
+        misfit +=
+            0.5 * dt *
+            pow(rtf_uz_true[i_shot][i_receiver][it] - rtf_uz[i_shot][i_receiver][it],
+                2);
       }
     }
   }
@@ -887,29 +846,25 @@ void fdModel::load_model(const std::string &de_path, const std::string &vp_path,
     std::cout << "Loading models." << std::endl;
     std::cout << "File: " << de_path << std::endl;
     std::cout << "File for density is "
-              << (de_file.good() ? "good (exists at least)." : "ungood.")
-              << std::endl;
+              << (de_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
     std::cout << "File: " << vp_path << std::endl;
     std::cout << "File for P-wave velocity is "
-              << (vp_file.good() ? "good (exists at least)." : "ungood.")
-              << std::endl;
+              << (vp_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
     std::cout << "File: " << vs_path << std::endl;
     std::cout << "File for S-wave velocity is "
-              << (vs_file.good() ? "good (exists at least)." : "ungood.")
-              << std::endl;
+              << (vs_file.good() ? "good (exists at least)." : "ungood.") << std::endl;
   }
   if (!de_file.good() or !vp_file.good() or !vs_file.good()) {
-    throw std::invalid_argument(
-        "The files for target models don't seem to exist.\r\n"
-        "Paths:\r\n"
-        "\tDensity target: " +
-        de_path +
-        "\r\n"
-        "\tP-wave target : " +
-        vp_path +
-        "\r\n"
-        "\tS-wave target : " +
-        vs_path + "\r\n");
+    throw std::invalid_argument("The files for target models don't seem to exist.\r\n"
+                                "Paths:\r\n"
+                                "\tDensity target: " +
+                                de_path +
+                                "\r\n"
+                                "\tP-wave target : " +
+                                vp_path +
+                                "\r\n"
+                                "\tS-wave target : " +
+                                vs_path + "\r\n");
   }
 
   real_simulation placeholder_de;
@@ -924,8 +879,8 @@ void fdModel::load_model(const std::string &de_path, const std::string &vp_path,
       vp_file >> placeholder_vp;
       vs_file >> placeholder_vs;
 
-      std::cout << iter << " " << ix << " " << iz << " " << de_file.good()
-                << " " << std::endl;
+      std::cout << iter << " " << ix << " " << iz << " " << de_file.good() << " "
+                << std::endl;
 
       rho[ix][iz] = placeholder_de;
       vp[ix][iz] = placeholder_vp;
@@ -1058,9 +1013,8 @@ dynamic_vector fdModel::get_model_vector() {
         for (int sub_iz = 0; sub_iz < basis_gridpoints_z; sub_iz++) {
           m[i_parameter] += vp[gix + sub_ix][giz + sub_iz] /
                             (basis_gridpoints_x * basis_gridpoints_z);
-          m[i_parameter + n_free_per_par] +=
-              vs[gix + sub_ix][giz + sub_iz] /
-              (basis_gridpoints_x * basis_gridpoints_z);
+          m[i_parameter + n_free_per_par] += vs[gix + sub_ix][giz + sub_iz] /
+                                             (basis_gridpoints_x * basis_gridpoints_z);
           m[i_parameter + 2 * n_free_per_par] +=
               rho[gix + sub_ix][giz + sub_iz] /
               (basis_gridpoints_x * basis_gridpoints_z);
@@ -1149,9 +1103,8 @@ dynamic_vector fdModel::get_gradient_vector() {
               vs_kernel[gix + sub_ix][giz + sub_iz]; // / (basis_gridpoints_x *
                                                      // basis_gridpoints_z);
           g[i_parameter + 2 * n_free_per_par] +=
-              density_v_kernel[gix + sub_ix]
-                              [giz + sub_iz]; //  / (basis_gridpoints_x *
-                                              //  basis_gridpoints_z);
+              density_v_kernel[gix + sub_ix][giz + sub_iz]; //  / (basis_gridpoints_x *
+                                                            //  basis_gridpoints_z);
         }
       }
     }
@@ -1173,16 +1126,14 @@ dynamic_vector fdModel::load_vector(const std::string &model_vector_path,
     std::cout << "Loading model vector." << std::endl;
     std::cout << "File: " << model_vector_path << std::endl;
     std::cout << "File is "
-              << (model_vector_file.good() ? "good (exists at least)."
-                                           : "ungood.")
+              << (model_vector_file.good() ? "good (exists at least)." : "ungood.")
               << std::endl;
   }
   if (!model_vector_file.good()) {
-    throw std::invalid_argument(
-        "The files for target models don't seem to exist.\r\n"
-        "Paths:\r\n"
-        "\tDensity target: " +
-        model_vector_path + "\r\n");
+    throw std::invalid_argument("The files for target models don't seem to exist.\r\n"
+                                "Paths:\r\n"
+                                "\tDensity target: " +
+                                model_vector_path + "\r\n");
   }
 
   real_simulation placeholder_model_vector;
@@ -1251,8 +1202,7 @@ void parse_string_to_nested_int_vector(
   size_t pos_outer = 0;
   std::string token_outer;
 
-  while ((pos_outer = string_to_parse.find(delimiter_outer)) !=
-         std::string::npos) {
+  while ((pos_outer = string_to_parse.find(delimiter_outer)) != std::string::npos) {
     std::vector<int> sub_vec;
 
     token_outer = string_to_parse.substr(0, pos_outer);
@@ -1260,8 +1210,7 @@ void parse_string_to_nested_int_vector(
     std::string delimiter_inner = ",";
     size_t pos_inner = 0;
     std::string token_inner;
-    while ((pos_inner = token_outer.find(delimiter_inner)) !=
-           std::string::npos) {
+    while ((pos_inner = token_outer.find(delimiter_inner)) != std::string::npos) {
       token_inner = token_outer.substr(0, pos_inner);
       sub_vec.emplace_back(atof(token_inner.c_str()));
       token_outer.erase(0, pos_inner + delimiter_inner.length());
@@ -1295,9 +1244,8 @@ void parse_string_to_nested_int_vector(
   //    destination_vector->emplace_back(atof(token_outer.c_str()));
 }
 
-void cross_correlate(const real_simulation *signal1,
-                     const real_simulation *signal2, real_simulation *r,
-                     int signal_length, int max_delay) {
+void cross_correlate(const real_simulation *signal1, const real_simulation *signal2,
+                     real_simulation *r, int signal_length, int max_delay) {
   // Calculate means
   real_simulation mean1 = 0;
   real_simulation mean2 = 0;
