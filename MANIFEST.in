@@ -1,6 +1,0 @@
-include src/*
-include CMakeLists.txt
-include versioneer.py
-include psvWave/_version.py
-include tests/*
-recursive-include ext *

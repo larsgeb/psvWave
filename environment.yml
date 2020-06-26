@@ -1,6 +1,0 @@
-name: forward-virieux
-dependencies:
-  - python=3.7
-  - numpydoc
-  - sphinx_rtd_theme
-  - matplotlib
