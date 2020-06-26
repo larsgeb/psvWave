@@ -1,0 +1,275 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>C++ API reference &mdash; psvWave 8c15bf4617d9489a7b0615d1fcb12837c4661f4a documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+        <script src="../_static/add_class.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="fdModel class" href="fdmodel/index.html" />
+    <link rel="prev" title="Configuration files" href="../python/configuration.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> psvWave
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1.6
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../typical-workflow.html">Typical workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python/index.html">Python API reference</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">C++ API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="fdmodel/index.html">fdModel class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html">Configuration files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="miscellaneous.html">Miscellaneous methods and definitions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#type-definitions">Type definitions</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">psvWave</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>C++ API reference</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/cpp/index.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="c-api-reference">
+<h1>C++ API reference<a class="headerlink" href="#c-api-reference" title="Permalink to this headline">¶</a></h1>
+
+    <video width="400" height="800"  autoplay>
+    <source src="../_static/video_slow.mp4" type="video/mp4">
+    Video
+    </video>
+    <p>The true bulk fo this package is written in the class fdModel.
+This class takes care of the wavefield simulations.
+Additionally, it is able to backpropagate a wavefield.
+By storing the forward propagation and correlating it during a backward (or adjoint)
+simulation, we can compute sensitivity kernels.</p>
+<p>Typical usage should be done in Python.
+However, if you want to interface directly with the finite difference code, you can work
+with the C++ API.
+It gives direct access to the dynamical fields, sensitivity kernels, etc.
+This C++ API is exposed in Python using PyBind11.</p>
+<p>Here and there we need to do some type casting between Python and C++ objects.
+This additional layer is not documented in this reference (as it is not part of the C++
+api).
+It can be found in <cite>src/psvWave.cpp</cite></p>
+<p>Using the C++ API also requires the configuration files to be present at time of
+instance construction.
+In other words, everytime we make an <cite>fdModel</cite> object, we need to have a properly
+formatted <cite>conf.ini</cite> file.
+How to create and use these is described in the Python API reference.</p>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Important parts</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="fdmodel/index.html">fdModel class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="miscellaneous.html">Miscellaneous methods and definitions</a></li>
+</ul>
+</div>
+<div class="section" id="type-definitions">
+<h2>Type definitions<a class="headerlink" href="#type-definitions" title="Permalink to this headline">¶</a></h2>
+<p>Throughout the C++ code, we have a few important type definitions.
+This makes working with varying precision and eigen types a little more concise.</p>
+<dl class="cpp type">
+<dt id="_CPPv415real_simulation">
+<span id="_CPPv315real_simulation"></span><span id="_CPPv215real_simulation"></span><span class="target" id="fdModel_8h_1a02e994543973a245bba654c13f252edd"></span><em class="property">using </em><code class="sig-name descname">real_simulation</code> = double<a class="headerlink" href="#_CPPv415real_simulation" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Typedef that determines simulation precision. On x86_64 systems it is typically fastest to use double, as this is the native precision. Double has about a 10 % performance gain over floats as tested on Ubuntu 18.04 x86_64. </p>
+</dd></dl>
+
+<dl class="cpp type">
+<dt id="_CPPv414dynamic_vector">
+<span id="_CPPv314dynamic_vector"></span><span id="_CPPv214dynamic_vector"></span><span class="target" id="fdModel_8h_1ac043cd27b3478f4a8a40234230a6d12d"></span><em class="property">using </em><code class="sig-name descname">dynamic_vector</code> = Eigen::Matrix&lt;<a class="reference internal" href="#_CPPv415real_simulation" title="real_simulation">real_simulation</a>, Eigen::Dynamic, 1&gt;<a class="headerlink" href="#_CPPv414dynamic_vector" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Typedef that is a shorthand for the correct precision column vector. This vector has the right precision and shape to be used in matrix equations. It is of dynamic size. </p>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="fdmodel/index.html" class="btn btn-neutral float-right" title="fdModel class" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../python/configuration.html" class="btn btn-neutral float-left" title="Configuration files" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2018-2020, Lars Gebraad
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

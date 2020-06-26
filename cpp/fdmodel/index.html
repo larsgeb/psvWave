@@ -1,0 +1,831 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>fdModel class &mdash; psvWave 8c15bf4617d9489a7b0615d1fcb12837c4661f4a documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+        <script src="../../_static/add_class.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Configuration files" href="../configuration.html" />
+    <link rel="prev" title="C++ API reference" href="../index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> psvWave
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1.6
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../typical-workflow.html">Typical workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../python/index.html">Python API reference</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">C++ API reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">fdModel class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../configuration.html">Configuration files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../miscellaneous.html">Miscellaneous methods and definitions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#type-definitions">Type definitions</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">psvWave</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">C++ API reference</a> &raquo;</li>
+        
+      <li>fdModel class</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/cpp/fdmodel/index.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="fdmodel-class">
+<h1>fdModel class<a class="headerlink" href="#fdmodel-class" title="Permalink to this headline">¶</a></h1>
+<p>The fdModel class</p>
+<dl class="cpp class">
+<dt id="_CPPv47fdModel">
+<span id="_CPPv37fdModel"></span><span id="_CPPv27fdModel"></span><span id="fdModel"></span><span class="target" id="classfdModel"></span><em class="property">class </em><code class="sig-name descname">fdModel</code><a class="headerlink" href="#_CPPv47fdModel" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Finite difference wave modelling class. </p>
+<p>This class contains everything needed to do finite difference wave forward and adjoint modelling. It contains the entire experimental parameters as fields, which are loaded at runtime from the supplied .ini file. The class contains all necessary functions to perform FWI, but lacks optimization schemes. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric">Public Functions</p>
+<dl class="cpp function">
+<dt id="_CPPv4N7fdModel7fdModelEPKc">
+<span id="_CPPv3N7fdModel7fdModelEPKc"></span><span id="_CPPv2N7fdModel7fdModelEPKc"></span><span id="fdModel::fdModel__cCP"></span><span class="target" id="classfdModel_1af6dd1299fa778295cbe5530036ced606"></span><code class="sig-name descname">fdModel</code><span class="sig-paren">(</span><em class="property">const</em> char *<em>configuration_file_relative_path</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7fdModel7fdModelEPKc" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Constructor for modelling class. </p>
+<p>This constructor creates the modelling class from a configuration file supplied at runtime. As such, all fields are created dynamically.</p>
+<p><dl class="simple">
+<dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">configuration_file_relative_path</span></code>: Relative path to the configuration .ini file. This file should contain all the fields needed for simulation. Arbitrary defaults are hardcoded into the binary as backup within the <a class="reference internal" href="#classfdModel_1a4b16071e96710987221cae0329b00f3e"><span class="std std-ref">parse_configuration()</span></a> method. </p></li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt id="_CPPv4N7fdModelD0Ev">
+<span id="_CPPv3N7fdModelD0Ev"></span><span id="_CPPv2N7fdModelD0Ev"></span><span id="fdModel::~fdModel"></span><span class="target" id="classfdModel_1a3bd5ca24dc1b1fc887592a9f07b95109"></span><code class="sig-name descname">~fdModel</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7fdModelD0Ev" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Destructor for the class. </p>
+<p>The destructor properly addresses every used new keyword in the constructor, freeing all memory. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt id="_CPPv4N7fdModel19parse_configurationEPKc">
+<span id="_CPPv3N7fdModel19parse_configurationEPKc"></span><span id="_CPPv2N7fdModel19parse_configurationEPKc"></span><span id="fdModel::parse_configuration__cCP"></span><span class="target" id="classfdModel_1a4b16071e96710987221cae0329b00f3e"></span>void <code class="sig-name descname">parse_configuration</code><span class="sig-paren">(</span><em class="property">const</em> char *<em>configuration_file_relative_path</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7fdModel19parse_configurationEPKc" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Method that parses .ini configuration file. Only used in <a class="reference internal" href="#classfdModel_1af6dd1299fa778295cbe5530036ced606"><span class="std std-ref">fdModel()</span></a>. </p>
+<p><dl class="simple">
+<dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">configuration_file_relative_path</span></code>: Relative path to the configuration .ini file. </p></li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt id="_CPPv4N7fdModel16forward_simulateEibbb">
+<span id="_CPPv3N7fdModel16forward_simulateEibbb"></span><span id="_CPPv2N7fdModel16forward_simulateEibbb"></span><span id="fdModel::forward_simulate__i.b.b.b"></span><span class="target" id="classfdModel_1a357540a5011816db1837e6b097ecdbda"></span>void <code class="sig-name descname">forward_simulate</code><span class="sig-paren">(</span>int <em>i_shot</em>, bool <em>store_fields</em>, bool <em>verbose</em>, bool <em>output_wavefields</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7fdModel16forward_simulateEibbb" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Method to forward simulate wavefields for a specific shot. </p>
+<p>Forward simulate wavefields of shot i_shot based on currently loaded models. Storage of wavefields and verbosity of run can be toggled.</p>
+<p><dl class="simple">
+<dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">i_shot</span></code>: Integer controlling which shot to simulate. </p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">store_fields</span></code>: Boolean to control storage of wavefields. If storage is not required (i.e. no adjoint modeling), forward simulation should be faster without storage. </p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">verbose</span></code>: Boolean controlling if modelling should be verbose. </p></li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt id="_CPPv4N7fdModel16adjoint_simulateEib">
+<span id="_CPPv3N7fdModel16adjoint_simulateEib"></span><span id="_CPPv2N7fdModel16adjoint_simulateEib"></span><span id="fdModel::adjoint_simulate__i.b"></span><span class="target" id="classfdModel_1ac3121626e711967379babe68d8c11f97"></span>void <code class="sig-name descname">adjoint_simulate</code><span class="sig-paren">(</span>int <em>i_shot</em>, bool <em>verbose</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7fdModel16adjoint_simulateEib" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Method to adjoint simulate wavefields for a specific shot. </p>
+<p>Adjoint simulate wavefields of shot i_shot based on currently loaded models and calculate adjoint sources. Verbosity of run can be toggled.</p>
+<p><dl class="simple">
+<dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">i_shot</span></code>: Integer controlling which shot to simulate. </p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">verbose</span></code>: Boolean controlling if modelling should be verbose. </p></li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt id="_CPPv4N7fdModel15write_receiversEv">
+<span id="_CPPv3N7fdModel15write_receiversEv"></span><span id="_CPPv2N7fdModel15write_receiversEv"></span><span id="fdModel::write_receivers"></span><span class="target" id="classfdModel_1a07986386f0b3a35796967087ed9e2aa9"></span>void <code class="sig-name descname">write_receivers</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7fdModel15write_receiversEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Method to write out synthetic seismograms to plaintext. </p>
+<p>This method writes out the synthetic seismograms to a plaintext file. Allows one to e.g. subsequently import these files as observed seismograms later using <a class="reference internal" href="#classfdModel_1abb088525e19b735ad39755124d27e2fb"><span class="std std-ref">load_receivers()</span></a>. Every shot generates a separate ux and uz receiver file (rtf_ux/rtf_uz), with every receiver being a single line in these files. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt id="_CPPv4N7fdModel15write_receiversENSt6stringE">
+<span id="_CPPv3N7fdModel15write_receiversENSt6stringE"></span><span id="_CPPv2N7fdModel15write_receiversENSt6stringE"></span><span id="fdModel::write_receivers__ss"></span><span class="target" id="classfdModel_1a5bd9e081f7374abedd3cc108f7cbd9c4"></span>void <code class="sig-name descname">write_receivers</code><span class="sig-paren">(</span>std::string <em>prefix</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7fdModel15write_receiversENSt6stringE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt id="_CPPv4N7fdModel13write_sourcesEv">
+<span id="_CPPv3N7fdModel13write_sourcesEv"></span><span id="_CPPv2N7fdModel13write_sourcesEv"></span><span id="fdModel::write_sources"></span><span class="target" id="classfdModel_1a07399bf0b8fd142518d34c3e8bc27241"></span>void <code class="sig-name descname">write_sources</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7fdModel13write_sourcesEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Method to write out source signals to plaintext. </p>
+<p>This method writes out the source time function (without moment tensor) to plaintext file. Useful for e.g. visualizing the source staggering. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt id="_CPPv4N7fdModel14load_receiversEb">
+<span id="_CPPv3N7fdModel14load_receiversEb"></span><span id="_CPPv2N7fdModel14load_receiversEb"></span><span id="fdModel::load_receivers__b"></span><span class="target" id="classfdModel_1abb088525e19b735ad39755124d27e2fb"></span>void <code class="sig-name descname">load_receivers</code><span class="sig-paren">(</span>bool <em>verbose</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7fdModel14load_receiversEb" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Method to load receiver files. </p>
+<p>This method loads receiver data from observed_data_folder folder into the object. The data has to exactly match the set-up, and be named according to component and shot (as generated by <a class="reference internal" href="#classfdModel_1a07986386f0b3a35796967087ed9e2aa9"><span class="std std-ref">write_receivers()</span></a> ).</p>
+<p><dl class="simple">
+<dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">verbose</span></code>: Controls the verbosity of the method during loading. </p></li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt id="_CPPv4N7fdModel23map_kernels_to_velocityEv">
+<span id="_CPPv3N7fdModel23map_kernels_to_velocityEv"></span><span id="_CPPv2N7fdModel23map_kernels_to_velocityEv"></span><span id="fdModel::map_kernels_to_velocity"></span><span class="target" id="classfdModel_1ac9c451cc1e93c737748ac77c37e33187"></span>void <code class="sig-name descname">map_kernels_to_velocity</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7fdModel23map_kernels_to_velocityEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Method to map kernels to velocity parameter set. </p>
+<p>This method takes the kernels (lambda, mu, rho) as originally calculated on the Lamé’s parameter set and maps them to the velocity parameter set (vp, vs, rho). </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt id="_CPPv4N7fdModel20update_from_velocityEv">
+<span id="_CPPv3N7fdModel20update_from_velocityEv"></span><span id="_CPPv2N7fdModel20update_from_velocityEv"></span><span id="fdModel::update_from_velocity"></span><span class="target" id="classfdModel_1a96f94d9137a949bd8b30ea092f36cceb"></span>void <code class="sig-name descname">update_from_velocity</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7fdModel20update_from_velocityEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Method to map velocities into Lamé’s parameter set. </p>
+<p>This method updates Lamé’s parameters of the current model based on the velocity parameters of the current model. Typically has to be done every time after updating velocity. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt id="_CPPv4N7fdModel19calculate_l2_misfitEv">
+<span id="_CPPv3N7fdModel19calculate_l2_misfitEv"></span><span id="_CPPv2N7fdModel19calculate_l2_misfitEv"></span><span id="fdModel::calculate_l2_misfit"></span><span class="target" id="classfdModel_1a93908afdaa0097166fe1ff179bca32a7"></span>void <code class="sig-name descname">calculate_l2_misfit</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7fdModel19calculate_l2_misfitEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Method to calculate L2 misfit. </p>
+<p>This method calculates L2 misfit between observed seismograms and synthetic seismograms and stores it in the misfit field. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt id="_CPPv4N7fdModel28calculate_l2_adjoint_sourcesEv">
+<span id="_CPPv3N7fdModel28calculate_l2_adjoint_sourcesEv"></span><span id="_CPPv2N7fdModel28calculate_l2_adjoint_sourcesEv"></span><span id="fdModel::calculate_l2_adjoint_sources"></span><span class="target" id="classfdModel_1ad12576395d84b8fb0b3c4a8520315a4a"></span>void <code class="sig-name descname">calculate_l2_adjoint_sources</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7fdModel28calculate_l2_adjoint_sourcesEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Method to calculate L2 adjoint sources This method calculates L2 misfit between observed seismograms and synthetic seismograms and stores it in the misfit field. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt id="_CPPv4N7fdModel10load_modelERKNSt6stringERKNSt6stringERKNSt6stringEb">
+<span id="_CPPv3N7fdModel10load_modelERKNSt6stringERKNSt6stringERKNSt6stringEb"></span><span id="_CPPv2N7fdModel10load_modelERKNSt6stringERKNSt6stringERKNSt6stringEb"></span><span id="fdModel::load_model__ssCR.ssCR.ssCR.b"></span><span class="target" id="classfdModel_1a4df7a35fbb56deb2073c4bc9df53b448"></span>void <code class="sig-name descname">load_model</code><span class="sig-paren">(</span><em class="property">const</em> std::string &amp;<em>de_path</em>, <em class="property">const</em> std::string &amp;<em>vp_path</em>, <em class="property">const</em> std::string &amp;<em>vs_path</em>, bool <em>verbose</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7fdModel10load_modelERKNSt6stringERKNSt6stringERKNSt6stringEb" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Method to load models from plaintext into the model. </p>
+<p>This methods loads any appropriate model (expressed in density, P-wave velocity, and S-wave velocity) into the class and updates the Lamé fields accordingly.</p>
+<p><dl class="simple">
+<dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">de_path</span></code>: Relative path to plaintext de file. </p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">vp_path</span></code>: Relative path to plaintext vp file. </p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">vs_path</span></code>: Relative path to plaintext vs file. </p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">verbose</span></code>: Boolean controlling the verbosity of the method. </p></li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt id="_CPPv4N7fdModel9run_modelEbb">
+<span id="_CPPv3N7fdModel9run_modelEbb"></span><span id="_CPPv2N7fdModel9run_modelEbb"></span><span id="fdModel::run_model__b.b"></span><span class="target" id="classfdModel_1a59622c9bc64fb195eae60e2f31bf928e"></span>void <code class="sig-name descname">run_model</code><span class="sig-paren">(</span>bool <em>verbose</em>, bool <em>simulate_adjoint</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7fdModel9run_modelEbb" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Method to perform all steps necessary for FWI, with additional control over adjoint simulation. </p>
+<p>This method performs all necessary steps in FWI; forward modelling, misfit calculation and optionally adjoint source calculation, adjoint modelling and kernel projection.</p>
+<p><dl class="simple">
+<dt><strong>Parameters</strong></dt><dd><ul class="breatheparameterlist simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">verbose</span></code>: Boolean controlling the verbosity of the method. </p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">simulate_adjoint</span></code>: Boolean controlling the execution of the adjoint simulation and kernel computation. </p></li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt id="_CPPv4N7fdModel13reset_kernelsEv">
+<span id="_CPPv3N7fdModel13reset_kernelsEv"></span><span id="_CPPv2N7fdModel13reset_kernelsEv"></span><span id="fdModel::reset_kernels"></span><span class="target" id="classfdModel_1af6b49329e4845b369009456dfa112ee0"></span>void <code class="sig-name descname">reset_kernels</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7fdModel13reset_kernelsEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Method to reset all Lamé sensitivity kernels to zero. </p>
+<p>This method resets all sensitivity kernels to zero. Essential before performing new adjoint simulations, as otherwise the kernels of subsequent simulations would stack. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt id="_CPPv4N7fdModel13write_kernelsEv">
+<span id="_CPPv3N7fdModel13write_kernelsEv"></span><span id="_CPPv2N7fdModel13write_kernelsEv"></span><span id="fdModel::write_kernels"></span><span class="target" id="classfdModel_1a3521c66b47d80ff82f1b165606f319d1"></span>void <code class="sig-name descname">write_kernels</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7fdModel13write_kernelsEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt id="_CPPv4N7fdModel16get_model_vectorEv">
+<span id="_CPPv3N7fdModel16get_model_vectorEv"></span><span id="_CPPv2N7fdModel16get_model_vectorEv"></span><span id="fdModel::get_model_vector"></span><span class="target" id="classfdModel_1a84762163811708e95ad0c8b80d336d8c"></span><a class="reference internal" href="../index.html#_CPPv414dynamic_vector" title="dynamic_vector">dynamic_vector</a> <code class="sig-name descname">get_model_vector</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7fdModel16get_model_vectorEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt id="_CPPv4N7fdModel16set_model_vectorE14dynamic_vector">
+<span id="_CPPv3N7fdModel16set_model_vectorE14dynamic_vector"></span><span id="_CPPv2N7fdModel16set_model_vectorE14dynamic_vector"></span><span id="fdModel::set_model_vector__dynamic_vector"></span><span class="target" id="classfdModel_1a4c1a12fee6eb6f7ce66f2886a677f246"></span>void <code class="sig-name descname">set_model_vector</code><span class="sig-paren">(</span><a class="reference internal" href="../index.html#_CPPv414dynamic_vector" title="dynamic_vector">dynamic_vector</a> <em>m</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7fdModel16set_model_vectorE14dynamic_vector" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt id="_CPPv4N7fdModel19get_gradient_vectorEv">
+<span id="_CPPv3N7fdModel19get_gradient_vectorEv"></span><span id="_CPPv2N7fdModel19get_gradient_vectorEv"></span><span id="fdModel::get_gradient_vector"></span><span class="target" id="classfdModel_1aab3a163b17f09d98516eb3d165925b9b"></span><a class="reference internal" href="../index.html#_CPPv414dynamic_vector" title="dynamic_vector">dynamic_vector</a> <code class="sig-name descname">get_gradient_vector</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7fdModel19get_gradient_vectorEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt id="_CPPv4N7fdModel11load_vectorERKNSt6stringEb">
+<span id="_CPPv3N7fdModel11load_vectorERKNSt6stringEb"></span><span id="_CPPv2N7fdModel11load_vectorERKNSt6stringEb"></span><span id="fdModel::load_vector__ssCR.b"></span><span class="target" id="classfdModel_1a5ae3618f529f9a276efb1f9a85f93c57"></span><a class="reference internal" href="../index.html#_CPPv414dynamic_vector" title="dynamic_vector">dynamic_vector</a> <code class="sig-name descname">load_vector</code><span class="sig-paren">(</span><em class="property">const</em> std::string &amp;<em>vector_path</em>, bool <em>verbose</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7fdModel11load_vectorERKNSt6stringEb" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric">Public Members</p>
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel2c1E">
+<span id="_CPPv3N7fdModel2c1E"></span><span id="_CPPv2N7fdModel2c1E"></span><span id="fdModel::c1__real_simulation"></span><span class="target" id="classfdModel_1ae692d083a462b5db65126e763aed443d"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> <code class="sig-name descname">c1</code> = <a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a>(9.0 / 8.0)<a class="headerlink" href="#_CPPv4N7fdModel2c1E" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel2c2E">
+<span id="_CPPv3N7fdModel2c2E"></span><span id="_CPPv2N7fdModel2c2E"></span><span id="fdModel::c2__real_simulation"></span><span class="target" id="classfdModel_1a77bfe53b569dc10c3dad0e75e0288bc6"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> <code class="sig-name descname">c2</code> = <a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a>(1.0 / 24.0)<a class="headerlink" href="#_CPPv4N7fdModel2c2E" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel25add_np_to_source_locationE">
+<span id="_CPPv3N7fdModel25add_np_to_source_locationE"></span><span id="_CPPv2N7fdModel25add_np_to_source_locationE"></span><span id="fdModel::add_np_to_source_location__b"></span><span class="target" id="classfdModel_1ad5979d050c228eb70e0326f8f4395e16"></span>bool <code class="sig-name descname">add_np_to_source_location</code> = true<a class="headerlink" href="#_CPPv4N7fdModel25add_np_to_source_locationE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel27add_np_to_receiver_locationE">
+<span id="_CPPv3N7fdModel27add_np_to_receiver_locationE"></span><span id="_CPPv2N7fdModel27add_np_to_receiver_locationE"></span><span id="fdModel::add_np_to_receiver_location__b"></span><span class="target" id="classfdModel_1a24916466bd55ee61229af6c10e254787"></span>bool <code class="sig-name descname">add_np_to_receiver_location</code> = true<a class="headerlink" href="#_CPPv4N7fdModel27add_np_to_receiver_locationE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel2vxE">
+<span id="_CPPv3N7fdModel2vxE"></span><span id="_CPPv2N7fdModel2vxE"></span><span id="fdModel::vx__real_simulationPP"></span><span class="target" id="classfdModel_1a793220a77f02c7f66374ee5e51c602d3"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> **<code class="sig-name descname">vx</code><a class="headerlink" href="#_CPPv4N7fdModel2vxE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Dynamic horizontal velocity field used in the simulations. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel2vzE">
+<span id="_CPPv3N7fdModel2vzE"></span><span id="_CPPv2N7fdModel2vzE"></span><span id="fdModel::vz__real_simulationPP"></span><span class="target" id="classfdModel_1ab92c66debad295fe0b19d1d4c32f4895"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> **<code class="sig-name descname">vz</code><a class="headerlink" href="#_CPPv4N7fdModel2vzE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Dynamic vertical velocity field used in the simulations. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel3txxE">
+<span id="_CPPv3N7fdModel3txxE"></span><span id="_CPPv2N7fdModel3txxE"></span><span id="fdModel::txx__real_simulationPP"></span><span class="target" id="classfdModel_1a3df23ff25845921c1a1bba67eff06d59"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> **<code class="sig-name descname">txx</code><a class="headerlink" href="#_CPPv4N7fdModel3txxE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Dynamic horizontal stress field used in the simulations. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel3tzzE">
+<span id="_CPPv3N7fdModel3tzzE"></span><span id="_CPPv2N7fdModel3tzzE"></span><span id="fdModel::tzz__real_simulationPP"></span><span class="target" id="classfdModel_1a8af51c75d94e89fa97a480492b7660f8"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> **<code class="sig-name descname">tzz</code><a class="headerlink" href="#_CPPv4N7fdModel3tzzE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Dynamic vertical stress field used in the simulations. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel3txzE">
+<span id="_CPPv3N7fdModel3txzE"></span><span id="_CPPv2N7fdModel3txzE"></span><span id="fdModel::txz__real_simulationPP"></span><span class="target" id="classfdModel_1aa5f03abff8fcd8f78d8b0e9e268f4c9a"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> **<code class="sig-name descname">txz</code><a class="headerlink" href="#_CPPv4N7fdModel3txzE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Dynamic shear stress field used in the simulations. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel2lmE">
+<span id="_CPPv3N7fdModel2lmE"></span><span id="_CPPv2N7fdModel2lmE"></span><span id="fdModel::lm__real_simulationPP"></span><span class="target" id="classfdModel_1a6c9f4f1771e349e87f90136318498ba4"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> **<code class="sig-name descname">lm</code><a class="headerlink" href="#_CPPv4N7fdModel2lmE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel2laE">
+<span id="_CPPv3N7fdModel2laE"></span><span id="_CPPv2N7fdModel2laE"></span><span id="fdModel::la__real_simulationPP"></span><span class="target" id="classfdModel_1ae1a3fc932a31d5962ee310b7a67f9675"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> **<code class="sig-name descname">la</code><a class="headerlink" href="#_CPPv4N7fdModel2laE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel2muE">
+<span id="_CPPv3N7fdModel2muE"></span><span id="_CPPv2N7fdModel2muE"></span><span id="fdModel::mu__real_simulationPP"></span><span class="target" id="classfdModel_1ab9df0001b9b14d337e05fc824be4ff1f"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> **<code class="sig-name descname">mu</code><a class="headerlink" href="#_CPPv4N7fdModel2muE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel4b_vxE">
+<span id="_CPPv3N7fdModel4b_vxE"></span><span id="_CPPv2N7fdModel4b_vxE"></span><span id="fdModel::b_vx__real_simulationPP"></span><span class="target" id="classfdModel_1a5ad0e7d23313c1f99e1613d867d23998"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> **<code class="sig-name descname">b_vx</code><a class="headerlink" href="#_CPPv4N7fdModel4b_vxE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel4b_vzE">
+<span id="_CPPv3N7fdModel4b_vzE"></span><span id="_CPPv2N7fdModel4b_vzE"></span><span id="fdModel::b_vz__real_simulationPP"></span><span class="target" id="classfdModel_1a732c144ca4613df2c9ef06add7581830"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> **<code class="sig-name descname">b_vz</code><a class="headerlink" href="#_CPPv4N7fdModel4b_vzE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel3rhoE">
+<span id="_CPPv3N7fdModel3rhoE"></span><span id="_CPPv2N7fdModel3rhoE"></span><span id="fdModel::rho__real_simulationPP"></span><span class="target" id="classfdModel_1ad936d56f6809f346e417019070333b4b"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> **<code class="sig-name descname">rho</code><a class="headerlink" href="#_CPPv4N7fdModel3rhoE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel2vpE">
+<span id="_CPPv3N7fdModel2vpE"></span><span id="_CPPv2N7fdModel2vpE"></span><span id="fdModel::vp__real_simulationPP"></span><span class="target" id="classfdModel_1aa75d9eae0fa908dfef34289977edef0e"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> **<code class="sig-name descname">vp</code><a class="headerlink" href="#_CPPv4N7fdModel2vpE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel2vsE">
+<span id="_CPPv3N7fdModel2vsE"></span><span id="_CPPv2N7fdModel2vsE"></span><span id="fdModel::vs__real_simulationPP"></span><span class="target" id="classfdModel_1ae631f9910109c912faa3b9975fe778f1"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> **<code class="sig-name descname">vs</code><a class="headerlink" href="#_CPPv4N7fdModel2vsE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel13lambda_kernelE">
+<span id="_CPPv3N7fdModel13lambda_kernelE"></span><span id="_CPPv2N7fdModel13lambda_kernelE"></span><span id="fdModel::lambda_kernel__real_simulationPP"></span><span class="target" id="classfdModel_1a7c7c7e2f1ab4276bde4e5dad17a5351a"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> **<code class="sig-name descname">lambda_kernel</code><a class="headerlink" href="#_CPPv4N7fdModel13lambda_kernelE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel9mu_kernelE">
+<span id="_CPPv3N7fdModel9mu_kernelE"></span><span id="_CPPv2N7fdModel9mu_kernelE"></span><span id="fdModel::mu_kernel__real_simulationPP"></span><span class="target" id="classfdModel_1a5419cb3054fbab351759dcc751c7b5bd"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> **<code class="sig-name descname">mu_kernel</code><a class="headerlink" href="#_CPPv4N7fdModel9mu_kernelE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel16density_l_kernelE">
+<span id="_CPPv3N7fdModel16density_l_kernelE"></span><span id="_CPPv2N7fdModel16density_l_kernelE"></span><span id="fdModel::density_l_kernel__real_simulationPP"></span><span class="target" id="classfdModel_1a1012f864735dbe5a006b931ca548535e"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> **<code class="sig-name descname">density_l_kernel</code><a class="headerlink" href="#_CPPv4N7fdModel16density_l_kernelE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel9vp_kernelE">
+<span id="_CPPv3N7fdModel9vp_kernelE"></span><span id="_CPPv2N7fdModel9vp_kernelE"></span><span id="fdModel::vp_kernel__real_simulationPP"></span><span class="target" id="classfdModel_1ac8602220f96ddb1d056ad5a35d2ee448"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> **<code class="sig-name descname">vp_kernel</code><a class="headerlink" href="#_CPPv4N7fdModel9vp_kernelE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel9vs_kernelE">
+<span id="_CPPv3N7fdModel9vs_kernelE"></span><span id="_CPPv2N7fdModel9vs_kernelE"></span><span id="fdModel::vs_kernel__real_simulationPP"></span><span class="target" id="classfdModel_1ab304937eb04e43ac1cc2830ed07a4541"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> **<code class="sig-name descname">vs_kernel</code><a class="headerlink" href="#_CPPv4N7fdModel9vs_kernelE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel16density_v_kernelE">
+<span id="_CPPv3N7fdModel16density_v_kernelE"></span><span id="_CPPv2N7fdModel16density_v_kernelE"></span><span id="fdModel::density_v_kernel__real_simulationPP"></span><span class="target" id="classfdModel_1a938bffda17a6dda58b4fbb17da1d61b7"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> **<code class="sig-name descname">density_v_kernel</code><a class="headerlink" href="#_CPPv4N7fdModel16density_v_kernelE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel12starting_rhoE">
+<span id="_CPPv3N7fdModel12starting_rhoE"></span><span id="_CPPv2N7fdModel12starting_rhoE"></span><span id="fdModel::starting_rho__real_simulationPP"></span><span class="target" id="classfdModel_1a1835dc8fd3dd4103762e34a663f7215a"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> **<code class="sig-name descname">starting_rho</code><a class="headerlink" href="#_CPPv4N7fdModel12starting_rhoE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel11starting_vpE">
+<span id="_CPPv3N7fdModel11starting_vpE"></span><span id="_CPPv2N7fdModel11starting_vpE"></span><span id="fdModel::starting_vp__real_simulationPP"></span><span class="target" id="classfdModel_1a0c502195c80459f3c671db6bca9a30a0"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> **<code class="sig-name descname">starting_vp</code><a class="headerlink" href="#_CPPv4N7fdModel11starting_vpE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel11starting_vsE">
+<span id="_CPPv3N7fdModel11starting_vsE"></span><span id="_CPPv2N7fdModel11starting_vsE"></span><span id="fdModel::starting_vs__real_simulationPP"></span><span class="target" id="classfdModel_1a009cd22bfe579e7746482aea11508ca6"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> **<code class="sig-name descname">starting_vs</code><a class="headerlink" href="#_CPPv4N7fdModel11starting_vsE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel5taperE">
+<span id="_CPPv3N7fdModel5taperE"></span><span id="_CPPv2N7fdModel5taperE"></span><span id="fdModel::taper__real_simulationPP"></span><span class="target" id="classfdModel_1a38a3fc6f463483b687e48fe71663a9db"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> **<code class="sig-name descname">taper</code><a class="headerlink" href="#_CPPv4N7fdModel5taperE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel1tE">
+<span id="_CPPv3N7fdModel1tE"></span><span id="_CPPv2N7fdModel1tE"></span><span id="fdModel::t__real_simulationP"></span><span class="target" id="classfdModel_1af42fb9d503c00f83039f4d68917ad475"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> *<code class="sig-name descname">t</code><a class="headerlink" href="#_CPPv4N7fdModel1tE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel3stfE">
+<span id="_CPPv3N7fdModel3stfE"></span><span id="_CPPv2N7fdModel3stfE"></span><span id="fdModel::stf__real_simulationPP"></span><span class="target" id="classfdModel_1aaafccd8e61e001812be140bfab551f90"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> **<code class="sig-name descname">stf</code><a class="headerlink" href="#_CPPv4N7fdModel3stfE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel6momentE">
+<span id="_CPPv3N7fdModel6momentE"></span><span id="_CPPv2N7fdModel6momentE"></span><span id="fdModel::moment__real_simulationPPP"></span><span class="target" id="classfdModel_1a51eff663ba717db45a24197440c26704"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> ***<code class="sig-name descname">moment</code><a class="headerlink" href="#_CPPv4N7fdModel6momentE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel6rtf_uxE">
+<span id="_CPPv3N7fdModel6rtf_uxE"></span><span id="_CPPv2N7fdModel6rtf_uxE"></span><span id="fdModel::rtf_ux__real_simulationPPP"></span><span class="target" id="classfdModel_1a54261edd375055858d2121681904f04b"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> ***<code class="sig-name descname">rtf_ux</code><a class="headerlink" href="#_CPPv4N7fdModel6rtf_uxE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel6rtf_uzE">
+<span id="_CPPv3N7fdModel6rtf_uzE"></span><span id="_CPPv2N7fdModel6rtf_uzE"></span><span id="fdModel::rtf_uz__real_simulationPPP"></span><span class="target" id="classfdModel_1a94b11c8c06d71549f520e2c36a675555"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> ***<code class="sig-name descname">rtf_uz</code><a class="headerlink" href="#_CPPv4N7fdModel6rtf_uzE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel11rtf_ux_trueE">
+<span id="_CPPv3N7fdModel11rtf_ux_trueE"></span><span id="_CPPv2N7fdModel11rtf_ux_trueE"></span><span id="fdModel::rtf_ux_true__real_simulationPPP"></span><span class="target" id="classfdModel_1aa9d711dd1606fc9b7e914b25573f41f8"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> ***<code class="sig-name descname">rtf_ux_true</code><a class="headerlink" href="#_CPPv4N7fdModel11rtf_ux_trueE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel11rtf_uz_trueE">
+<span id="_CPPv3N7fdModel11rtf_uz_trueE"></span><span id="_CPPv2N7fdModel11rtf_uz_trueE"></span><span id="fdModel::rtf_uz_true__real_simulationPPP"></span><span class="target" id="classfdModel_1a89a98cadd1f2d024d6c396dabd8df9da"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> ***<code class="sig-name descname">rtf_uz_true</code><a class="headerlink" href="#_CPPv4N7fdModel11rtf_uz_trueE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel8a_stf_uxE">
+<span id="_CPPv3N7fdModel8a_stf_uxE"></span><span id="_CPPv2N7fdModel8a_stf_uxE"></span><span id="fdModel::a_stf_ux__real_simulationPPP"></span><span class="target" id="classfdModel_1a925b1bc7018e91622fd3d6b3173c4bb5"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> ***<code class="sig-name descname">a_stf_ux</code><a class="headerlink" href="#_CPPv4N7fdModel8a_stf_uxE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel8a_stf_uzE">
+<span id="_CPPv3N7fdModel8a_stf_uzE"></span><span id="_CPPv2N7fdModel8a_stf_uzE"></span><span id="fdModel::a_stf_uz__real_simulationPPP"></span><span class="target" id="classfdModel_1a7b48da9670b63824e159446df66a7c0f"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> ***<code class="sig-name descname">a_stf_uz</code><a class="headerlink" href="#_CPPv4N7fdModel8a_stf_uzE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel7accu_vxE">
+<span id="_CPPv3N7fdModel7accu_vxE"></span><span id="_CPPv2N7fdModel7accu_vxE"></span><span id="fdModel::accu_vx__real_simulationPPPP"></span><span class="target" id="classfdModel_1a4e904266408e17ca4ce6de290dcf84bf"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> ****<code class="sig-name descname">accu_vx</code><a class="headerlink" href="#_CPPv4N7fdModel7accu_vxE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel7accu_vzE">
+<span id="_CPPv3N7fdModel7accu_vzE"></span><span id="_CPPv2N7fdModel7accu_vzE"></span><span id="fdModel::accu_vz__real_simulationPPPP"></span><span class="target" id="classfdModel_1a1b41486318a28e032ccefa60f4d1fda9"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> ****<code class="sig-name descname">accu_vz</code><a class="headerlink" href="#_CPPv4N7fdModel7accu_vzE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel8accu_txxE">
+<span id="_CPPv3N7fdModel8accu_txxE"></span><span id="_CPPv2N7fdModel8accu_txxE"></span><span id="fdModel::accu_txx__real_simulationPPPP"></span><span class="target" id="classfdModel_1a050de4834bd4958b7bf2685f9a9d43cf"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> ****<code class="sig-name descname">accu_txx</code><a class="headerlink" href="#_CPPv4N7fdModel8accu_txxE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel8accu_tzzE">
+<span id="_CPPv3N7fdModel8accu_tzzE"></span><span id="_CPPv2N7fdModel8accu_tzzE"></span><span id="fdModel::accu_tzz__real_simulationPPPP"></span><span class="target" id="classfdModel_1a36dcb145674a6da1bd0e535ae72eacf9"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> ****<code class="sig-name descname">accu_tzz</code><a class="headerlink" href="#_CPPv4N7fdModel8accu_tzzE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel8accu_txzE">
+<span id="_CPPv3N7fdModel8accu_txzE"></span><span id="_CPPv2N7fdModel8accu_txzE"></span><span id="fdModel::accu_txz__real_simulationPPPP"></span><span class="target" id="classfdModel_1ae112c767b1e15d6b7ffcb1fafb48e30e"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> ****<code class="sig-name descname">accu_txz</code><a class="headerlink" href="#_CPPv4N7fdModel8accu_txzE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel2ntE">
+<span id="_CPPv3N7fdModel2ntE"></span><span id="_CPPv2N7fdModel2ntE"></span><span id="fdModel::nt__i"></span><span class="target" id="classfdModel_1ac3a06c65bacf4fd73ff466a77929d049"></span>int <code class="sig-name descname">nt</code><a class="headerlink" href="#_CPPv4N7fdModel2ntE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel8nx_innerE">
+<span id="_CPPv3N7fdModel8nx_innerE"></span><span id="_CPPv2N7fdModel8nx_innerE"></span><span id="fdModel::nx_inner__i"></span><span class="target" id="classfdModel_1a4ed660e0d20c6f410008fe89e731f52a"></span>int <code class="sig-name descname">nx_inner</code><a class="headerlink" href="#_CPPv4N7fdModel8nx_innerE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel8nz_innerE">
+<span id="_CPPv3N7fdModel8nz_innerE"></span><span id="_CPPv2N7fdModel8nz_innerE"></span><span id="fdModel::nz_inner__i"></span><span class="target" id="classfdModel_1a771690ccc0fd9803fcd5efffdc1ff699"></span>int <code class="sig-name descname">nz_inner</code><a class="headerlink" href="#_CPPv4N7fdModel8nz_innerE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel17nx_inner_boundaryE">
+<span id="_CPPv3N7fdModel17nx_inner_boundaryE"></span><span id="_CPPv2N7fdModel17nx_inner_boundaryE"></span><span id="fdModel::nx_inner_boundary__i"></span><span class="target" id="classfdModel_1a0cdf4ad77b40a76d9e3472a94704d568"></span>int <code class="sig-name descname">nx_inner_boundary</code><a class="headerlink" href="#_CPPv4N7fdModel17nx_inner_boundaryE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel17nz_inner_boundaryE">
+<span id="_CPPv3N7fdModel17nz_inner_boundaryE"></span><span id="_CPPv2N7fdModel17nz_inner_boundaryE"></span><span id="fdModel::nz_inner_boundary__i"></span><span class="target" id="classfdModel_1abcdbd57b4c5990f6b71cc932d4f15edc"></span>int <code class="sig-name descname">nz_inner_boundary</code><a class="headerlink" href="#_CPPv4N7fdModel17nz_inner_boundaryE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel2dxE">
+<span id="_CPPv3N7fdModel2dxE"></span><span id="_CPPv2N7fdModel2dxE"></span><span id="fdModel::dx__real_simulation"></span><span class="target" id="classfdModel_1a17805ad69a7ea7c95f4f5dd13da99a95"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> <code class="sig-name descname">dx</code><a class="headerlink" href="#_CPPv4N7fdModel2dxE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel2dzE">
+<span id="_CPPv3N7fdModel2dzE"></span><span id="_CPPv2N7fdModel2dzE"></span><span id="fdModel::dz__real_simulation"></span><span class="target" id="classfdModel_1a41931554f61ada2e07e0d15f302ca39c"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> <code class="sig-name descname">dz</code><a class="headerlink" href="#_CPPv4N7fdModel2dzE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel2dtE">
+<span id="_CPPv3N7fdModel2dtE"></span><span id="_CPPv2N7fdModel2dtE"></span><span id="fdModel::dt__real_simulation"></span><span class="target" id="classfdModel_1a00d79e7769931eb2a38e1e82b70106dd"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> <code class="sig-name descname">dt</code><a class="headerlink" href="#_CPPv4N7fdModel2dtE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel11np_boundaryE">
+<span id="_CPPv3N7fdModel11np_boundaryE"></span><span id="_CPPv2N7fdModel11np_boundaryE"></span><span id="fdModel::np_boundary__i"></span><span class="target" id="classfdModel_1ac3caf7760bcb45b29d8d8d40302b1655"></span>int <code class="sig-name descname">np_boundary</code><a class="headerlink" href="#_CPPv4N7fdModel11np_boundaryE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel9np_factorE">
+<span id="_CPPv3N7fdModel9np_factorE"></span><span id="_CPPv2N7fdModel9np_factorE"></span><span id="fdModel::np_factor__real_simulation"></span><span class="target" id="classfdModel_1a16b4b1b040cb728c18251ae40629a640"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> <code class="sig-name descname">np_factor</code><a class="headerlink" href="#_CPPv4N7fdModel9np_factorE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel10scalar_rhoE">
+<span id="_CPPv3N7fdModel10scalar_rhoE"></span><span id="_CPPv2N7fdModel10scalar_rhoE"></span><span id="fdModel::scalar_rho__real_simulation"></span><span class="target" id="classfdModel_1ad32e07fd8f446cc39778cb95433f1867"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> <code class="sig-name descname">scalar_rho</code><a class="headerlink" href="#_CPPv4N7fdModel10scalar_rhoE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel9scalar_vpE">
+<span id="_CPPv3N7fdModel9scalar_vpE"></span><span id="_CPPv2N7fdModel9scalar_vpE"></span><span id="fdModel::scalar_vp__real_simulation"></span><span class="target" id="classfdModel_1a1310e5dfe52929da721a85ad84a353b7"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> <code class="sig-name descname">scalar_vp</code><a class="headerlink" href="#_CPPv4N7fdModel9scalar_vpE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel9scalar_vsE">
+<span id="_CPPv3N7fdModel9scalar_vsE"></span><span id="_CPPv2N7fdModel9scalar_vsE"></span><span id="fdModel::scalar_vs__real_simulation"></span><span class="target" id="classfdModel_1a28ee63d5d5bfa5be7987506cd42399da"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> <code class="sig-name descname">scalar_vs</code><a class="headerlink" href="#_CPPv4N7fdModel9scalar_vsE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel9n_sourcesE">
+<span id="_CPPv3N7fdModel9n_sourcesE"></span><span id="_CPPv2N7fdModel9n_sourcesE"></span><span id="fdModel::n_sources__i"></span><span class="target" id="classfdModel_1ac3dac46f3e6d2f89c59a21d2e7f7758a"></span>int <code class="sig-name descname">n_sources</code><a class="headerlink" href="#_CPPv4N7fdModel9n_sourcesE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel7n_shotsE">
+<span id="_CPPv3N7fdModel7n_shotsE"></span><span id="_CPPv2N7fdModel7n_shotsE"></span><span id="fdModel::n_shots__i"></span><span class="target" id="classfdModel_1a2894388e008f4c001472d84e347bf3f6"></span>int <code class="sig-name descname">n_shots</code><a class="headerlink" href="#_CPPv4N7fdModel7n_shotsE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel34which_source_to_fire_in_which_shotE">
+<span id="_CPPv3N7fdModel34which_source_to_fire_in_which_shotE"></span><span id="_CPPv2N7fdModel34which_source_to_fire_in_which_shotE"></span><span id="fdModel::which_source_to_fire_in_which_shot__std::vector:std::vector:i::"></span><span class="target" id="classfdModel_1afcb2d4050c53359324b6d7c11208cca5"></span>std::vector&lt;std::vector&lt;int&gt;&gt; <code class="sig-name descname">which_source_to_fire_in_which_shot</code><a class="headerlink" href="#_CPPv4N7fdModel34which_source_to_fire_in_which_shotE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel21delay_cycles_per_shotE">
+<span id="_CPPv3N7fdModel21delay_cycles_per_shotE"></span><span id="_CPPv2N7fdModel21delay_cycles_per_shotE"></span><span id="fdModel::delay_cycles_per_shot__real_simulation"></span><span class="target" id="classfdModel_1a179aad8f9d9ae8b8f4bd2f281637b9cc"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> <code class="sig-name descname">delay_cycles_per_shot</code><a class="headerlink" href="#_CPPv4N7fdModel21delay_cycles_per_shotE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel10ix_sourcesE">
+<span id="_CPPv3N7fdModel10ix_sourcesE"></span><span id="_CPPv2N7fdModel10ix_sourcesE"></span><span id="fdModel::ix_sources__iP"></span><span class="target" id="classfdModel_1a30d7d56f2add1d1d37e4d13d9cd55a6c"></span>int *<code class="sig-name descname">ix_sources</code><a class="headerlink" href="#_CPPv4N7fdModel10ix_sourcesE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel10iz_sourcesE">
+<span id="_CPPv3N7fdModel10iz_sourcesE"></span><span id="_CPPv2N7fdModel10iz_sourcesE"></span><span id="fdModel::iz_sources__iP"></span><span class="target" id="classfdModel_1ab92fb3bf21d4b8ac4e10b69d28152eab"></span>int *<code class="sig-name descname">iz_sources</code><a class="headerlink" href="#_CPPv4N7fdModel10iz_sourcesE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel13moment_anglesE">
+<span id="_CPPv3N7fdModel13moment_anglesE"></span><span id="_CPPv2N7fdModel13moment_anglesE"></span><span id="fdModel::moment_angles__real_simulationP"></span><span class="target" id="classfdModel_1aee27ba27868f504aca7a705ce6a01917"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> *<code class="sig-name descname">moment_angles</code><a class="headerlink" href="#_CPPv4N7fdModel13moment_anglesE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel14peak_frequencyE">
+<span id="_CPPv3N7fdModel14peak_frequencyE"></span><span id="_CPPv2N7fdModel14peak_frequencyE"></span><span id="fdModel::peak_frequency__real_simulation"></span><span class="target" id="classfdModel_1a40656c3225ebf8cb70397d94f07b2201"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> <code class="sig-name descname">peak_frequency</code><a class="headerlink" href="#_CPPv4N7fdModel14peak_frequencyE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel5alphaE">
+<span id="_CPPv3N7fdModel5alphaE"></span><span id="_CPPv2N7fdModel5alphaE"></span><span id="fdModel::alpha__real_simulation"></span><span class="target" id="classfdModel_1a529ec16cb8316218728d9fd752da9cc2"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> <code class="sig-name descname">alpha</code><a class="headerlink" href="#_CPPv4N7fdModel5alphaE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel2t0E">
+<span id="_CPPv3N7fdModel2t0E"></span><span id="_CPPv2N7fdModel2t0E"></span><span id="fdModel::t0__real_simulation"></span><span class="target" id="classfdModel_1a2cbeab89335cc97907ff81ffbc2dab1c"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> <code class="sig-name descname">t0</code><a class="headerlink" href="#_CPPv4N7fdModel2t0E" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel2nrE">
+<span id="_CPPv3N7fdModel2nrE"></span><span id="_CPPv2N7fdModel2nrE"></span><span id="fdModel::nr__i"></span><span class="target" id="classfdModel_1a69525cac4b7e1da097f445972358b58f"></span>int <code class="sig-name descname">nr</code><a class="headerlink" href="#_CPPv4N7fdModel2nrE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel12ix_receiversE">
+<span id="_CPPv3N7fdModel12ix_receiversE"></span><span id="_CPPv2N7fdModel12ix_receiversE"></span><span id="fdModel::ix_receivers__iP"></span><span class="target" id="classfdModel_1a6fb842e6324a044df6e9c7da8e4dbc05"></span>int *<code class="sig-name descname">ix_receivers</code><a class="headerlink" href="#_CPPv4N7fdModel12ix_receiversE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel12iz_receiversE">
+<span id="_CPPv3N7fdModel12iz_receiversE"></span><span id="_CPPv2N7fdModel12iz_receiversE"></span><span id="fdModel::iz_receivers__iP"></span><span class="target" id="classfdModel_1ac36504700c8b1945f72744a6db57aa20"></span>int *<code class="sig-name descname">iz_receivers</code><a class="headerlink" href="#_CPPv4N7fdModel12iz_receiversE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel17snapshot_intervalE">
+<span id="_CPPv3N7fdModel17snapshot_intervalE"></span><span id="_CPPv2N7fdModel17snapshot_intervalE"></span><span id="fdModel::snapshot_interval__i"></span><span class="target" id="classfdModel_1a871f447e5391b5fcb32ce29d16d52364"></span>int <code class="sig-name descname">snapshot_interval</code><a class="headerlink" href="#_CPPv4N7fdModel17snapshot_intervalE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel9snapshotsE">
+<span id="_CPPv3N7fdModel9snapshotsE"></span><span id="_CPPv2N7fdModel9snapshotsE"></span><span id="fdModel::snapshots__i"></span><span class="target" id="classfdModel_1a9805f8b27e43417a664866cf28540883"></span>int <code class="sig-name descname">snapshots</code><a class="headerlink" href="#_CPPv4N7fdModel9snapshotsE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel2nxE">
+<span id="_CPPv3N7fdModel2nxE"></span><span id="_CPPv2N7fdModel2nxE"></span><span id="fdModel::nx__i"></span><span class="target" id="classfdModel_1a1dd945255a995b356e25655dc1fa951c"></span>int <code class="sig-name descname">nx</code><a class="headerlink" href="#_CPPv4N7fdModel2nxE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel2nzE">
+<span id="_CPPv3N7fdModel2nzE"></span><span id="_CPPv2N7fdModel2nzE"></span><span id="fdModel::nz__i"></span><span class="target" id="classfdModel_1af5356dbf0aada2f4b378d0458c85676f"></span>int <code class="sig-name descname">nz</code><a class="headerlink" href="#_CPPv4N7fdModel2nzE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel18nx_free_parametersE">
+<span id="_CPPv3N7fdModel18nx_free_parametersE"></span><span id="_CPPv2N7fdModel18nx_free_parametersE"></span><span id="fdModel::nx_free_parameters__i"></span><span class="target" id="classfdModel_1ab1dfd378a083f3e5128423658fa186bc"></span>int <code class="sig-name descname">nx_free_parameters</code><a class="headerlink" href="#_CPPv4N7fdModel18nx_free_parametersE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel18nz_free_parametersE">
+<span id="_CPPv3N7fdModel18nz_free_parametersE"></span><span id="_CPPv2N7fdModel18nz_free_parametersE"></span><span id="fdModel::nz_free_parameters__i"></span><span class="target" id="classfdModel_1a62da17f3a8210d34aafa4fc447b063dd"></span>int <code class="sig-name descname">nz_free_parameters</code><a class="headerlink" href="#_CPPv4N7fdModel18nz_free_parametersE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel18basis_gridpoints_xE">
+<span id="_CPPv3N7fdModel18basis_gridpoints_xE"></span><span id="_CPPv2N7fdModel18basis_gridpoints_xE"></span><span id="fdModel::basis_gridpoints_x__i"></span><span class="target" id="classfdModel_1a2a9115963ec3e7637eca8ba366f3b1e2"></span>int <code class="sig-name descname">basis_gridpoints_x</code> = 1<a class="headerlink" href="#_CPPv4N7fdModel18basis_gridpoints_xE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel18basis_gridpoints_zE">
+<span id="_CPPv3N7fdModel18basis_gridpoints_zE"></span><span id="_CPPv2N7fdModel18basis_gridpoints_zE"></span><span id="fdModel::basis_gridpoints_z__i"></span><span class="target" id="classfdModel_1aeeed06ff546598b0e618b44c1af7688e"></span>int <code class="sig-name descname">basis_gridpoints_z</code> = 1<a class="headerlink" href="#_CPPv4N7fdModel18basis_gridpoints_zE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel15free_parametersE">
+<span id="_CPPv3N7fdModel15free_parametersE"></span><span id="_CPPv2N7fdModel15free_parametersE"></span><span id="fdModel::free_parameters__i"></span><span class="target" id="classfdModel_1a2fd17c930f37bc2b97e8eb633eb534e9"></span>int <code class="sig-name descname">free_parameters</code><a class="headerlink" href="#_CPPv4N7fdModel15free_parametersE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel6misfitE">
+<span id="_CPPv3N7fdModel6misfitE"></span><span id="_CPPv2N7fdModel6misfitE"></span><span id="fdModel::misfit__real_simulation"></span><span class="target" id="classfdModel_1ac998ae45481b5b1022a25e9910a848b7"></span><a class="reference internal" href="../index.html#_CPPv415real_simulation" title="real_simulation">real_simulation</a> <code class="sig-name descname">misfit</code><a class="headerlink" href="#_CPPv4N7fdModel6misfitE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel20observed_data_folderE">
+<span id="_CPPv3N7fdModel20observed_data_folderE"></span><span id="_CPPv2N7fdModel20observed_data_folderE"></span><span id="fdModel::observed_data_folder__ss"></span><span class="target" id="classfdModel_1a75e7a45947d9d1edc0f46ac8a8aca718"></span>std::string <code class="sig-name descname">observed_data_folder</code><a class="headerlink" href="#_CPPv4N7fdModel20observed_data_folderE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt id="_CPPv4N7fdModel10stf_folderE">
+<span id="_CPPv3N7fdModel10stf_folderE"></span><span id="_CPPv2N7fdModel10stf_folderE"></span><span id="fdModel::stf_folder__ss"></span><span class="target" id="classfdModel_1a0e7d365d5c46a9e814b3576dc2e9a467"></span>std::string <code class="sig-name descname">stf_folder</code><a class="headerlink" href="#_CPPv4N7fdModel10stf_folderE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+</div>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../configuration.html" class="btn btn-neutral float-right" title="Configuration files" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../index.html" class="btn btn-neutral float-left" title="C++ API reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2018-2020, Lars Gebraad
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
