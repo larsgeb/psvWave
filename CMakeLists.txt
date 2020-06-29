@@ -13,6 +13,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 add_executable(test_file_constructor tests/test_file_constructor.cpp src/fdModel.cpp src/contiguous_arrays.h src/fdModel.h)
 add_executable(test_variable_constructor tests/test_variable_constructor.cpp src/fdModel.cpp src/contiguous_arrays.h src/fdModel.h)
 add_executable(test_constructor_comparison tests/test_constructor_comparison.cpp src/fdModel.cpp src/contiguous_arrays.h src/fdModel.h)
+add_executable(test_copy_constructor tests/test_copy_constructor.cpp src/fdModel.cpp src/contiguous_arrays.h src/fdModel.h)
 
 # Create the python extension
 add_library(psvWave_cpp SHARED src/psvWave.cpp src/fdModel.cpp src/contiguous_arrays.h src/fdModel.h)
