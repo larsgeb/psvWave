@@ -148,9 +148,9 @@ try:
         g = model.get_gradient_vector()
 
         # Amplify Vp gradient
-        g[0:10800] *= 1000
+        g[0:10800] *= 100
 
-        m -= 0.2 * g
+        m -= 0.25 * g
         model.set_model_vector(m)
 
         fields_during_iteration.append(list(model.get_parameter_fields()))
@@ -207,65 +207,65 @@ plt.show()
 
 # Bonus: Animating a wavefield ------------------------------------------------
 
-fig = plt.figure(figsize=(4, 10))
-ax = plt.subplot(211)
-ax2 = plt.subplot(212)
-plt.xlabel("x [m]")
-plt.ylabel("z [m]")
+# fig = plt.figure(figsize=(4, 10))
+# ax = plt.subplot(211)
+# ax2 = plt.subplot(212)
+# plt.xlabel("x [m]")
+# plt.ylabel("z [m]")
 
-vx, _, _, _, _ = model.get_snapshots()
-vx = vx[0, :, :, :]
+# vx, _, _, _, _ = model.get_snapshots()
+# vx = vx[0, :, :, :]
 
-# Get the receivers
-rx, rz = model.get_receivers()
+# # Get the receivers
+# rx, rz = model.get_receivers()
 
-dt = model.dt
-nt = vx.shape[0]
-snapshot_interval = model.snapshot_interval
-abswave = numpy.max(numpy.abs(vx)) / 25
+# dt = model.dt
+# nt = vx.shape[0]
+# snapshot_interval = model.snapshot_interval
+# abswave = numpy.max(numpy.abs(vx)) / 25
 
-extent = (extent[0], extent[1], extent[3], extent[2])
+# extent = (extent[0], extent[1], extent[3], extent[2])
 
-t = numpy.linspace(0, dt * nt * snapshot_interval, nt * snapshot_interval)
-
-
-def animate(i):
-    z1 = vx[int(i), :, :].T
-    ax.cla()
-    ax.set_xlabel("x [m]")
-    ax.set_ylabel("z [m]")
-    ax.scatter(rx, rz, color="k", marker="v")
-
-    ax.text(-5, -5, f"Time: {i * dt * snapshot_interval:.3f}")
-    im1 = ax.imshow(
-        z1, vmin=-abswave, vmax=abswave, cmap=plt.get_cmap("PRGn"), extent=extent,
-    )
-    ax.invert_yaxis()
-
-    ax2.cla()
-    ax2.set_ylim([0, t[-1]])
-
-    ax2.set_xlim(ax.get_xlim())
-
-    for ir in range(19):
-        ln1 = ax2.plot(
-            ux[0, ir, : i * snapshot_interval] / 100 + rx[ir],
-            t[: i * snapshot_interval],
-            "k",
-            alpha=0.5,
-        )
-        ln1 = ax2.plot(
-            uz[0, ir, : i * snapshot_interval] / 100 + rx[ir],
-            t[: i * snapshot_interval],
-            "k",
-            alpha=0.5,
-        )
-    ax2.invert_yaxis()
-    ax2.set_xlabel("x [m]")
-    ax2.set_ylabel("t [s]")
-    plt.tight_layout()
-    return im1, ln1
+# t = numpy.linspace(0, dt * nt * snapshot_interval, nt * snapshot_interval)
 
 
-anim = animation.FuncAnimation(fig, animate, frames=nt, interval=1)
-anim.save("video.mp4")
+# def animate(i):
+#     z1 = vx[int(i), :, :].T
+#     ax.cla()
+#     ax.set_xlabel("x [m]")
+#     ax.set_ylabel("z [m]")
+#     ax.scatter(rx, rz, color="k", marker="v")
+
+#     ax.text(-5, -5, f"Time: {i * dt * snapshot_interval:.3f}")
+#     im1 = ax.imshow(
+#         z1, vmin=-abswave, vmax=abswave, cmap=plt.get_cmap("PRGn"), extent=extent,
+#     )
+#     ax.invert_yaxis()
+
+#     ax2.cla()
+#     ax2.set_ylim([0, t[-1]])
+
+#     ax2.set_xlim(ax.get_xlim())
+
+#     for ir in range(19):
+#         ln1 = ax2.plot(
+#             ux[0, ir, : i * snapshot_interval] / 100 + rx[ir],
+#             t[: i * snapshot_interval],
+#             "k",
+#             alpha=0.5,
+#         )
+#         ln1 = ax2.plot(
+#             uz[0, ir, : i * snapshot_interval] / 100 + rx[ir],
+#             t[: i * snapshot_interval],
+#             "k",
+#             alpha=0.5,
+#         )
+#     ax2.invert_yaxis()
+#     ax2.set_xlabel("x [m]")
+#     ax2.set_ylabel("t [s]")
+#     plt.tight_layout()
+#     return im1, ln1
+
+
+# anim = animation.FuncAnimation(fig, animate, frames=nt, interval=1)
+# anim.save("video.mp4")

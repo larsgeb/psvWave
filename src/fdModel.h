@@ -45,11 +45,36 @@ public:
   //!  parse_configuration() method.
   explicit fdModel(const char *configuration_file_relative_path);
 
+  fdModel(const int nt, const int nx_inner, const int nz_inner,
+          const int nx_inner_boundary, const int nz_inner_boundary,
+          const real_simulation dx, const real_simulation dz, const real_simulation dt,
+          const int np_boundary, const real_simulation np_factor,
+          const real_simulation scalar_rho, const real_simulation scalar_vp,
+          const real_simulation scalar_vs, const int npx, const int npz,
+          const real_simulation peak_frequency, const real_simulation source_timeshift,
+          const real_simulation delay_cycles_per_shot, const int n_sources,
+          const int n_shots, const std::vector<int> ix_sources_vector,
+          const std::vector<int> iz_sources_vector,
+          const std::vector<real_simulation> moment_angles_vector,
+          const std::vector<std::vector<int>> which_source_to_fire_in_which_shot,
+          const int nr, const std::vector<int> ix_receivers_vector,
+          const std::vector<int> iz_receivers_vector, const int snapshot_interval,
+          const std::string observed_data_folder, const std::string stf_folder);
   //!  \brief Destructor for the class.
   //!
   //!  The destructor properly addresses every used new keyword in the
   //!  constructor, freeing all memory.
   ~fdModel();
+
+  void allocate_memory();
+
+  void initialize_arrays();
+
+  void parse_parameters(const std::vector<int> ix_sources_vector,
+                        const std::vector<int> iz_sources_vector,
+                        const std::vector<real_simulation> moment_angles_vector,
+                        const std::vector<int> ix_receivers_vector,
+                        const std::vector<int> iz_receivers_vector);
 
   // ---- METHODS ----
   //!  \brief Method that parses .ini configuration file. Only used in
@@ -57,7 +82,7 @@ public:
   //!
   //!  @param configuration_file_relative_path Relative path to the configuration
   //!  .ini file.
-  void parse_configuration(const char *configuration_file_relative_path);
+  void parse_configuration_file(const char *configuration_file_relative_path);
 
   //!  \brief Method to forward simulate wavefields for a specific shot.
   //!

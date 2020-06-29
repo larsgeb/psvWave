@@ -17,9 +17,88 @@ fdModel::fdModel(const char *configuration_file_relative_path) {
   // --- Initialization section ---
 
   // Parse configuration from supplied file
-  parse_configuration(configuration_file_relative_path);
+  parse_configuration_file(configuration_file_relative_path);
 
   // Allocate all fields dynamically (grouped by type)
+  allocate_memory();
+
+  initialize_arrays();
+}
+
+fdModel::fdModel(
+    const int nt, const int nx_inner, const int nz_inner, const int nx_inner_boundary,
+    const int nz_inner_boundary, const real_simulation dx, const real_simulation dz,
+    const real_simulation dt, const int np_boundary, const real_simulation np_factor,
+    const real_simulation scalar_rho, const real_simulation scalar_vp,
+    const real_simulation scalar_vs, const int npx, const int npz,
+    const real_simulation peak_frequency, const real_simulation source_timeshift,
+    const real_simulation delay_cycles_per_shot, const int n_sources, const int n_shots,
+    const std::vector<int> ix_sources_vector, const std::vector<int> iz_sources_vector,
+    const std::vector<real_simulation> moment_angles_vector,
+    const std::vector<std::vector<int>> which_source_to_fire_in_which_shot,
+    const int nr, const std::vector<int> ix_receivers_vector,
+    const std::vector<int> iz_receivers_vector, const int snapshot_interval,
+    const std::string observed_data_folder, const std::string stf_folder)
+    : nt(nt), nx_inner(nx_inner), nz_inner(nz_inner),
+      nx_inner_boundary(nx_inner_boundary), nz_inner_boundary(nz_inner_boundary),
+      dx(dx), dz(dz), dt(dt), np_boundary(np_boundary), np_factor(np_factor),
+      scalar_rho(scalar_rho), scalar_vp(scalar_vp), scalar_vs(scalar_vs),
+      basis_gridpoints_x(npx), basis_gridpoints_z(npz), peak_frequency(peak_frequency),
+      t0(source_timeshift), delay_cycles_per_shot(delay_cycles_per_shot),
+      n_sources(n_sources), n_shots(n_shots),
+      which_source_to_fire_in_which_shot(which_source_to_fire_in_which_shot), nr(nr),
+      snapshot_interval(snapshot_interval), observed_data_folder(observed_data_folder),
+      stf_folder(stf_folder) {
+
+  parse_parameters(ix_sources_vector, iz_sources_vector, moment_angles_vector,
+                   ix_receivers_vector, iz_receivers_vector);
+
+  // Allocate all fields dynamically (grouped by type)
+  allocate_memory();
+
+  initialize_arrays();
+}
+
+fdModel::~fdModel() {
+  deallocate_array(vx);
+  deallocate_array(vz);
+  deallocate_array(txx);
+  deallocate_array(tzz);
+  deallocate_array(txz);
+  deallocate_array(lm);
+  deallocate_array(la);
+  deallocate_array(mu);
+  deallocate_array(b_vx);
+  deallocate_array(b_vz);
+  deallocate_array(rho);
+  deallocate_array(vp);
+  deallocate_array(vs);
+  deallocate_array(density_l_kernel);
+  deallocate_array(lambda_kernel);
+  deallocate_array(mu_kernel);
+  deallocate_array(vp_kernel);
+  deallocate_array(vs_kernel);
+  deallocate_array(density_v_kernel);
+  deallocate_array(starting_rho);
+  deallocate_array(starting_vp);
+  deallocate_array(starting_vs);
+  deallocate_array(taper);
+  deallocate_array(t);
+  deallocate_array(stf);
+  deallocate_array(moment);
+  deallocate_array(accu_vx);
+  deallocate_array(accu_vz);
+  deallocate_array(accu_txx);
+  deallocate_array(accu_tzz);
+  deallocate_array(accu_txz);
+  deallocate_array(ix_receivers);
+  deallocate_array(iz_receivers);
+  deallocate_array(ix_sources);
+  deallocate_array(iz_sources);
+  deallocate_array(moment_angles);
+}
+
+void fdModel::allocate_memory() {
   allocate_array(vx, nx, nz);
   allocate_array(vz, nx, nz);
   allocate_array(txx, nx, nz);
@@ -57,6 +136,9 @@ fdModel::fdModel(const char *configuration_file_relative_path) {
   allocate_array(accu_txx, n_shots, snapshots, nx, nz);
   allocate_array(accu_tzz, n_shots, snapshots, nx, nz);
   allocate_array(accu_txz, n_shots, snapshots, nx, nz);
+}
+
+void fdModel::initialize_arrays() {
 
   // Place sources/receivers inside the domain if required
   if (add_np_to_receiver_location) {
@@ -141,113 +223,34 @@ fdModel::fdModel(const char *configuration_file_relative_path) {
           exp(-pow(np_factor * (np_boundary - taper[ix][iz]), 2)));
     }
   }
-
-  // Check if the amount of snapshots satisfies the other parameters.
-  if (floor(double(nt) / snapshot_interval) != snapshots) {
-    throw std::length_error("Snapshot interval and size of accumulator don't match!");
-  }
 }
 
-fdModel::~fdModel() {
-  deallocate_array(vx);
-  deallocate_array(vz);
-  deallocate_array(txx);
-  deallocate_array(tzz);
-  deallocate_array(txz);
-  deallocate_array(lm);
-  deallocate_array(la);
-  deallocate_array(mu);
-  deallocate_array(b_vx);
-  deallocate_array(b_vz);
-  deallocate_array(rho);
-  deallocate_array(vp);
-  deallocate_array(vs);
-  deallocate_array(density_l_kernel);
-  deallocate_array(lambda_kernel);
-  deallocate_array(mu_kernel);
-  deallocate_array(vp_kernel);
-  deallocate_array(vs_kernel);
-  deallocate_array(density_v_kernel);
-  deallocate_array(starting_rho);
-  deallocate_array(starting_vp);
-  deallocate_array(starting_vs);
-  deallocate_array(taper);
-  deallocate_array(t);
-  deallocate_array(stf);
-  deallocate_array(moment);
-  deallocate_array(accu_vx);
-  deallocate_array(accu_vz);
-  deallocate_array(accu_txx);
-  deallocate_array(accu_tzz);
-  deallocate_array(accu_txz);
-}
-
-void fdModel::parse_configuration(const char *configuration_file_relative_path) {
-  std::cout << "Loading configuration file: '" << configuration_file_relative_path
-            << "'." << std::endl;
-
-  INIReader reader(configuration_file_relative_path);
-  if (reader.ParseError() < 0) {
-    std::cout << "Can't load .ini file\n";
-    exit(1);
-  }
-
-  // Domain
-  nt = reader.GetInteger("domain", "nt", 1000);
-  nx_inner = reader.GetInteger("domain", "nx_inner", 200);
-  nz_inner = reader.GetInteger("domain", "nz_inner", 100);
-  nx_inner_boundary = reader.GetInteger("domain", "nx_inner_boundary", 10);
-  nz_inner_boundary = reader.GetInteger("domain", "nz_inner_boundary", 20);
-  dx = reader.GetReal("domain", "dx", 1.249);
-  dz = reader.GetReal("domain", "dz", 1.249);
-  dt = reader.GetReal("domain", "dt", 0.00025);
-
-  // Boundary
-  np_boundary = reader.GetInteger("boundary", "np_boundary", 10);
-  np_factor = reader.GetReal("boundary", "np_factor", 0.075);
+void fdModel::parse_parameters(const std::vector<int> ix_sources_vector,
+                               const std::vector<int> iz_sources_vector,
+                               const std::vector<real_simulation> moment_angles_vector,
+                               const std::vector<int> ix_receivers_vector,
+                               const std::vector<int> iz_receivers_vector) {
+  std::cout << "Parsing passed configuration." << std::endl;
 
   nx = nx_inner + np_boundary * 2;
   nz = nz_inner + np_boundary * 2;
   nx_free_parameters = nx_inner - nx_inner_boundary * 2;
   nz_free_parameters = nz_inner - nz_inner_boundary * 2;
 
-  // Default medium
-  scalar_rho = reader.GetReal("medium", "scalar_rho", 1500.0);
-  scalar_vp = reader.GetReal("medium", "scalar_vp", 2000.0);
-  scalar_vs = reader.GetReal("medium", "scalar_vs", 800.0);
-
   // Basis functions
-  basis_gridpoints_x = reader.GetInteger("basis", "npx", 1);
-  basis_gridpoints_z = reader.GetInteger("basis", "npz", 1);
   assert(nx_free_parameters % basis_gridpoints_x == 0 and
          nz_free_parameters % basis_gridpoints_z == 0);
   free_parameters = 3 * nx_free_parameters * nz_free_parameters /
                     (basis_gridpoints_x * basis_gridpoints_z);
 
-  // Sources
-  peak_frequency = reader.GetReal("sources", "peak_frequency", 50.0);
-  t0 = reader.GetReal("sources", "source_timeshift", 0.005);
-  delay_cycles_per_shot = reader.GetReal("sources", "delay_cycles_per_shot", 12);
-  n_sources = reader.GetInteger("sources", "n_sources", 7);
-  n_shots = reader.GetInteger("sources", "n_shots", 1);
   // Parse source setup.
   ix_sources = new int[n_sources];
   iz_sources = new int[n_sources];
   moment_angles = new real_simulation[n_sources];
-  std::vector<int> ix_sources_vector;
-  std::vector<int> iz_sources_vector;
-  std::vector<real_simulation> moment_angles_vector;
-  parse_string_to_vector(
-      reader.Get("sources", "ix_sources", "{25, 50, 75, 100, 125, 150, 175};"),
-      &ix_sources_vector);
-  parse_string_to_vector(
-      reader.Get("sources", "iz_sources", "{10, 10, 10, 10, 10, 10, 10};"),
-      &iz_sources_vector);
-  parse_string_to_vector(
-      reader.Get("sources", "moment_angles", "{90, 81, 41, 300, 147, 252, 327};"),
-      &moment_angles_vector);
+
   if (ix_sources_vector.size() != n_sources or iz_sources_vector.size() != n_sources or
       moment_angles_vector.size() != n_sources) {
+    // TODO I should probably reformat this into an exception, not an exit.
     std::cout << "Dimension mismatch between n_sources and sources.ix_sources, "
                  "sources.iz_sources or sources.moment_angles"
               << std::endl;
@@ -259,11 +262,8 @@ void fdModel::parse_configuration(const char *configuration_file_relative_path) 
     moment_angles[i_source] = moment_angles_vector[i_source];
   }
   // Parse source stacking
-  parse_string_to_nested_int_vector(reader.Get("sources",
-                                               "which_source_to_fire_in_which_shot",
-                                               "{{0, 1, 2, 3, 4, 5, 6}};"),
-                                    &which_source_to_fire_in_which_shot);
   if (which_source_to_fire_in_which_shot.size() != n_shots) {
+    // TODO I should probably reformat this into an exception, not an exit.
     std::cout << "Mismatch between n_shots and "
                  "sources.which_source_to_fire_in_which_shot"
               << std::endl;
@@ -274,30 +274,19 @@ void fdModel::parse_configuration(const char *configuration_file_relative_path) 
     total_sources += shot_sources.size();
   }
   if (total_sources != n_sources) {
+    // TODO I should probably reformat this into an exception, not an exit.
     std::cout << "Mismatch between n_sources and "
                  "sources.which_source_to_fire_in_which_shot"
               << std::endl;
     exit(1);
   }
 
-  // Receivers
-  nr = reader.GetInteger("receivers", "nr", 19);
+  // Receivers geometry
   ix_receivers = new int[nr];
   iz_receivers = new int[nr];
-  std::vector<int> ix_receivers_vector;
-  std::vector<int> iz_receivers_vector;
-  parse_string_to_vector(
-      reader.Get("receivers", "ix_receivers",
-                 "{10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, "
-                 "140, 150, 160, 170, 180}; !!"),
-      &ix_receivers_vector);
-  parse_string_to_vector(
-      reader.Get("receivers", "iz_receivers",
-                 "{90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, "
-                 "90, 90, 90, 90}; !!"),
-      &iz_receivers_vector);
 
   if (ix_receivers_vector.size() != nr or iz_receivers_vector.size() != nr) {
+    // TODO I should probably reformat this into an exception, not an exit.
     std::cout << "Mismatch between nr and receivers.ix_receivers or "
                  "receivers.iz_receivers"
               << std::endl;
@@ -308,16 +297,69 @@ void fdModel::parse_configuration(const char *configuration_file_relative_path) 
     iz_receivers[i_receiver] = iz_receivers_vector[i_receiver];
   }
 
-  // Inversion
-  snapshot_interval = reader.GetInteger("inversion", "snapshot_interval", 10);
-
-  // Output
-  observed_data_folder = reader.Get("output", "observed_data_folder", ".");
-  stf_folder = reader.Get("output", "stf_folder", ".");
-
   // Final calculations
   alpha = static_cast<real_simulation>(1.0 / peak_frequency);
   snapshots = ceil(nt / snapshot_interval);
+
+  // Check if the amount of snapshots satisfies the other parameters.
+  if (floor(double(nt) / snapshot_interval) != snapshots) {
+    throw std::length_error("Snapshot interval and size of accumulator don't match!");
+  }
+}
+
+void fdModel::parse_configuration_file(const char *configuration_file_relative_path) {
+  std::cout << "Loading configuration file: '" << configuration_file_relative_path
+            << "'." << std::endl;
+
+  INIReader reader(configuration_file_relative_path);
+  if (reader.ParseError() < 0) {
+    // TODO Throw error instead of exit
+    std::cout << "Can't load .ini file\n";
+    exit(1);
+  }
+
+  // Domain
+  nt = reader.GetInteger("domain", "nt");
+  nx_inner = reader.GetInteger("domain", "nx_inner");
+  nz_inner = reader.GetInteger("domain", "nz_inner");
+  nx_inner_boundary = reader.GetInteger("domain", "nx_inner_boundary");
+  nz_inner_boundary = reader.GetInteger("domain", "nz_inner_boundary");
+  dx = reader.GetReal("domain", "dx");
+  dz = reader.GetReal("domain", "dz");
+  dt = reader.GetReal("domain", "dt");
+  np_boundary = reader.GetInteger("boundary", "np_boundary");
+  np_factor = reader.GetReal("boundary", "np_factor");
+  scalar_rho = reader.GetReal("medium", "scalar_rho");
+  scalar_vp = reader.GetReal("medium", "scalar_vp");
+  scalar_vs = reader.GetReal("medium", "scalar_vs");
+  basis_gridpoints_x = reader.GetInteger("basis", "npx");
+  basis_gridpoints_z = reader.GetInteger("basis", "npz");
+  peak_frequency = reader.GetReal("sources", "peak_frequency");
+  t0 = reader.GetReal("sources", "source_timeshift");
+  delay_cycles_per_shot = reader.GetReal("sources", "delay_cycles_per_shot");
+  n_sources = reader.GetInteger("sources", "n_sources");
+  n_shots = reader.GetInteger("sources", "n_shots");
+  std::vector<int> ix_sources_vector;
+  std::vector<int> iz_sources_vector;
+  std::vector<real_simulation> moment_angles_vector;
+  parse_string_to_vector(reader.Get("sources", "ix_sources"), &ix_sources_vector);
+  parse_string_to_vector(reader.Get("sources", "iz_sources"), &iz_sources_vector);
+  parse_string_to_vector(reader.Get("sources", "moment_angles"), &moment_angles_vector);
+  parse_string_to_nested_int_vector(
+      reader.Get("sources", "which_source_to_fire_in_which_shot"),
+      &which_source_to_fire_in_which_shot);
+  nr = reader.GetInteger("receivers", "nr");
+  std::vector<int> ix_receivers_vector;
+  std::vector<int> iz_receivers_vector;
+  parse_string_to_vector(reader.Get("receivers", "ix_receivers"), &ix_receivers_vector);
+  parse_string_to_vector(reader.Get("receivers", "iz_receivers"), &iz_receivers_vector);
+  snapshot_interval = reader.GetInteger("inversion", "snapshot_interval");
+  observed_data_folder = reader.Get("output", "observed_data_folder");
+  stf_folder = reader.Get("output", "stf_folder");
+
+  // Parse the read parameters
+  parse_parameters(ix_sources_vector, iz_sources_vector, moment_angles_vector,
+                   ix_receivers_vector, iz_receivers_vector);
 }
 
 // Forward modeller
