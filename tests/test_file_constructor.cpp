@@ -10,19 +10,17 @@
 #include <omp.h>
 #include <tgmath.h>
 
-int main(int argc, char **argv) {
+int main() {
   std::cout << "Maximum amount of OpenMP threads:" << omp_get_max_threads()
-            << std::endl
             << std::endl;
 
-  auto configuration_file = argv[1];
+  auto conf_file = "../tests/test_configurations/default_testing_configuration.ini";
 
-  auto *model = new fdModel(configuration_file);
+  auto *model = new fdModel(conf_file);
 
   auto startTime = omp_get_wtime();
   int n_tests = 5;
-  std::cout << "Running forward simulation " << n_tests << " times."
-            << std::endl;
+  std::cout << "Running forward simulation " << n_tests << " times." << std::endl;
   auto deterministic_sum = new real_simulation[n_tests];
 
   for (int i_test = 0; i_test < n_tests; ++i_test) {
@@ -41,20 +39,22 @@ int main(int argc, char **argv) {
     }
   }
   auto endTime = omp_get_wtime();
-  std::cout << "Elapsed time for all forward wave simulations: "
-            << endTime - startTime << std::endl;
+  std::cout << "Elapsed time for all forward wave simulations: " << endTime - startTime
+            << std::endl;
 
   model->write_receivers();
   model->write_sources();
 
   // Check deterministic output
-  for (unsigned i = 0; i < n_tests; i++) {
+  for (int i = 0; i < n_tests; i++) {
     if (deterministic_sum[i] != deterministic_sum[0]) {
+      std::cout << "Simulations were not consistent. The test failed." << std::endl
+                << std::endl;
       exit(1);
     }
   }
-  std::cout
-      << "All simulations produced the same seismograms. The test succeeded."
-      << std::endl;
+  std::cout << "All simulations produced the same seismograms. The test succeeded."
+            << std::endl
+            << std::endl;
   exit(0);
 }
