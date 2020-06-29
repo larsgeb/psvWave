@@ -19,7 +19,7 @@ int main() {
   auto *model = new fdModel(conf_file);
 
   auto startTime = omp_get_wtime();
-  int n_tests = 5;
+  int n_tests = 2;
   std::cout << "Running forward simulation " << n_tests << " times." << std::endl;
   auto deterministic_sum = new real_simulation[n_tests];
 

@@ -25,6 +25,7 @@ jobs:
         - ./test_file_constructor
         - ./test_variable_constructor
     - stage: test-python
+      script:
         - pyenv global 3.7
         - python --version
         - wget -qO- https://bootstrap.pypa.io/get-pip.py | python
