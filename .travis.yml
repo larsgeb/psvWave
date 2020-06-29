@@ -21,9 +21,9 @@ jobs:
         - make test_constructor_comparison
         - make test_file_constructor
         - make test_variable_constructor
-        - test_constructor_comparison
-        - test_file_constructor
-        - test_variable_constructor
+        - ./test_constructor_comparison
+        - ./test_file_constructor
+        - ./test_variable_constructor
     - stage: test-python
         - pyenv global 3.7
         - python --version
