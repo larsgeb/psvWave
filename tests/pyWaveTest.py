@@ -37,7 +37,7 @@ plt.subplot(312)
 plt.imshow(vs.T, extent=extent, vmin=600, vmax=1000, cmap=cmap)
 plt.subplot(313)
 plt.imshow(rho.T, extent=extent, vmin=1200, vmax=1800, cmap=cmap)
-plt.show()
+plt.close()
 
 vp_target = vp
 vs_target = vs
@@ -92,7 +92,7 @@ for i in range(ux_obs.shape[1]):
 
 plt.plot(m_ux[0, :, :].T, "r", label="synthetic", alpha=0.5)
 plt.plot(m_ux_obs[0, :, :].T, "k", label="observed", alpha=0.5)
-plt.show()
+plt.close()
 
 # Perform adjoint simulation --------------------------------------------------
 
@@ -130,7 +130,7 @@ for i in range(3):
     plt.colorbar()
 
 plt.tight_layout()
-plt.show()
+plt.close()
 
 # Start iterating -------------------------------------------------------------
 
@@ -203,7 +203,7 @@ def animate(j):
 
 
 anim = animation.FuncAnimation(fig, animate, frames=iterations, interval=10)
-plt.show()
+plt.close()
 
 # Bonus: Animating a wavefield ------------------------------------------------
 
