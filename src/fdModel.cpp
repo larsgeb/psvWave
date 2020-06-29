@@ -59,6 +59,40 @@ fdModel::fdModel(
   initialize_arrays();
 }
 
+fdModel::fdModel(const fdModel &model)
+    : nt(model.nt), nx_inner(model.nx_inner), nz_inner(model.nz_inner),
+      nx_inner_boundary(model.nx_inner_boundary),
+      nz_inner_boundary(model.nz_inner_boundary), dx(model.dx), dz(model.dz),
+      dt(model.dt), np_boundary(model.np_boundary), np_factor(model.np_factor),
+      scalar_rho(model.scalar_rho), scalar_vp(model.scalar_vp),
+      scalar_vs(model.scalar_vs), basis_gridpoints_x(model.basis_gridpoints_x),
+      basis_gridpoints_z(model.basis_gridpoints_z),
+      peak_frequency(model.peak_frequency), t0(model.t0),
+      delay_cycles_per_shot(model.delay_cycles_per_shot), n_sources(model.n_sources),
+      n_shots(model.n_shots),
+      which_source_to_fire_in_which_shot(model.which_source_to_fire_in_which_shot),
+      nr(model.nr), snapshot_interval(model.snapshot_interval),
+      observed_data_folder(model.observed_data_folder), stf_folder(model.stf_folder) {
+
+  std::vector<int> ix_sources_vector(model.ix_sources,
+                                     model.ix_sources + model.n_sources);
+  std::vector<int> iz_sources_vector(model.iz_sources,
+                                     model.iz_sources + model.n_sources);
+  std::vector<real_simulation> moment_angles_vector(
+      model.moment_angles, model.moment_angles + model.n_sources);
+  std::vector<int> ix_receivers_vector(model.ix_receivers,
+                                       model.ix_receivers + model.nr);
+  std::vector<int> iz_receivers_vector(model.iz_receivers,
+                                       model.iz_receivers + model.nr);
+
+  parse_parameters(ix_sources_vector, iz_sources_vector, moment_angles_vector,
+                   ix_receivers_vector, iz_receivers_vector);
+
+  allocate_memory();
+
+  copy_arrays(model);
+}
+
 fdModel::~fdModel() {
   deallocate_array(vx);
   deallocate_array(vz);
@@ -221,6 +255,82 @@ void fdModel::initialize_arrays() {
     for (int iz = 0; iz < nz; ++iz) {
       taper[ix][iz] = static_cast<real_simulation>(
           exp(-pow(np_factor * (np_boundary - taper[ix][iz]), 2)));
+    }
+  }
+}
+
+void fdModel::copy_arrays(const fdModel &model) {
+
+#pragma omp parallel for collapse(2)
+  for (int ix = 0; ix < nx; ix++) {
+    for (int iz = 0; iz < nz; iz++) {
+      vx[ix][iz] = model.vx[ix][iz];
+      vz[ix][iz] = model.vz[ix][iz];
+      txx[ix][iz] = model.txx[ix][iz];
+      tzz[ix][iz] = model.tzz[ix][iz];
+      txz[ix][iz] = model.txz[ix][iz];
+      lm[ix][iz] = model.lm[ix][iz];
+      la[ix][iz] = model.la[ix][iz];
+      mu[ix][iz] = model.mu[ix][iz];
+      b_vx[ix][iz] = model.b_vx[ix][iz];
+      b_vz[ix][iz] = model.b_vz[ix][iz];
+      rho[ix][iz] = model.rho[ix][iz];
+      vp[ix][iz] = model.vp[ix][iz];
+      vs[ix][iz] = model.vs[ix][iz];
+      density_l_kernel[ix][iz] = model.density_l_kernel[ix][iz];
+      lambda_kernel[ix][iz] = model.lambda_kernel[ix][iz];
+      mu_kernel[ix][iz] = model.mu_kernel[ix][iz];
+      vp_kernel[ix][iz] = model.vp_kernel[ix][iz];
+      vs_kernel[ix][iz] = model.vs_kernel[ix][iz];
+      density_v_kernel[ix][iz] = model.density_v_kernel[ix][iz];
+      starting_rho[ix][iz] = model.starting_rho[ix][iz];
+      starting_vp[ix][iz] = model.starting_vp[ix][iz];
+      starting_vs[ix][iz] = model.starting_vs[ix][iz];
+      taper[ix][iz] = model.taper[ix][iz];
+
+#pragma omp parallel for collapse(2)
+      for (int i_shot = 0; i_shot < n_shots; i_shot++) {
+        for (int i_snapshot = 0; i_snapshot < snapshots; i_snapshot++) {
+          accu_vx[i_shot][i_snapshot][ix][iz] =
+              model.accu_vx[i_shot][i_snapshot][ix][iz];
+          accu_vz[i_shot][i_snapshot][ix][iz] =
+              model.accu_vz[i_shot][i_snapshot][ix][iz];
+          accu_txx[i_shot][i_snapshot][ix][iz] =
+              model.accu_txx[i_shot][i_snapshot][ix][iz];
+          accu_tzz[i_shot][i_snapshot][ix][iz] =
+              model.accu_tzz[i_shot][i_snapshot][ix][iz];
+          accu_txz[i_shot][i_snapshot][ix][iz] =
+              model.accu_txz[i_shot][i_snapshot][ix][iz];
+        }
+      }
+    }
+  }
+#pragma omp parallel for collapse(1)
+  for (int it = 0; it < nt; it++) {
+    t[it] = model.t[it];
+    for (int i_source = 0; i_source < n_sources; i_source++) {
+      stf[i_source][it] = model.stf[i_source][it];
+    }
+  }
+#pragma omp parallel for collapse(3)
+  for (int i_source = 0; i_source < n_sources; i_source++) {
+    for (int mi_ = 0; mi_ < 2; mi_++) {
+      for (int m_j = 0; m_j < 2; m_j++) {
+        moment[i_source][mi_][m_j] = model.moment[i_source][mi_][m_j];
+      }
+    }
+  }
+#pragma omp parallel for collapse(3)
+  for (int i_shot = 0; i_shot < n_shots; i_shot++) {
+    for (int ir = 0; ir < nr; ir++) {
+      for (int it = 0; it < nt; it++) {
+        rtf_ux[i_shot][ir][it] = model.rtf_ux[i_shot][ir][it];
+        rtf_uz[i_shot][ir][it] = model.rtf_uz[i_shot][ir][it];
+        rtf_ux_true[i_shot][ir][it] = model.rtf_ux_true[i_shot][ir][it];
+        rtf_uz_true[i_shot][ir][it] = model.rtf_uz_true[i_shot][ir][it];
+        a_stf_ux[i_shot][ir][it] = model.a_stf_ux[i_shot][ir][it];
+        a_stf_uz[i_shot][ir][it] = model.a_stf_uz[i_shot][ir][it];
+      }
     }
   }
 }
@@ -1145,8 +1255,8 @@ dynamic_vector fdModel::get_gradient_vector() {
               vs_kernel[gix + sub_ix][giz + sub_iz]; // / (basis_gridpoints_x *
                                                      // basis_gridpoints_z);
           g[i_parameter + 2 * n_free_per_par] +=
-              density_v_kernel[gix + sub_ix][giz + sub_iz]; //  / (basis_gridpoints_x *
-                                                            //  basis_gridpoints_z);
+              density_v_kernel[gix + sub_ix][giz + sub_iz]; //  / (basis_gridpoints_x
+                                                            //  * basis_gridpoints_z);
         }
       }
     }

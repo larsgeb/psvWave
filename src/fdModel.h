@@ -60,6 +60,9 @@ public:
           const int nr, const std::vector<int> ix_receivers_vector,
           const std::vector<int> iz_receivers_vector, const int snapshot_interval,
           const std::string observed_data_folder, const std::string stf_folder);
+
+  fdModel(const fdModel &model);
+
   //!  \brief Destructor for the class.
   //!
   //!  The destructor properly addresses every used new keyword in the
@@ -69,6 +72,7 @@ public:
   void allocate_memory();
 
   void initialize_arrays();
+  void copy_arrays(const fdModel &model);
 
   void parse_parameters(const std::vector<int> ix_sources_vector,
                         const std::vector<int> iz_sources_vector,
