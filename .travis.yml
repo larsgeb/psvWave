@@ -13,13 +13,29 @@ addons:
 
 jobs:
   include:
-    - stage: installation
+    - stage: build-dependencies
       script:
         - pyenv global 3.7
         - wget -qO- https://bootstrap.pypa.io/get-pip.py | python
         - python --version
+        - python -m pip install numpy
+        - python -m pip install cmake
+        - python -m pip install pybind11
+    - stage: build-cmake
+      script:
+        - mkdir build
+        - cd build
+        - cmake ..
+        - make all
+        - cd ..
+    - stage: run-tests
+    script:
+        - build/test_constructor_comparison
+        - build/test_file_constructor
+        - build/test_variable_constructor
+    - stage: python-installation
         - python -m pip install -e .[dev]
-    - stage: deploy
+    - stage: python-deploy
       if: branch = master AND tag IS present
       script:
         - python setup.py bdist_wheel
