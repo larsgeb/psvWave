@@ -61,7 +61,7 @@ class CMakeBuild(build_ext):
 
         import pybind11
 
-        extension = get_config_vars()["EXT_SUFFIX"]
+        suffix = get_config_vars()["EXT_SUFFIX"]
         python_includes = get_paths()["include"]
         pybind_includes = pybind11.get_include()
 
@@ -75,7 +75,7 @@ class CMakeBuild(build_ext):
             "-DPYTHON_EXECUTABLE=" + sys.executable,
             "-DPYBIND_INCLUDES=" + pybind_includes,
             "-DPYTHON_INCLUDES=" + python_includes,
-            "-DEXTENSION=" + extension,
+            "-DSUFFIX=" + suffix,
         ]
 
         cfg = "Debug" if self.debug else "Release"
@@ -109,11 +109,13 @@ class CMakeBuild(build_ext):
             stdout=subprocess.PIPE,
         )
 
-        result = out.communicate()
-        print(result)
+        result = out.communicate()[0]
+
+        print(result.decode())
 
         out = subprocess.Popen(
-            ["cmake", "--build", "."] + build_args, cwd=self.build_temp
+            ["cmake", "--build", ".", "--target", "psvWave_cpp"] + build_args,
+            cwd=self.build_temp,
         )
 
         result = out.communicate()
