@@ -147,7 +147,7 @@ setup(
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.7",
-    install_requires=["numpy", "cmake", "pybind11", "matplotlib"],
+    install_requires=["numpy", "cmake", "pybind11"],
     extras_require={
         "dev": [
             "numpy",
@@ -155,6 +155,7 @@ setup(
             "pybind11",
             "matplotlib",
             "black",
+            "pytest",
             "setuptools",
             "matplotlib",
             "versioneer",

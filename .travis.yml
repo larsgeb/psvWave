@@ -32,8 +32,8 @@ jobs:
         - python --version
         - wget -qO- https://bootstrap.pypa.io/get-pip.py | python
         - python -m pip install -e .[dev]
-        - cd tests
-        - python pyWaveTest.py
+        - cd tests/python
+        - pytest
     - stage: python-deploy
       if: branch = master AND tag IS present
       script:

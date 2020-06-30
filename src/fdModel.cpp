@@ -360,11 +360,9 @@ void fdModel::parse_parameters(const std::vector<int> ix_sources_vector,
 
   if (ix_sources_vector.size() != n_sources or iz_sources_vector.size() != n_sources or
       moment_angles_vector.size() != n_sources) {
-    // TODO I should probably reformat this into an exception, not an exit.
-    std::cout << "Dimension mismatch between n_sources and sources.ix_sources, "
-                 "sources.iz_sources or sources.moment_angles"
-              << std::endl;
-    exit(1);
+    throw std::invalid_argument(
+        "Dimension mismatch between n_sources and sources.ix_sources, "
+        "sources.iz_sources or sources.moment_angles");
   }
   for (int i_source = 0; i_source < n_sources; ++i_source) {
     ix_sources[i_source] = ix_sources_vector[i_source];
@@ -373,22 +371,16 @@ void fdModel::parse_parameters(const std::vector<int> ix_sources_vector,
   }
   // Parse source stacking
   if (which_source_to_fire_in_which_shot.size() != n_shots) {
-    // TODO I should probably reformat this into an exception, not an exit.
-    std::cout << "Mismatch between n_shots and "
-                 "sources.which_source_to_fire_in_which_shot"
-              << std::endl;
-    exit(1);
+    throw std::invalid_argument(
+        "Mismatch between n_shots and sources.which_source_to_fire_in_which_shot");
   }
   int total_sources = 0;
   for (const auto &shot_sources : which_source_to_fire_in_which_shot) {
     total_sources += shot_sources.size();
   }
   if (total_sources != n_sources) {
-    // TODO I should probably reformat this into an exception, not an exit.
-    std::cout << "Mismatch between n_sources and "
-                 "sources.which_source_to_fire_in_which_shot"
-              << std::endl;
-    exit(1);
+    throw std::invalid_argument(
+        "Mismatch between n_sources and sources.which_source_to_fire_in_which_shot.");
   }
 
   // Receivers geometry
@@ -396,11 +388,8 @@ void fdModel::parse_parameters(const std::vector<int> ix_sources_vector,
   iz_receivers = new int[nr];
 
   if (ix_receivers_vector.size() != nr or iz_receivers_vector.size() != nr) {
-    // TODO I should probably reformat this into an exception, not an exit.
-    std::cout << "Mismatch between nr and receivers.ix_receivers or "
-                 "receivers.iz_receivers"
-              << std::endl;
-    exit(1);
+    throw std::invalid_argument(
+        "Mismatch between nr and receivers.ix_receivers or receivers.iz_receivers");
   }
   for (int i_receiver = 0; i_receiver < nr; ++i_receiver) {
     ix_receivers[i_receiver] = ix_receivers_vector[i_receiver];
@@ -423,9 +412,7 @@ void fdModel::parse_configuration_file(const char *configuration_file_relative_p
 
   INIReader reader(configuration_file_relative_path);
   if (reader.ParseError() < 0) {
-    // TODO Throw error instead of exit
-    std::cout << "Can't load .ini file\n";
-    exit(1);
+    throw std::invalid_argument("Can't load .ini file.");
   }
 
   // Domain
@@ -1040,7 +1027,8 @@ void fdModel::load_model(const std::string &de_path, const std::string &vp_path,
       iter++;
 
       if (!de_file.good() or !vp_file.good() or !vs_file.good()) {
-        exit(0);
+        throw std::invalid_argument("Received bad state of one of the files at end of "
+                                    "reading. Does the data match the domain?");
       }
     }
   }
