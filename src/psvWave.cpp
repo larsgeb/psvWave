@@ -321,6 +321,11 @@ public:
     copy_data(rtf_uz[0][0], ptr_uz, buffer_size);
   }
 
+  fdModelExtended *copy() {
+    // std::cout << "Returning" << std::endl;
+    return std::move(new fdModelExtended(*this));
+  }
+
   void set_observed_data(py::array_t<real_simulation> ux,
                          py::array_t<real_simulation> uz) {
     // Get buffer information for the passed arrays
@@ -362,6 +367,10 @@ PYBIND11_MODULE(__psvWave_cpp, m) {
     :param configuration_file_path: Path to the desired configuration.
 )mydelimiter")
       .def(py::init<const char *>())
+      .def("copy", &fdModelExtended::copy,
+           "copy() -> psvWave.fdModel\n"
+           "\n"
+           "Returns a copy of the object, duplicating all members.")
       .def("forward_simulate", &fdModelExtended::forward_simulate_explicit_threads,
            py::arg("i_shot"), py::arg("store_fields") = true,
            py::arg("verbose") = false, py::arg("output_wavefields") = false,
