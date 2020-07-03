@@ -2,6 +2,7 @@
 
 #include <pybind11/eigen.h>
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -291,6 +292,34 @@ public:
 
     return py::make_tuple(x_receivers, z_receivers);
   }
+  py::tuple get_sources(bool in_units, bool include_absorbing_boundary_as_index) {
+    // Create new arrays
+    py::array_t<real_simulation> x_sources(py::buffer_info(
+        nullptr, sizeof(real_simulation),
+        py::format_descriptor<real_simulation>::format(), 1,
+        std::vector<ssize_t>{n_sources}, std::vector<size_t>{sizeof(real_simulation)}));
+    py::array_t<real_simulation> z_sources(py::buffer_info(
+        nullptr, sizeof(real_simulation),
+        py::format_descriptor<real_simulation>::format(), 1,
+        std::vector<ssize_t>{n_sources}, std::vector<size_t>{sizeof(real_simulation)}));
+
+    copy_data_cast((real_simulation *)x_sources.request().ptr, ix_sources, n_sources);
+
+    copy_data_cast((real_simulation *)z_sources.request().ptr, iz_sources, n_sources);
+
+    if (!include_absorbing_boundary_as_index || in_units) {
+      for (int ir = 0; ir < n_sources; ir++) {
+        ((real_simulation *)x_sources.request().ptr)[ir] -= np_boundary;
+        ((real_simulation *)z_sources.request().ptr)[ir] -= np_boundary;
+        if (in_units) {
+          ((real_simulation *)x_sources.request().ptr)[ir] *= dx;
+          ((real_simulation *)z_sources.request().ptr)[ir] *= dz;
+        }
+      }
+    }
+
+    return py::make_tuple(x_sources, z_sources);
+  }
 
   void set_synthetic_data(py::array_t<real_simulation> ux,
                           py::array_t<real_simulation> uz) {
@@ -455,6 +484,18 @@ PYBIND11_MODULE(__psvWave_cpp, m) {
       .def_readonly("dt", &fdModelExtended::dt, "Time discretization")
       .def_readonly("dz", &fdModelExtended::dz, "Vertical discretization")
       .def_readonly("dx", &fdModelExtended::dx, "Horizontal discretization")
+      .def_readonly("nt", &fdModelExtended::nt, "Total time points")
+      .def_readonly("nz", &fdModelExtended::nz,
+                    "Total vertical points, including boundary layer")
+      .def_readonly("nx", &fdModelExtended::nx,
+                    "Total horizontal points, including boundary layer")
+      .def_readonly("nx_free_parameters", &fdModelExtended::nx_free_parameters)
+      .def_readonly("nz_free_parameters", &fdModelExtended::nz_free_parameters)
+      .def_readonly("nx_inner", &fdModelExtended::nx_inner)
+      .def_readonly("nz_inner", &fdModelExtended::nz_inner)
+      .def_readonly("nx_inner_boundary", &fdModelExtended::nx_inner_boundary)
+      .def_readonly("nz_inner_boundary", &fdModelExtended::nz_inner_boundary)
+      .def_readonly("np_boundary", &fdModelExtended::np_boundary)
       .def_readonly("free_parameters", &fdModelExtended::free_parameters,
                     "Total free parameters in the model, vp, vs, rho combined.")
       .def_readonly("snapshot_interval", &fdModelExtended::snapshot_interval,
@@ -469,8 +510,13 @@ PYBIND11_MODULE(__psvWave_cpp, m) {
       .def("get_synthetic_data", &fdModelExtended::get_synthetic_data)
       .def("get_observed_data", &fdModelExtended::get_observed_data)
       .def_readonly("n_shots", &fdModelExtended::n_shots, "Number of shots")
+      .def_readonly("which_source_to_fire_in_which_shot",
+                    &fdModelExtended::which_source_to_fire_in_which_shot,
+                    "Which source fires in which shot.")
       .def("set_synthetic_data", &fdModelExtended::set_synthetic_data)
       .def("set_observed_data", &fdModelExtended::set_observed_data)
+      .def("get_sources", &fdModelExtended::get_sources, py::arg("in_units") = true,
+           py::arg("include_absorbing_boundary_as_index") = true)
       .def("get_receivers", &fdModelExtended::get_receivers, py::arg("in_units") = true,
            py::arg("include_absorbing_boundary_as_index") = true,
            "get_receivers(in_units: bool, include_absorbing_boundary_as_index: bool) "
