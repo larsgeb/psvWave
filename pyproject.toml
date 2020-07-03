@@ -1,2 +1,2 @@
 [build-system]
-requires = ["setuptools>=40.8.0", "wheel", "cmake", "pybind11"]
+requires = ["setuptools>=40.8.0", "wheel", "cmake", "pybind11", "matplotlib"]

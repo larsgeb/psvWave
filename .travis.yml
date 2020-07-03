@@ -33,7 +33,7 @@ jobs:
         - wget -qO- https://bootstrap.pypa.io/get-pip.py | python
         - python -m pip install -e .[dev]
         - cd tests/python
-        - pytest
+        - python -m pytest
     - stage: python-deploy
       if: branch = master AND tag IS present
       script:
