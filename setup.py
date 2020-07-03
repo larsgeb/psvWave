@@ -24,8 +24,8 @@ class CleanCommand(Command):
 
     def run(self):
         os.system(
-            "rm -vrf ./build ./dist ./*.pyc ./*.tgz ./*.egg-info ./psvWave/*.so "
-            "__pycache__/"
+            "rm -vrf ./build ./dist ./*.pyc ./*.tgz ./*.egg-info ./psvWave/*.so ./*.so "
+            "__pycache__/ .pytest_cache/ psvWave/__pycache__/"
         )
 
 
@@ -150,15 +150,20 @@ setup(
     install_requires=["numpy", "cmake", "pybind11", "matplotlib"],
     extras_require={
         "dev": [
+            # Runtime
             "numpy",
+            "matplotlib",
+            # Build
             "cmake",
             "pybind11",
-            "matplotlib",
-            "black",
+            # Test
             "pytest",
+            # Development
             "setuptools",
-            "matplotlib",
+            "black",
+            "flake8",
             "versioneer",
+            # Documentation
             "sphinx",
             "sphinx_rtd_theme",
             "breathe",
