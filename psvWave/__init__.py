@@ -23,8 +23,6 @@ fdModel.parameters = [
 ]
 
 # Class methods
-
-
 def _add_method(cls):
     def decorator(func):
         setattr(cls, func.__name__.strip("_"), func)
@@ -34,25 +32,119 @@ def _add_method(cls):
 
 
 @_add_method(fdModel)
+def get_dictionary():
+    domain = {}
+    boundary = {}
+    medium = {}
+    sources = {}
+    receivers = {}
+    inversion = {}
+    basis = {}
+    output = {}
+
+    domain["nt"] = 1000
+    domain["nx_inner"] = 100
+    domain["nz_inner"] = 100
+    domain["nx_inner_boundary"] = 10
+    domain["nz_inner_boundary"] = 10
+    domain["dx"] = 1.249
+    domain["dz"] = 1.249
+    domain["dt"] = 0.0002
+
+    boundary["np_boundary"] = 25
+    boundary["np_factor"] = 0.015
+
+    # [medium]; Default values for the simulated models if none are loaded
+    medium["scalar_rho"] = 1500.0
+    medium["scalar_vp"] = 2000.0
+    medium["scalar_vs"] = 800.0
+
+    # [sources]
+    sources["peak_frequency"] = 50.0
+    sources["n_sources"] = 2
+    sources["n_shots"] = 1
+    sources["source_timeshift"] = 0.005
+    sources["delay_cycles_per_shot"] = 24
+    sources["moment_angles"] = [90, 180]
+    sources["ix_sources"] = [10, 90]
+    sources["iz_sources"] = [10, 10]
+    sources["which_source_to_fire_in_which_shot"] = [[0, 1]]
+
+    # [receivers]
+    receivers["nr"] = 4
+    receivers["ix_receivers"] = [20, 40, 60, 80]
+    receivers["iz_receivers"] = [90, 90, 90, 90]
+
+    # [inversion]
+    inversion["snapshot_interval"] = 10
+
+    # [basis]
+    basis["npx"] = 1
+    basis["npz"] = 1
+
+    # [output]
+    output["observed_data_folder"] = "."
+    output["stf_folder"] = "."
+
+    return {
+        "domain": domain,
+        "boundary": boundary,
+        "medium": medium,
+        "sources": sources,
+        "receivers": receivers,
+        "inversion": inversion,
+        "basis": basis,
+        "output": output,
+    }
+
+
+import configparser
+
+
+@_add_method(fdModel)
+def write_dictionary(filename, dictionary):
+    config = configparser.ConfigParser()
+
+    for section, section_content in dictionary.items():
+        config.add_section(section)
+        for item_name, item_content in section_content.items():
+            config.set(
+                section,
+                item_name,
+                str(item_content).replace("[", "{").replace("]", "}"),
+            )
+
+    with open(filename, "w") as configfile:  # save
+        config.write(configfile)
+
+
+@_add_method(fdModel)
 def _plot_data(
-    self: fdModel, data: _Tuple[_numpy.ndarray, _numpy.ndarray], exagerration=5.0,
+    self: fdModel,
+    data: _Tuple[_numpy.ndarray, _numpy.ndarray],
+    exagerration=5.0,
 ):
     ux, uz = data
     n_shots = self.n_shots
     t = _numpy.arange(self.nt) * self.dt
     figure, axes = _plt.subplots(n_shots, 2, figsize=(8, 3 * n_shots))
-    if axes.shape.__len__() == 1:
-        axes = axes[:, None]
+
+    if axes.shape.__len__() == 1 or axes.shape == (2,):
+        axes = axes[None, :]
+
     max_amp = _numpy.max([ux, uz]) / exagerration
     for i_shot in range(n_shots):
+
         _ = axes[i_shot, 0].plot(
             t,
-            (ux[i_shot, :, :].T + max_amp * _numpy.arange(ux.shape[1])) / max_amp,
+            (ux[i_shot, :, :].T + max_amp * _numpy.arange(ux.shape[1]))
+            / max_amp,
             "r",
         )
         _ = axes[i_shot, 1].plot(
             t,
-            (uz[i_shot, :, :].T + max_amp * _numpy.arange(ux.shape[1])) / max_amp,
+            (uz[i_shot, :, :].T + max_amp * _numpy.arange(ux.shape[1]))
+            / max_amp,
             "r",
         )
         axes[i_shot, 0].set_title(f"horizontal displacement shot {i_shot}")
@@ -69,14 +161,16 @@ def _plot_data(
 @_add_method(fdModel)
 def _plot_synthetic_data(self: fdModel, exagerration=5.0):
     self.plot_data(
-        self.get_synthetic_data(), exagerration=exagerration,
+        self.get_synthetic_data(),
+        exagerration=exagerration,
     )
 
 
 @_add_method(fdModel)
 def _plot_observed_data(self: fdModel, exagerration=5.0):
     self.plot_data(
-        self.get_observed_data(), exagerration=exagerration,
+        self.get_observed_data(),
+        exagerration=exagerration,
     )
 
 
@@ -107,7 +201,12 @@ def _plot_domain(self: fdModel, axis=None, shot_to_plot=None):
     axis.set_aspect("equal")
 
     axis.scatter(
-        rx, rz, marker="v", s=5, c="k", label="receivers",
+        rx,
+        rz,
+        marker="v",
+        s=5,
+        c="k",
+        label="receivers",
     )
 
     if shot_to_plot is not None:
@@ -122,7 +221,12 @@ def _plot_domain(self: fdModel, axis=None, shot_to_plot=None):
             )
     else:
         axis.scatter(
-            sx, sz, marker="x", s=5, c="r", label="sources",
+            sx,
+            sz,
+            marker="x",
+            s=5,
+            c="r",
+            label="sources",
         )
 
     _plt.tight_layout()
@@ -148,7 +252,10 @@ def _plot_fields(
         fields = self.get_parameter_fields()
 
     for field in fields:
-        assert field.shape == (self.nx, self.nz,), "Field has the wrong shape"
+        assert field.shape == (
+            self.nx,
+            self.nz,
+        ), "Field has the wrong shape"
 
     extent = self.get_extent(True)
 
@@ -157,7 +264,12 @@ def _plot_fields(
 
         image = axis.imshow(
             fields[i].T,
-            extent=[extent[0], extent[1], extent[3], extent[2],],
+            extent=[
+                extent[0],
+                extent[1],
+                extent[3],
+                extent[2],
+            ],
             cmap=cmap,
             vmin=vmin[i],
             vmax=vmax[i],
@@ -167,6 +279,8 @@ def _plot_fields(
         cax = divider.append_axes("right", size="5%", pad=0.05)
         _plt.colorbar(image, cax=cax)
         cax.set_ylabel(f"{self.parameters[i]} [{self.units[i]}]")
+
+    return axes
 
 
 @_add_method(fdModel)
@@ -196,7 +310,12 @@ def _plot_model_vector(
             ),
         ] = (
             vector_splits[i]
-            .reshape((self.nz_free_parameters, self.nx_free_parameters,))
+            .reshape(
+                (
+                    self.nz_free_parameters,
+                    self.nx_free_parameters,
+                )
+            )
             .T
         )
 
