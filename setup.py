@@ -72,7 +72,7 @@ class CMakeBuild(build_ext):
 
         cmake_args = [
             "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=" + extdir,
-            "-DPYTHON_EXECUTABLE=" + sys.executable,
+            #"-DPYTHON_EXECUTABLE=" + sys.executable,
             "-DPYBIND_INCLUDES=" + pybind_includes,
             "-DPYTHON_INCLUDES=" + python_includes,
             "-DSUFFIX=" + suffix,
@@ -91,7 +91,6 @@ class CMakeBuild(build_ext):
         else:
             cmake_args += [
                 "-DCMAKE_BUILD_TYPE=" + cfg,
-                "-O3",
             ]
             build_args += ["--", "-j2"]
 
