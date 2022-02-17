@@ -131,5 +131,8 @@ def test_descent():
         m = model.get_model_vector()
         iterations = i
 
+    print(f"Misfit at start {misfits[0]}")
+    print(f"Misfit at end   {misfits[-1]}")
+
     assert misfits[0] > misfits[-1]
 
