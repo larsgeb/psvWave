@@ -7,6 +7,8 @@
 [![PyPI version](https://badge.fury.io/py/psvWave.svg)](https://pypi.org/project/psvWave/)
 [![](https://img.shields.io/badge/docs-latest-brightgreen)](https://larsgeb.github.io/psvWave/)
 
+[Check out the notebook here!](https://github.com/larsgeb/psvWave/blob/master/notebooks/L-BFGS%20FWI.ipynb)
+
 A Python/C++ package for 2D P-SV wave propagation using finite differences and OpenMP.
 This package was written to facilitate high-throughput numerical wave simulations for
 Monte Carlo simulation in Seismology.
