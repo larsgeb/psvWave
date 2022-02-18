@@ -26,6 +26,9 @@ Pull the docker image and start the notebook server on port 5123.
 
 ```bash
 docker run -it -p 5123:5123 larsgebraad/psvwave
+```
+If the docker is running: start the server by running:
+```bash
 ./start-server.sh
 ```
 
