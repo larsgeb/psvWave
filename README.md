@@ -20,6 +20,15 @@ however installation can be easily done through pip.
 Used as a PDE-simulation code for
 [this publication](https://doi.org/10.1029/2019JB018428).
 
+## Extremely quick start
+
+Pull the docker image and start the notebook server on port 5123.
+
+```bash
+docker run -it -p 5123:5123 larsgebraad/psvwave
+./start-server.sh
+```
+
 ## Installing the package
 
 There are many ways to install this package.
