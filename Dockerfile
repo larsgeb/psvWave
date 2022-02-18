@@ -38,5 +38,9 @@ ADD .  /home/psvWave
 RUN cd /home/psvWave && \
     pip install -e .
 
+RUN touch /home/start_server.sh && \
+    echo "cd psvWave/notebooks && jupyter notebook --allow-root --no-browser --port=5123 --ip=0.0.0.0" \
+    >> /home/start_server.sh && \
+    chmod +x /home/start_server.sh 
 
 CMD ["/bin/zsh" ]
