@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
-pip install breathe
-pip install htmlmin
-cd source/doxygen
-doxygen Doxyfile
-cd ../..
+doxygen ./source/doxygen/Doxyfile
 if make html ; then
     echo "make Sphinx succeeded"
 else
