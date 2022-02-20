@@ -1,0 +1,45 @@
+FROM condaforge/miniforge3 
+
+RUN apt-get --yes -qq update && \
+    apt-get --yes -qq upgrade && \
+    DEBIAN_FRONTEND=noninteractive \ 
+    apt-get --yes -qq install \
+                         build-essential \
+                         cmake \
+                         g++ \
+                         gcc \
+                         git \
+                         openmpi-bin \
+                         zsh && \
+    apt-get --yes -qq clean && \
+    rm -rf /var/lib/apt/lists/*
+
+
+SHELL ["/bin/bash", "-c"]
+
+RUN conda init bash
+RUN conda init zsh
+
+RUN mkdir /home/psvWave
+ADD .  /home/psvWave
+
+RUN conda create -n psvWave-dev python==3.9 && \
+    echo "conda activate psvWave-dev" >> $HOME/.zshrc && \
+    echo "conda activate psvWave-dev" >> $HOME/.bashrc
+SHELL ["conda", "run", "-n", "psvWave-dev", "/bin/bash", "-c"]
+
+# Dependencies for documentation building
+RUN apt-get --yes -qq update \
+ && apt-get --yes -qq upgrade \
+ && DEBIAN_FRONTEND=noninteractive \ 
+ apt-get --yes -qq install \
+                      pandoc \
+                      doxygen \
+ && apt-get --yes -qq clean \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN cd /home/psvWave && \
+    pip install -v -e .[dev]
+
+
+CMD ["/bin/zsh" ]

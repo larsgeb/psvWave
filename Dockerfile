@@ -1,46 +1,38 @@
 FROM condaforge/miniforge3
-WORKDIR /home
 
-RUN apt-get --yes -qq update \
- && apt-get --yes -qq upgrade \
- && DEBIAN_FRONTEND=noninteractive \ 
- apt-get --yes -qq install \
-                      build-essential \
-                      cmake \
-                      curl \
-                      g++ \
-                      gcc \
-                      gfortran \
-                      git \
-                      libblas-dev \
-                      liblapack-dev \
-                      libopenmpi-dev \
-                      openmpi-bin \
-                      wget \
-                      htop \
-                      nano \
-                      zsh \
- && apt-get --yes -qq clean \
- && rm -rf /var/lib/apt/lists/*
+RUN apt-get --yes -qq update && \
+    apt-get --yes -qq upgrade && \
+    DEBIAN_FRONTEND=noninteractive \ 
+    apt-get --yes -qq install \
+                         build-essential \
+                         cmake \
+                         g++ \
+                         gcc \
+                         git \
+                         openmpi-bin \
+                         zsh && \
+    apt-get --yes -qq clean && \
+    rm -rf /var/lib/apt/lists/*
 SHELL ["/bin/bash", "-c"]
 
 RUN conda init bash
 RUN conda init zsh
 
-RUN conda create -n psvWave python==3.9
-RUN echo "conda activate psvWave" >> $HOME/.zshrc
-RUN echo "conda activate psvWave" >> $HOME/.bashrc
-SHELL ["conda", "run", "-n", "psvWave", "/bin/bash", "-c"]
-
 RUN mkdir /home/psvWave
 ADD .  /home/psvWave
+
+RUN conda create -n psvWave python==3.9 && \
+    echo "conda activate psvWave" >> $HOME/.zshrc && \
+    echo "conda activate psvWave" >> $HOME/.bashrc
+SHELL ["conda", "run", "-n", "psvWave", "/bin/bash", "-c"]
+
 
 RUN cd /home/psvWave && \
     pip install -e .
 
-RUN touch /home/start_server.sh && \
-    echo "cd psvWave/notebooks && jupyter notebook --allow-root --no-browser --port=5123 --ip=0.0.0.0" \
-    >> /home/start_server.sh && \
-    chmod +x /home/start_server.sh 
 
-CMD ["/bin/zsh" ]
+
+CMD ["conda", "run", "--no-capture-output", "-n", "hmclab", "jupyter", \
+     "notebook", "--notebook-dir=hmclab/notebooks", "--ip=0.0.0.0", \
+     "--port=8888", "--allow-root", "--NotebookApp.token=''", \
+     "--NotebookApp.password='psvWave'", "--no-browser"]

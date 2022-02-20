@@ -1,0 +1,11 @@
+**/__pycache__
+**/*.h5
+**/*.npy
+**/Dockerfile*
+**/.git
+CMakeFiles
+CMakeCache.txt
+psvWave.egg-info
+dist
+build
+docs

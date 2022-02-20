@@ -38,6 +38,9 @@ class CMakeExtension(Extension):
 class CMakeBuild(build_ext):
     def run(self):
 
+        if platform.system() != "Linux":
+            raise RuntimeError("Windows and MacOS are not supported")
+
         try:
             out = subprocess.check_output(["cmake", "--version"])
             print(out)
@@ -47,13 +50,6 @@ class CMakeBuild(build_ext):
                 + ", ".join(e.name for e in self.extensions)
             )
 
-        if platform.system() == "Windows":
-            cmake_version = LooseVersion(
-                re.search(r"version\s*([\d.]+)", out.decode()).group(1)
-            )
-            if cmake_version < "3.1.0":
-                raise RuntimeError("CMake >= 3.1.0 is required on Windows")
-
         for ext in self.extensions:
             self.build_extension(ext)
 
@@ -61,6 +57,8 @@ class CMakeBuild(build_ext):
 
         import pybind11
 
+        # Set the right variables for PyBind. These are overwritten by env variables if
+        # defined, in CMakeLists.
         suffix = get_config_vars()["EXT_SUFFIX"]
         python_includes = get_paths()["include"]
         pybind_includes = pybind11.get_include()
@@ -81,23 +79,16 @@ class CMakeBuild(build_ext):
         cfg = "Debug" if self.debug else "Release"
         build_args = ["--config", cfg]
 
-        if platform.system() == "Windows":
-            cmake_args += [
-                "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(cfg.upper(), extdir)
-            ]
-            if sys.maxsize > 2**32:
-                cmake_args += ["-A", "x64"]
-            build_args += ["--", "/m"]
-        else:
-            cmake_args += [
-                "-DCMAKE_BUILD_TYPE=" + cfg,
-            ]
-            build_args += ["--", "-j2"]
+        cmake_args += [
+            "-DCMAKE_BUILD_TYPE=" + cfg,
+        ]
+        build_args += ["--", "-j2"]
 
         env = os.environ.copy()
         env["CXXFLAGS"] = '{} -DVERSION_INFO=\\"{}\\"'.format(
             env.get("CXXFLAGS", ""), self.distribution.get_version()
         )
+
         if not os.path.exists(self.build_temp):
             os.makedirs(self.build_temp)
 
@@ -118,7 +109,11 @@ class CMakeBuild(build_ext):
         )
 
         result = out.communicate()
-        print(result)
+
+        print(f"CMAKE RETURN {result}")
+
+        assert out.returncode is not None
+        assert out.returncode == 0
 
 
 with open("README.md", "r") as fh:
