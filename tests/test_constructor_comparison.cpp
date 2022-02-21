@@ -16,7 +16,7 @@ int main() {
 
   // Define test, should be the same set up as the configuration file:
   // "../tests/test_configurations/default_testing_configuration.ini"
-  auto conf_file = "../tests/test_configurations/default_testing_configuration.ini";
+  auto conf_file = "tests/test_configurations/default_testing_configuration.ini";
   int nt = 8000;
   int nx_inner = 200;
   int nz_inner = 100;

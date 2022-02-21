@@ -4,7 +4,7 @@ import numpy
 
 def test_descent():
     model = psvWave.fdModel(
-        "../../tests/test_configurations/default_testing_configuration.ini"
+        "tests/test_configurations/default_testing_configuration.ini"
     )
 
     # Create target model ---------------------------------------------------------
@@ -135,4 +135,3 @@ def test_descent():
     print(f"Misfit at end   {misfits[-1]}")
 
     assert misfits[0] > misfits[-1]
-

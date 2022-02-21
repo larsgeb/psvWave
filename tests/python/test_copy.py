@@ -4,7 +4,7 @@ import numpy
 
 def test_copy():
     model = psvWave.fdModel(
-        "../../tests/test_configurations/default_testing_configuration.ini"
+        "tests/test_configurations/default_testing_configuration.ini"
     )
 
     model2: psvWave.fdModel = model.copy()
@@ -12,7 +12,7 @@ def test_copy():
 
 def test_copy_modify():
     model1 = psvWave.fdModel(
-        "../../tests/test_configurations/default_testing_configuration.ini"
+        "tests/test_configurations/default_testing_configuration.ini"
     )
 
     model2: psvWave.fdModel = model1.copy()

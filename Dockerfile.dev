@@ -41,5 +41,6 @@ RUN apt-get --yes -qq update \
 RUN cd /home/psvWave && \
     pip install -v -e .[dev]
 
+WORKDIR /home/psvWave/
 
 CMD ["/bin/zsh" ]

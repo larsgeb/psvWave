@@ -14,7 +14,7 @@ int main() {
   std::cout << "Maximum amount of OpenMP threads:" << omp_get_max_threads()
             << std::endl;
 
-  auto conf_file = "../tests/test_configurations/default_testing_configuration.ini";
+  auto conf_file = "tests/test_configurations/default_testing_configuration.ini";
 
   auto *model = new fdModel(conf_file);
 

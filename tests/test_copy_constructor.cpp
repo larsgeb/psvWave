@@ -16,7 +16,7 @@ int main() {
 
   // Define test, should be the same set up as the configuration file:
   // "../tests/test_configurations/default_testing_configuration.ini"
-  auto conf_file = "../tests/test_configurations/default_testing_configuration.ini";
+  auto conf_file = "tests/test_configurations/default_testing_configuration.ini";
 
   auto *model_1 = new fdModel(conf_file);
 
