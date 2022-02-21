@@ -20,19 +20,28 @@ however installation can be easily done through pip.
 Used as a PDE-simulation code for
 [this publication](https://doi.org/10.1029/2019JB018428).
 
-## Extremely quick start
 
-Pull the docker image and start the notebook server on port 5123.
+## Extremely quick start using Docker
+
+The best way to run the code if you are not on Linux. Pull the docker image and start
+the notebook server on port 7999. Feel free to change the port 7999 to something of your
+preference.
 
 ```bash
-docker run -it -p 5123:5123 larsgebraad/psvwave
-```
-If the docker is running: start the server by running:
-```bash
-./start-server.sh
+docker run -it -p 7999:8888 larsgebraad/psvwave
 ```
 
-## Installing the package
+You can then navigate in your browser to `localhost:7999`. This starts you right off 
+with some fun notebooks! 
+
+Note that the notebooks assume you have 6 cores available for your docker. You can
+specify how many cores are available by starting the Docker the following way:
+
+```bash
+docker run -it --cpus=2 -p 7999:8888 larsgebraad/psvwave
+```
+
+## Installing the package using PyPi (pip)
 
 There are many ways to install this package.
 Installing directly from the PyPi archives is arguably the easiest:
@@ -49,52 +58,10 @@ To check if everything worked correctly, you can run the following in an interac
 ```
 
 If this raises an `ImportError`, the C++ packages have not correctly compiled and you
-are either on an unsupported system (Windows) or I have made a terrible mistake.
+are either on an unsupported system (Windows/MacOS) or I have made a terrible mistake.
 Please contact me in any case!
 
-You might also be tempted to install it from tags or another GitHub hash.
-This has the problem however that submodules are not automatically downloaded.
-If you still wish to install from the repo, you have to clone it to your machine first,
-and then also pull all the submodules:
-
-```bash
-git clone https://github.com/larsgeb/psvWave.git
-cd psvWave
-git submodule update --init --recursive
-```
-
-Afterwards you can ...
-
-1. directly install from this directory:
-
-   ```bash
-   pip install -e .
-   ```
-
-2. create a source distribution (uncompiled) and install it on _any_ machine:
-
-   ```bash
-   python setup.py sdist
-   cd dist
-   pip install psvWave-*.tar.gz # this will compile the C++ modules
-   ```
-
-3. create a binary wheel in which the compiled code is present and install it on
-   _similar_ machines:
-
-   ```bash
-   python setup.py bdist_wheel # this will compile the C++ modules
-   cd dist
-   pip install psvWave-*.whl
-   ```
-
-The main difference between 2 and 3 is that 2 doesn't compile the C++ code yet at the
-distribution stage.
-Option 3 does compile in this stage, and therefore might not work on machines with
-wildly different architectures.
-
-If you are really at the end of your rope, we can also send a precompiled wheel for the
-platform you're using.
+## Getting started
 
 ## Working with the configuration files
 
@@ -225,6 +192,51 @@ iz_receivers = {90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 
 [inversion]
 snapshot_interval = 10
 ```
+
+## Installing from GitHub
+
+You might also be tempted to install it from tags or another GitHub hash.
+This has the problem however that submodules are not automatically downloaded.
+If you still wish to install from the repo, you have to clone it to your machine first,
+and then also pull all the submodules:
+
+```bash
+git clone --recursive https://github.com/larsgeb/psvWave.git
+cd psvWave
+```
+
+Afterwards you can ...
+
+1. directly install from this directory:
+
+   ```bash
+   pip install -e .
+   ```
+
+2. create a source distribution (uncompiled) and install it on _any_ machine:
+
+   ```bash
+   python setup.py sdist
+   cd dist
+   pip install psvWave-*.tar.gz # this will compile the C++ modules
+   ```
+
+3. create a binary wheel in which the compiled code is present and install it on
+   _similar_ machines:
+
+   ```bash
+   python setup.py bdist_wheel # this will compile the C++ modules
+   cd dist
+   pip install psvWave-*.whl
+   ```
+
+The main difference between 2 and 3 is that 2 doesn't compile the C++ code yet at the
+distribution stage.
+Option 3 does compile in this stage, and therefore might not work on machines with
+wildly different architectures.
+
+If you are really at the end of your rope, we can also send a precompiled wheel for the
+platform you're using.
 
 ## Compiling the C++ interface
 
