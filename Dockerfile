@@ -30,9 +30,10 @@ SHELL ["conda", "run", "-n", "psvWave", "/bin/bash", "-c"]
 RUN cd /home/psvWave && \
     pip install -e .
 
+WORKDIR /home/psvWave/
 
 
-CMD ["conda", "run", "--no-capture-output", "-n", "hmclab", "jupyter", \
-     "notebook", "--notebook-dir=hmclab/notebooks", "--ip=0.0.0.0", \
-     "--port=8888", "--allow-root", "--NotebookApp.token=''", \
-     "--NotebookApp.password='psvWave'", "--no-browser"]
+CMD ["conda", "run", "--no-capture-output", "-n", "psvWave", "jupyter", \
+     "notebook", "--notebook-dir=./notebooks", "--ip=0.0.0.0", \
+     "--port=8888", "--allow-root", "--NotebookApp.token=", \
+     "--no-browser"]

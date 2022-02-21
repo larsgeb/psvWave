@@ -1,6 +1,6 @@
 **/__pycache__
 **/*.h5
-**/*.npy
+**/*dockerignore.npy
 **/Dockerfile*
 **/.git
 CMakeFiles
@@ -9,3 +9,4 @@ psvWave.egg-info
 dist
 build
 docs
+build_docker_images.sh
