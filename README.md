@@ -2,12 +2,13 @@
 
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/psvWave)
 [![Main GitHub Language](https://img.shields.io/github/languages/top/larsgeb/forward-virieux)](https://github.com/larsgeb/psvWave)
-[![Build Status](https://travis-ci.com/larsgeb/psvWave.svg?branch=master)](https://travis-ci.com/larsgeb/psvWave)
 [![GitHub](https://img.shields.io/github/license/larsgeb/psvWave?color=4dc71f)](https://github.com/larsgeb/psvWave/blob/master/LICENSE)
 [![PyPI version](https://badge.fury.io/py/psvWave.svg)](https://pypi.org/project/psvWave/)
 [![](https://img.shields.io/badge/docs-latest-brightgreen)](https://larsgeb.github.io/psvWave/)
 
 https://user-images.githubusercontent.com/21038893/155033663-5e22b5ee-1b2b-43eb-9aab-74bfd85f2a73.mp4
+
+![Gradients](https://user-images.githubusercontent.com/21038893/155048974-63ce3dd3-5c07-4650-a7f2-9c2105151642.png)
 
 [Check out the notebook here!](https://github.com/larsgeb/psvWave/blob/master/notebooks/L-BFGS%20FWI.ipynb)
 
