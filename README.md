@@ -9,6 +9,8 @@
 
 https://user-images.githubusercontent.com/21038893/155033663-5e22b5ee-1b2b-43eb-9aab-74bfd85f2a73.mp4
 
+![Gradients](https://user-images.githubusercontent.com/21038893/155048974-63ce3dd3-5c07-4650-a7f2-9c2105151642.png)
+
 [Check out the notebook here!](https://github.com/larsgeb/psvWave/blob/master/notebooks/L-BFGS%20FWI.ipynb)
 
 A Python/C++ package for 2D P-SV wave propagation using finite differences and OpenMP.
