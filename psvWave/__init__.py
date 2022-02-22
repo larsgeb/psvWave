@@ -165,7 +165,7 @@ def _plot_data(
 
 @_add_method(fdModel)
 def _plot_synthetic_data(self: fdModel, exagerration=5.0):
-    self.plot_data(
+    return self.plot_data(
         self.get_synthetic_data(),
         exagerration=exagerration,
     )
@@ -173,7 +173,7 @@ def _plot_synthetic_data(self: fdModel, exagerration=5.0):
 
 @_add_method(fdModel)
 def _plot_observed_data(self: fdModel, exagerration=5.0):
-    self.plot_data(
+    return self.plot_data(
         self.get_observed_data(),
         exagerration=exagerration,
     )
