@@ -2,7 +2,6 @@
 
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/psvWave)
 [![Main GitHub Language](https://img.shields.io/github/languages/top/larsgeb/forward-virieux)](https://github.com/larsgeb/psvWave)
-[![Build Status](https://travis-ci.com/larsgeb/psvWave.svg?branch=master)](https://travis-ci.com/larsgeb/psvWave)
 [![GitHub](https://img.shields.io/github/license/larsgeb/psvWave?color=4dc71f)](https://github.com/larsgeb/psvWave/blob/master/LICENSE)
 [![PyPI version](https://badge.fury.io/py/psvWave.svg)](https://pypi.org/project/psvWave/)
 [![](https://img.shields.io/badge/docs-latest-brightgreen)](https://larsgeb.github.io/psvWave/)
