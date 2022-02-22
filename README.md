@@ -5,12 +5,12 @@
 [![GitHub](https://img.shields.io/github/license/larsgeb/psvWave?color=4dc71f)](https://github.com/larsgeb/psvWave/blob/master/LICENSE)
 [![PyPI version](https://badge.fury.io/py/psvWave.svg)](https://pypi.org/project/psvWave/)
 [![](https://img.shields.io/badge/docs-latest-brightgreen)](https://larsgeb.github.io/psvWave/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6216312.svg)](https://doi.org/10.5281/zenodo.6216312)
 
 https://user-images.githubusercontent.com/21038893/155033663-5e22b5ee-1b2b-43eb-9aab-74bfd85f2a73.mp4
 
-![Gradients](https://user-images.githubusercontent.com/21038893/155048974-63ce3dd3-5c07-4650-a7f2-9c2105151642.png)
 
-[Check out the notebook here!](https://github.com/larsgeb/psvWave/blob/master/notebooks/L-BFGS%20FWI.ipynb)
+[Check out the notebooks here!](https://github.com/larsgeb/psvWave/blob/master/notebooks)
 
 A Python/C++ package for 2D P-SV wave propagation using finite differences and OpenMP.
 This package was written to facilitate high-throughput numerical wave simulations for

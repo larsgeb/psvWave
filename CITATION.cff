@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Gebraad"
+  given-names: "Lars"
+  orcid: "https://orcid.org/0000-0003-3736-1435"
+- family-names: "Fichtner"
+  given-names: "Andreas"
+  orcid: "https://orcid.org/0000-0003-3090-963X"
+title: "psvWave"
+version: 1.0
+doi: 10.5281/zenodo.6216311
+date-released: 2022-02-21
+url: "https://github.com/larsgeb/psvWave"
