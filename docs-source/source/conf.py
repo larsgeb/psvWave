@@ -45,7 +45,7 @@ extensions = [
     "sphinx.ext.githubpages",
     "sphinx.ext.mathjax",
     "breathe",
-    "m2r",
+    "m2r2",
 ]
 
 breathe_domain_by_extension = {"h": "cpp"}
