@@ -1,222 +1,64 @@
-
-
-<!DOCTYPE html>
-<html class="writer-html5" lang="en" >
-<head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <title>Typical workflow &mdash; psvWave de1b8a96f3e669a31aa56e650d7ffd15d17dd01e documentation</title>
-  
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-
-  
-  
-  
-  
-
-  
-  <!--[if lt IE 9]>
+<!DOCTYPE html><html class=writer-html5 lang=en> <head><meta charset=utf-8><meta name=generator content="Docutils 0.17.1: http://docutils.sourceforge.net/"><meta name=viewport content="width=device-width, initial-scale=1.0"><title>Typical FWI workflow &mdash; psvWave 74bfb8a901eff20e8c1eafefb967ba44dee5698d documentation</title><link rel=stylesheet href=_static/pygments.css type=text/css><link rel=stylesheet href=_static/css/theme.css type=text/css><!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/language_data.js"></script>
-        <script src="_static/add_class.js"></script>
-    
-    <script type="text/javascript" src="_static/js/theme.js"></script>
+  <![endif]--><script data-url_root=./ id=documentation_options src=_static/documentation_options.js></script><script src=_static/jquery.js></script><script src=_static/underscore.js></script><script src=_static/doctools.js></script><script src=_static/add_class.js></script><script src=_static/js/theme.js></script><link rel=index title=Index href=genindex.html><link rel=search title=Search href=search.html><link rel=next title="Python API reference" href=python/index.html><link rel=prev title=Homepage href=index.html></head> <body class=wy-body-for-nav> <div class=wy-grid-for-nav> <nav data-toggle=wy-nav-shift class=wy-nav-side> <div class=wy-side-scroll> <div class=wy-side-nav-search> <a href=index.html class="icon icon-home"> psvWave </a> <div class=version> 1.0 </div> <div role=search> <form id=rtd-search-form class=wy-form action=search.html method=get> <input type=text name=q placeholder="Search docs"> <input type=hidden name=check_keywords value=yes> <input type=hidden name=area value=default> </form> </div> </div><div class="wy-menu wy-menu-vertical" data-spy=affix role=navigation aria-label="Navigation menu"> <p class=caption role=heading><span class=caption-text>Table of contents</span></p> <ul class=current> <li class=toctree-l1><a class="reference internal" href=index.html>Homepage</a></li> <li class="toctree-l1 current"><a class="current reference internal" href=#>Typical FWI workflow</a></li> <li class=toctree-l1><a class="reference internal" href=python/index.html>Python API reference</a></li> <li class=toctree-l1><a class="reference internal" href=cpp/index.html>C++ API reference</a></li> <li class=toctree-l1><a class="reference internal" href=genindex.html>Index</a></li> </ul> </div> </div> </nav> <section data-toggle=wy-nav-shift class=wy-nav-content-wrap><nav class=wy-nav-top aria-label="Mobile navigation menu"> <i data-toggle=wy-nav-top class="fa fa-bars"></i> <a href=index.html>psvWave</a> </nav> <div class=wy-nav-content> <div class=rst-content> <div role=navigation aria-label="Page navigation"> <ul class=wy-breadcrumbs> <li><a href=index.html class="icon icon-home"></a> &raquo;</li> <li>Typical FWI workflow</li> <li class=wy-breadcrumbs-aside> <a href=_sources/typical-workflow.rst.txt rel=nofollow> View page source</a> </li> </ul> <hr> </div> <div role=main class=document itemscope=itemscope itemtype=http://schema.org/Article> <div itemprop=articleBody> <section id=typical-fwi-workflow> <h1>Typical FWI workflow<a class=headerlink href=#typical-fwi-workflow title="Permalink to this headline"></a></h1> <p>To perform full-waveform inversion, the following actions must be performed:</p> <ol class="arabic simple"> <li><p>Set some observed data (we did this in the previous cell)</p></li> <li><p>Forward simulate all sources</p></li> <li><p>Calculate the misfit</p></li> <li><p>Calculate the adjoint sources</p></li> <li><p>Empty the kernels (from any previous calculation)</p></li> <li><p>Adjoint simulate all sources</p></li> <li><p>Transform the sensitivity kernels (in Lamé’s paramters) to velocity</p></li> </ol> <p>In Notebook 2, these actions are described. If you simply want a class that combines everything, use the following code, given you have a fdModel instance stored in <cite>solver</cite>:</p> <div class="highlight-default notranslate"><div class=highlight><pre><span></span><span class=k>class</span> <span class=nc>_fwi</span><span class=p>:</span>
 
-    
-    <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Python API reference" href="python/index.html" />
-    <link rel="prev" title="Homepage" href="index.html" /> 
-</head>
+    <span class=n>last_model</span> <span class=o>=</span> <span class=n>numpy</span><span class=o>.</span><span class=n>empty_like</span><span class=p>(</span><span class=n>solver</span><span class=o>.</span><span class=n>get_model_vector</span><span class=p>())</span>
+    <span class=n>misfit</span> <span class=o>=</span> <span class=kc>None</span>
+    <span class=n>g</span> <span class=o>=</span> <span class=kc>None</span>
+    <span class=n>smoothing</span> <span class=o>=</span> <span class=kc>None</span>
 
-<body class="wy-body-for-nav">
+    <span class=k>def</span> <span class=fm>__init__</span><span class=p>(</span><span class=bp>self</span><span class=p>):</span>
+        <span class=k>pass</span>
 
-   
-  <div class="wy-grid-for-nav">
-    
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
-          
+    <span class=k>def</span> <span class=nf>misfit</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>m</span><span class=p>):</span>
 
-          
-            <a href="index.html" class="icon icon-home" alt="Documentation Home"> psvWave
-          
+        <span class=k>if</span> <span class=n>numpy</span><span class=o>.</span><span class=n>allclose</span><span class=p>(</span><span class=n>m</span><span class=p>,</span> <span class=bp>self</span><span class=o>.</span><span class=n>last_model</span><span class=p>):</span>
+            <span class=k>return</span> <span class=bp>self</span><span class=o>.</span><span class=n>misfit</span>
+        <span class=k>else</span><span class=p>:</span>
+            <span class=n>_</span> <span class=o>=</span> <span class=bp>self</span><span class=o>.</span><span class=n>grad</span><span class=p>(</span><span class=n>m</span><span class=p>)</span>
+            <span class=k>return</span> <span class=bp>self</span><span class=o>.</span><span class=n>misfit</span>
 
-          
-          </a>
+    <span class=k>def</span> <span class=nf>grad</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>m</span><span class=p>):</span>
 
-          
-            
-            
-              <div class="version">
-                0.1.6b
-              </div>
-            
-          
+        <span class=k>if</span> <span class=n>numpy</span><span class=o>.</span><span class=n>allclose</span><span class=p>(</span><span class=n>m</span><span class=p>,</span> <span class=bp>self</span><span class=o>.</span><span class=n>last_model</span><span class=p>):</span>
+            <span class=k>return</span> <span class=bp>self</span><span class=o>.</span><span class=n>g</span>
+        <span class=k>else</span><span class=p>:</span>
+            <span class=n>solver</span><span class=o>.</span><span class=n>set_model_vector</span><span class=p>(</span><span class=n>m</span><span class=p>)</span>
 
-          
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
-</div>
+            <span class=c1># Simulate forward</span>
+            <span class=k>for</span> <span class=n>i_shot</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=n>solver</span><span class=o>.</span><span class=n>n_shots</span><span class=p>):</span>
+                <span class=n>solver</span><span class=o>.</span><span class=n>forward_simulate</span><span class=p>(</span><span class=n>i_shot</span><span class=p>,</span> <span class=n>omp_threads_override</span><span class=o>=</span><span class=mi>6</span><span class=p>)</span>
 
-          
-        </div>
+            <span class=c1># Calculate misfit and adjoint sources</span>
+            <span class=n>solver</span><span class=o>.</span><span class=n>calculate_l2_misfit</span><span class=p>()</span>
+            <span class=n>solver</span><span class=o>.</span><span class=n>calculate_l2_adjoint_sources</span><span class=p>()</span>
+            <span class=bp>self</span><span class=o>.</span><span class=n>misfit</span> <span class=o>=</span> <span class=n>solver</span><span class=o>.</span><span class=n>misfit</span>
 
-        
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
-              <p class="caption"><span class="caption-text">Table of contents</span></p>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="index.html">Homepage</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Typical workflow</a></li>
-<li class="toctree-l1"><a class="reference internal" href="python/index.html">Python API reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cpp/index.html">C++ API reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="genindex.html">Index</a></li>
-</ul>
+            <span class=c1># Simulate adjoint</span>
+            <span class=n>solver</span><span class=o>.</span><span class=n>reset_kernels</span><span class=p>()</span>
+            <span class=k>for</span> <span class=n>i_shot</span> <span class=ow>in</span> <span class=nb>range</span><span class=p>(</span><span class=n>solver</span><span class=o>.</span><span class=n>n_shots</span><span class=p>):</span>
+                <span class=n>solver</span><span class=o>.</span><span class=n>adjoint_simulate</span><span class=p>(</span><span class=n>i_shot</span><span class=p>,</span> <span class=n>omp_threads_override</span><span class=o>=</span><span class=mi>6</span><span class=p>)</span>
+            <span class=n>solver</span><span class=o>.</span><span class=n>map_kernels_to_velocity</span><span class=p>()</span>
 
-            
-          
-        </div>
-        
-      </div>
-    </nav>
+            <span class=n>g</span> <span class=o>=</span> <span class=n>solver</span><span class=o>.</span><span class=n>get_gradient_vector</span><span class=p>()</span>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+            <span class=k>if</span> <span class=bp>self</span><span class=o>.</span><span class=n>smoothing</span> <span class=ow>is</span> <span class=ow>not</span> <span class=kc>None</span><span class=p>:</span>
+                <span class=n>g</span> <span class=o>=</span> <span class=n>numpy</span><span class=o>.</span><span class=n>hstack</span><span class=p>(</span>
+                    <span class=p>[</span>
+                        <span class=n>gaussian_filter</span><span class=p>(</span>
+                            <span class=n>igs</span><span class=o>.</span><span class=n>reshape</span><span class=p>((</span><span class=mi>60</span><span class=p>,</span> <span class=mi>180</span><span class=p>)),</span> <span class=n>sigma</span><span class=o>=</span><span class=bp>self</span><span class=o>.</span><span class=n>smoothing</span>
+                        <span class=p>)</span><span class=o>.</span><span class=n>flatten</span><span class=p>()</span>
+                        <span class=k>for</span> <span class=n>igs</span> <span class=ow>in</span> <span class=n>numpy</span><span class=o>.</span><span class=n>split</span><span class=p>(</span><span class=n>g</span><span class=p>,</span> <span class=mi>3</span><span class=p>)</span>
+                    <span class=p>]</span>
+                <span class=p>)</span>
 
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">psvWave</a>
-        
-      </nav>
+            <span class=bp>self</span><span class=o>.</span><span class=n>g</span> <span class=o>=</span> <span class=n>g</span>
 
+            <span class=bp>self</span><span class=o>.</span><span class=n>last_model</span> <span class=o>=</span> <span class=n>m</span>
 
-      <div class="wy-nav-content">
-        
-        <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
-  <ul class="wy-breadcrumbs">
-    
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-        
-      <li>Typical workflow</li>
-    
-    
-      <li class="wy-breadcrumbs-aside">
-        
-            
-            <a href="_sources/typical-workflow.rst.txt" rel="nofollow"> View page source</a>
-          
-        
-      </li>
-    
-  </ul>
-
-  
-  <hr/>
-</div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-            
-  <div class="section" id="typical-workflow">
-<h1>Typical workflow<a class="headerlink" href="#typical-workflow" title="Permalink to this headline">¶</a></h1>
-</div>
-
-
-           </div>
-           
-          </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="python/index.html" class="btn btn-neutral float-right" title="Python API reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="index.html" class="btn btn-neutral float-left" title="Homepage" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
-    </div>
-  
-
-  <hr/>
-
-  <div role="contentinfo">
-    <p>
-        
-        &copy; Copyright 2018-2020, Lars Gebraad
-
-    </p>
-  </div>
-    
-    
-    
-    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
-    
-    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
-    
-    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
-
-</footer>
-
-        </div>
-      </div>
-
-    </section>
-
-  </div>
-  
-
-  <script type="text/javascript">
+            <span class=k>return</span> <span class=bp>self</span><span class=o>.</span><span class=n>g</span>
+</pre></div> </div> </section> </div> </div> <footer><div class=rst-footer-buttons role=navigation aria-label=Footer> <a href=index.html class="btn btn-neutral float-left" title=Homepage accesskey=p rel=prev><span class="fa fa-arrow-circle-left" aria-hidden=true></span> Previous</a> <a href=python/index.html class="btn btn-neutral float-right" title="Python API reference" accesskey=n rel=next>Next <span class="fa fa-arrow-circle-right" aria-hidden=true></span></a> </div> <hr> <div role=contentinfo> <p>&#169; Copyright 2018-2022, Lars Gebraad.</p> </div> Built with <a href=https://www.sphinx-doc.org/ >Sphinx</a> using a <a href=https://github.com/readthedocs/sphinx_rtd_theme>theme</a> provided by <a href=https://readthedocs.org>Read the Docs</a>. </footer> </div> </div> </section> </div> <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
-
-</body>
-</html>
+  </script> </body> </html>

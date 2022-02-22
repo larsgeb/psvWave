@@ -29,7 +29,6 @@ How to create and use these is described in the Python API reference.
    :caption: Important parts
 
    fdmodel/index
-   configuration
    miscellaneous
 
 Type definitions
