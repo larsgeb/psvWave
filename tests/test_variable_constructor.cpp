@@ -10,9 +10,21 @@
 #include <omp.h>
 #include <tgmath.h>
 
-int main() {
+int omp_thread_count()
+{
+  int n = 0;
+#pragma omp parallel reduction(+ \
+                               : n)
+  n += 1;
+  return n;
+}
+
+int main()
+{
   std::cout << "Maximum amount of OpenMP threads:" << omp_get_max_threads()
             << std::endl;
+
+  std::cout << "Running with " << omp_thread_count() << " threads." << std::endl;
 
   int nt = 8000;
   int nx_inner = 200;
