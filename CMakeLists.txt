@@ -5,7 +5,9 @@ message("PYBIND_INCLUDES=${PYBIND_INCLUDES}")
 message("PYTHON_INCLUDES=${PYTHON_INCLUDES}")
 message("SUFFIX=${SUFFIX}")
 
-set(CMAKE_CXX_FLAGS "")
+set (CMAKE_CXX_STANDARD 11)
+
+set(CMAKE_CXX_FLAGS "-undefined dynamic_lookup")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Wextra")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 

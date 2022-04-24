@@ -25,7 +25,8 @@ class CleanCommand(Command):
     def run(self):
         os.system(
             "rm -vrf ./build ./dist ./*.pyc ./*.tgz ./*.egg-info ./psvWave/*.so ./*.so "
-            "__pycache__/ .pytest_cache/ psvWave/__pycache__/"
+            "__pycache__/ .pytest_cache/ psvWave/__pycache__/ CMakeCache.txt "
+            "cmake_install.cmake CMakeFiles"
         )
 
 
@@ -38,8 +39,10 @@ class CMakeExtension(Extension):
 class CMakeBuild(build_ext):
     def run(self):
 
-        if platform.system() != "Linux":
-            raise RuntimeError("Windows and MacOS are not supported")
+        if not (platform.system() == "Linux" or platform.system() == "Darwin"):
+            raise RuntimeError(
+                f"Windows is not supported. Your system: {platform.system()}."
+            )
 
         try:
             out = subprocess.check_output(["cmake", "--version"])
@@ -70,7 +73,6 @@ class CMakeBuild(build_ext):
 
         cmake_args = [
             "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=" + extdir,
-            # "-DPYTHON_EXECUTABLE=" + sys.executable,
             "-DPYBIND_INCLUDES=" + pybind_includes,
             "-DPYTHON_INCLUDES=" + python_includes,
             "-DSUFFIX=" + suffix,
@@ -88,6 +90,22 @@ class CMakeBuild(build_ext):
         env["CXXFLAGS"] = '{} -DVERSION_INFO=\\"{}\\"'.format(
             env.get("CXXFLAGS", ""), self.distribution.get_version()
         )
+
+        if platform.system() == "Darwin":
+            print("Trying to set GCC compiler manually...")
+            import glob
+
+            try:
+                gcc_loc = glob.glob("/opt/homebrew/Cellar/gcc/*/bin")[0]
+            except IndexError:
+                raise Exception("Couldn't find GCC, exiting...")
+
+            print(f"Found GCC loc at {gcc_loc}")
+
+            cmake_args += [
+                f"-DCMAKE_C_COMPILER={gcc_loc}/gcc-11",
+                f"-DCMAKE_CXX_COMPILER={gcc_loc}/g++-11",
+            ]
 
         if not os.path.exists(self.build_temp):
             os.makedirs(self.build_temp)
