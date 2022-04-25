@@ -13,13 +13,17 @@
 
 #include "fdModel.h"
 
+#include "contiguous_arrays.h"
+
 namespace py = pybind11;
 
 #include <algorithm>
 #include <iterator>
 #include <vector>
 
-template <typename T> std::ostream &operator<<(std::ostream &os, std::vector<T> vec) {
+template <typename T>
+std::ostream &operator<<(std::ostream &os, std::vector<T> vec)
+{
   os << "{ ";
   std::copy(vec.begin(), vec.end(), std::ostream_iterator<T>(os, " "));
   os << "}";
@@ -27,7 +31,8 @@ template <typename T> std::ostream &operator<<(std::ostream &os, std::vector<T> 
 }
 
 template <class T>
-py::array_t<T> array_to_numpy(T ****pointer, std::vector<ssize_t> shape) {
+py::array_t<T> array_to_numpy(T ****pointer, std::vector<ssize_t> shape)
+{
   return py::array_t<T>(py::buffer_info(
       ***pointer, sizeof(T), py::format_descriptor<T>::format(), 4, shape,
       std::vector<size_t>{shape[3] * shape[2] * shape[1] * sizeof(T),
@@ -35,45 +40,55 @@ py::array_t<T> array_to_numpy(T ****pointer, std::vector<ssize_t> shape) {
                           sizeof(T)}));
 }
 template <class T>
-py::array_t<T> array_to_numpy(T ***pointer, std::vector<ssize_t> shape) {
+py::array_t<T> array_to_numpy(T ***pointer, std::vector<ssize_t> shape)
+{
   return py::array_t<T>(py::buffer_info(
       **pointer, sizeof(T), py::format_descriptor<T>::format(), 3, shape,
       std::vector<size_t>{shape[2] * shape[1] * sizeof(T), shape[2] * sizeof(T),
                           sizeof(T)}));
 }
 template <class T>
-py::array_t<T> array_to_numpy(T **pointer, std::vector<ssize_t> shape) {
+py::array_t<T> array_to_numpy(T **pointer, std::vector<ssize_t> shape)
+{
   return py::array_t<T>(
       py::buffer_info(*pointer, sizeof(T), py::format_descriptor<T>::format(), 2, shape,
                       std::vector<size_t>{shape[1] * sizeof(T), sizeof(T)}));
 }
 template <class T>
-py::array_t<T> array_to_numpy(T *pointer, std::vector<ssize_t> shape) {
+py::array_t<T> array_to_numpy(T *pointer, std::vector<ssize_t> shape)
+{
   return py::array_t<T>(py::buffer_info(pointer, sizeof(T),
                                         py::format_descriptor<T>::format(), 1, shape,
                                         std::vector<size_t>{sizeof(T)}));
 }
 
-template <class T> void copy_data(T *destination, T *source, int size) {
+template <class T>
+void copy_data(T *destination, T *source, int size)
+{
 #pragma omp parallel for collapse(1)
-  for (size_t i1 = 0; i1 < size; i1++) {
+  for (size_t i1 = 0; i1 < size; i1++)
+  {
     destination[i1] = source[i1];
   }
 }
 
 template <class T1, class T2>
-void copy_data_cast(T1 *destination, T2 *source, int size) {
+void copy_data_cast(T1 *destination, T2 *source, int size)
+{
 #pragma omp parallel for collapse(1)
-  for (size_t i1 = 0; i1 < size; i1++) {
+  for (size_t i1 = 0; i1 < size; i1++)
+  {
     destination[i1] = (T1)source[i1];
   }
 }
 
-class fdModelExtended : public fdModel {
+class fdModelExtended : public fdModel
+{
 public:
   using fdModel::fdModel;
 
-  py::tuple get_snapshots() {
+  py::tuple get_snapshots()
+  {
     std::vector<ssize_t> shape = {n_shots, snapshots, nx, nz};
     return py::make_tuple(
         array_to_numpy(accu_vx, shape), array_to_numpy(accu_vz, shape),
@@ -81,108 +96,142 @@ public:
         array_to_numpy(accu_txz, shape));
   };
 
-  py::tuple get_extent(bool include_absorbing_boundary = true) {
-    if (include_absorbing_boundary) {
+  py::tuple get_extent(bool include_absorbing_boundary = true)
+  {
+    if (include_absorbing_boundary)
+    {
       return py::make_tuple(-np_boundary, dx * (nx_inner + np_boundary), -np_boundary,
                             dz * (nz_inner + np_boundary));
-    } else {
+    }
+    else
+    {
       return py::make_tuple(0, dx * nx_inner, 0, dz * nz_inner);
     }
   };
 
   void forward_simulate_explicit_threads(int i_shot, bool store_fields, bool verbose,
                                          bool output_wavefields,
-                                         int omp_threads_override) {
+                                         int omp_threads_override)
+  {
     const auto old_limit = omp_get_max_threads();
     const auto optimal = std::thread::hardware_concurrency();
 
-    if (verbose) {
+    if (verbose)
+    {
       std::cout << "OpenMP info:" << std::endl
                 << "  Original thread limit: " << omp_get_max_threads() << std::endl
                 << "  Hardware concurrency: " << optimal << std::endl;
     }
 
-    if (omp_threads_override != 0) {
-      if (verbose) {
+    if (omp_threads_override != 0)
+    {
+      if (verbose)
+      {
         std::cout << "  Setting override number of threads: " << omp_threads_override
                   << std::endl;
       }
       omp_set_num_threads(omp_threads_override);
-    } else {
-      if (verbose) {
+    }
+    else
+    {
+      if (verbose)
+      {
         std::cout << "  Setting original number of threads: " << omp_get_max_threads()
                   << std::endl;
       }
       omp_set_num_threads(omp_get_max_threads());
     }
 
-    if (verbose) {
+    if (verbose)
+    {
       std::cout << "  Actual threads: " << omp_get_max_threads() << std::endl;
     }
 
     forward_simulate(i_shot, store_fields, verbose, output_wavefields);
 
-    if (verbose) {
-      std::cout << "  Resetting threads to: " << old_limit << std::endl << std::endl;
+    if (verbose)
+    {
+      std::cout << "  Resetting threads to: " << old_limit << std::endl
+                << std::endl;
     }
     omp_set_num_threads(old_limit);
   }
 
   void adjoint_simulate_explicit_threads(int i_shot, bool verbose,
-                                         int omp_threads_override) {
+                                         int omp_threads_override)
+  {
     const auto old_limit = omp_get_max_threads();
     const auto optimal = std::thread::hardware_concurrency();
 
-    if (verbose) {
+    if (verbose)
+    {
       std::cout << "OpenMP info:" << std::endl
                 << "  Original thread limit: " << omp_get_max_threads() << std::endl
                 << "  Hardware concurrency: " << optimal << std::endl;
     }
 
-    if (omp_threads_override != 0) {
-      if (verbose) {
+    if (omp_threads_override != 0)
+    {
+      if (verbose)
+      {
         std::cout << "  Setting override number of threads: " << omp_threads_override
                   << std::endl;
       }
       omp_set_num_threads(omp_threads_override);
-    } else {
-      if (verbose) {
+    }
+    else
+    {
+      if (verbose)
+      {
         std::cout << "  Setting original number of threads: " << omp_get_max_threads()
                   << std::endl;
       }
       omp_set_num_threads(omp_get_max_threads());
     }
 
-    if (verbose) {
+    if (verbose)
+    {
       std::cout << "  Actual threads: " << omp_get_max_threads() << std::endl;
     }
 
     adjoint_simulate(i_shot, verbose);
 
-    if (verbose) {
-      std::cout << "  Resetting threads to: " << old_limit << std::endl << std::endl;
+    if (verbose)
+    {
+      std::cout << "  Resetting threads to: " << old_limit << std::endl
+                << std::endl;
     }
     omp_set_num_threads(old_limit);
   }
 
-  py::tuple get_coordinates(bool in_units) {
-    real_simulation **IX, **IZ;
+  py::tuple get_coordinates(bool in_units)
+  {
+    real_simulation *IX, *IZ;
 
-    allocate_array(IX, nx, nz);
-    allocate_array(IZ, nx, nz);
+    allocate_array(IX, shape_grid);
+    allocate_array(IZ, shape_grid);
 
-    if (in_units) {
-      for (int ix = 0; ix < nx; ++ix) {
-        for (int iz = 0; iz < nz; ++iz) {
-          IX[ix][iz] = (ix - np_boundary) * dx;
-          IZ[ix][iz] = (iz - np_boundary) * dz;
+    if (in_units)
+    {
+      for (int ix = 0; ix < nx; ++ix)
+      {
+        for (int iz = 0; iz < nz; ++iz)
+        {
+          auto idx = linear_IDX(ix, iz, nx, nz);
+          IX[idx] = (ix - np_boundary) * dx;
+          IZ[idx] = (iz - np_boundary) * dz;
         }
       }
-    } else {
-      for (int ix = 0; ix < nx; ++ix) {
-        for (int iz = 0; iz < nz; ++iz) {
-          IX[ix][iz] = ix;
-          IZ[ix][iz] = iz;
+    }
+    else
+    {
+      for (int ix = 0; ix < nx; ++ix)
+      {
+        for (int iz = 0; iz < nz; ++iz)
+        {
+          auto idx = linear_IDX(ix, iz, nx, nz);
+          IX[idx] = ix;
+          IZ[idx] = iz;
         }
       }
     }
@@ -196,7 +245,8 @@ public:
     return py::make_tuple(array_IX, array_IZ);
   }
 
-  py::tuple get_parameter_fields() {
+  py::tuple get_parameter_fields()
+  {
     auto array_vp = array_to_numpy(vp, std::vector<ssize_t>{nx, nz});
     auto array_vs = array_to_numpy(vs, std::vector<ssize_t>{nx, nz});
     auto array_rho = array_to_numpy(rho, std::vector<ssize_t>{nx, nz});
@@ -205,7 +255,8 @@ public:
 
   void set_parameter_fields(py::array_t<real_simulation> _vp,
                             py::array_t<real_simulation> _vs,
-                            py::array_t<real_simulation> _rho) {
+                            py::array_t<real_simulation> _rho)
+  {
     // Get buffer information for the passed arrays
     py::buffer_info _vp_buffer = _vp.request();
     py::buffer_info _vs_buffer = _vs.request();
@@ -215,13 +266,16 @@ public:
     std::vector<ssize_t> shape{nx, nz};
 
     // Verify the buffer shape
-    if (!(_vp_buffer.shape == shape)) {
+    if (!(_vp_buffer.shape == shape))
+    {
       throw py::value_error("The input ndarray _vp does not have the right shape.");
     };
-    if (!(_vs_buffer.shape == shape)) {
+    if (!(_vs_buffer.shape == shape))
+    {
       throw py::value_error("The input ndarray _vs does not have the right shape.");
     };
-    if (!(_rho_buffer.shape == shape)) {
+    if (!(_rho_buffer.shape == shape))
+    {
       throw py::value_error("The input ndarray _rho does not have the right shape.");
     };
 
@@ -234,15 +288,16 @@ public:
     real_simulation *_rho_ptr = (real_simulation *)_rho_buffer.ptr;
 
     // Copy the data
-    copy_data(vp[0], _vp_ptr, buffer_size);
-    copy_data(vs[0], _vs_ptr, buffer_size);
-    copy_data(rho[0], _rho_ptr, buffer_size);
+    copy_data(vp, _vp_ptr, buffer_size);
+    copy_data(vs, _vs_ptr, buffer_size);
+    copy_data(rho, _rho_ptr, buffer_size);
 
     // Recalculate Lamé's parameters
     update_from_velocity();
   }
 
-  py::tuple get_kernels() {
+  py::tuple get_kernels()
+  {
     auto array_vp_kernel = array_to_numpy(vp_kernel, std::vector<ssize_t>{nx, nz});
     auto array_vs_kernel = array_to_numpy(vs_kernel, std::vector<ssize_t>{nx, nz});
     auto array_rho_kernel =
@@ -250,13 +305,15 @@ public:
     return py::make_tuple(array_vp_kernel, array_vs_kernel, array_rho_kernel);
   }
 
-  py::tuple get_synthetic_data() {
+  py::tuple get_synthetic_data()
+  {
     auto array_rtf_ux = array_to_numpy(rtf_ux, std::vector<ssize_t>{n_shots, nr, nt});
     auto array_rtf_uz = array_to_numpy(rtf_uz, std::vector<ssize_t>{n_shots, nr, nt});
     return py::make_tuple(array_rtf_ux, array_rtf_uz);
   }
 
-  py::tuple get_observed_data() {
+  py::tuple get_observed_data()
+  {
     auto array_rtf_ux_true =
         array_to_numpy(rtf_ux_true, std::vector<ssize_t>{n_shots, nr, nt});
     auto array_rtf_uz_true =
@@ -264,7 +321,8 @@ public:
     return py::make_tuple(array_rtf_ux_true, array_rtf_uz_true);
   }
 
-  py::tuple get_receivers(bool in_units, bool include_absorbing_boundary_as_index) {
+  py::tuple get_receivers(bool in_units, bool include_absorbing_boundary_as_index)
+  {
     // Create new arrays
     py::array_t<real_simulation> x_receivers(py::buffer_info(
         nullptr, sizeof(real_simulation),
@@ -279,11 +337,14 @@ public:
 
     copy_data_cast((real_simulation *)z_receivers.request().ptr, iz_receivers, nr);
 
-    if (!include_absorbing_boundary_as_index || in_units) {
-      for (int ir = 0; ir < nr; ir++) {
+    if (!include_absorbing_boundary_as_index || in_units)
+    {
+      for (int ir = 0; ir < nr; ir++)
+      {
         ((real_simulation *)x_receivers.request().ptr)[ir] -= np_boundary;
         ((real_simulation *)z_receivers.request().ptr)[ir] -= np_boundary;
-        if (in_units) {
+        if (in_units)
+        {
           ((real_simulation *)x_receivers.request().ptr)[ir] *= dx;
           ((real_simulation *)z_receivers.request().ptr)[ir] *= dz;
         }
@@ -292,7 +353,8 @@ public:
 
     return py::make_tuple(x_receivers, z_receivers);
   }
-  py::tuple get_sources(bool in_units, bool include_absorbing_boundary_as_index) {
+  py::tuple get_sources(bool in_units, bool include_absorbing_boundary_as_index)
+  {
     // Create new arrays
     py::array_t<real_simulation> x_sources(py::buffer_info(
         nullptr, sizeof(real_simulation),
@@ -307,11 +369,14 @@ public:
 
     copy_data_cast((real_simulation *)z_sources.request().ptr, iz_sources, n_sources);
 
-    if (!include_absorbing_boundary_as_index || in_units) {
-      for (int ir = 0; ir < n_sources; ir++) {
+    if (!include_absorbing_boundary_as_index || in_units)
+    {
+      for (int ir = 0; ir < n_sources; ir++)
+      {
         ((real_simulation *)x_sources.request().ptr)[ir] -= np_boundary;
         ((real_simulation *)z_sources.request().ptr)[ir] -= np_boundary;
-        if (in_units) {
+        if (in_units)
+        {
           ((real_simulation *)x_sources.request().ptr)[ir] *= dx;
           ((real_simulation *)z_sources.request().ptr)[ir] *= dz;
         }
@@ -322,7 +387,8 @@ public:
   }
 
   void set_synthetic_data(py::array_t<real_simulation> ux,
-                          py::array_t<real_simulation> uz) {
+                          py::array_t<real_simulation> uz)
+  {
     // Get buffer information for the passed arrays
     py::buffer_info ux_buffer = ux.request();
     py::buffer_info uz_buffer = uz.request();
@@ -331,10 +397,12 @@ public:
     std::vector<ssize_t> shape{n_shots, nr, nt};
 
     // Verify the buffer shape
-    if (!(ux_buffer.shape == shape)) {
+    if (!(ux_buffer.shape == shape))
+    {
       throw py::value_error("The input ndarray ux does not have the right shape.");
     };
-    if (!(uz_buffer.shape == shape)) {
+    if (!(uz_buffer.shape == shape))
+    {
       throw py::value_error("The input ndarray uz does not have the right shape.");
     };
 
@@ -346,17 +414,19 @@ public:
     real_simulation *ptr_uz = (real_simulation *)uz_buffer.ptr;
 
     // Copy the data
-    copy_data(rtf_ux[0][0], ptr_ux, buffer_size);
-    copy_data(rtf_uz[0][0], ptr_uz, buffer_size);
+    copy_data(rtf_ux, ptr_ux, buffer_size);
+    copy_data(rtf_uz, ptr_uz, buffer_size);
   }
 
-  fdModelExtended *copy() {
+  fdModelExtended *copy()
+  {
     // std::cout << "Returning" << std::endl;
     return std::move(new fdModelExtended(*this));
   }
 
   void set_observed_data(py::array_t<real_simulation> ux,
-                         py::array_t<real_simulation> uz) {
+                         py::array_t<real_simulation> uz)
+  {
     // Get buffer information for the passed arrays
     py::buffer_info ux_buffer = ux.request();
     py::buffer_info uz_buffer = uz.request();
@@ -365,10 +435,12 @@ public:
     std::vector<ssize_t> shape{n_shots, nr, nt};
 
     // Verify the buffer shape
-    if (!(ux_buffer.shape == shape)) {
+    if (!(ux_buffer.shape == shape))
+    {
       throw py::value_error("The input ndarray ux does not have the right shape.");
     };
-    if (!(uz_buffer.shape == shape)) {
+    if (!(uz_buffer.shape == shape))
+    {
       throw py::value_error("The input ndarray ux does not have the right shape.");
     };
 
@@ -380,12 +452,13 @@ public:
     real_simulation *uz_ptr = (real_simulation *)uz_buffer.ptr;
 
     // Copy the data
-    copy_data(rtf_ux_true[0][0], ux_ptr, buffer_size);
-    copy_data(rtf_uz_true[0][0], uz_ptr, buffer_size);
+    copy_data(rtf_ux_true, ux_ptr, buffer_size);
+    copy_data(rtf_uz_true, uz_ptr, buffer_size);
   }
 };
 
-PYBIND11_MODULE(__psvWave_cpp, m) {
+PYBIND11_MODULE(__psvWave_cpp, m)
+{
   py::options options;
   options.disable_function_signatures();
 

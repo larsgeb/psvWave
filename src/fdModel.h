@@ -13,6 +13,7 @@
 #include "Eigen/Sparse"
 
 #include "contiguous_arrays.h"
+
 //! Typedef that determines simulation precision.
 //! On x86_64 systems it is typically fastest to use double,
 //! as this is the native precision. Double has about a 10 %
@@ -31,7 +32,8 @@ using dynamic_vector = Eigen::Matrix<real_simulation, Eigen::Dynamic, 1>;
 //! fields, which are loaded at runtime from the supplied .ini file. The class
 //! contains all necessary functions to perform FWI, but lacks optimization
 //! schemes.
-class fdModel {
+class fdModel
+{
 public:
   // ---- CONSTRUCTORS AND DESTRUCTORS ----
   //!  \brief Constructor for modelling class.
@@ -204,50 +206,57 @@ public:
 
   // |--< Spatial fields >--
   // | Dynamic physical fields
-  real_simulation **vx;  //!< Dynamic horizontal velocity field used in the simulations.
-  real_simulation **vz;  //!< Dynamic vertical velocity field used in the simulations.
-  real_simulation **txx; //!< Dynamic horizontal stress field used in the simulations.
-  real_simulation **tzz; //!< Dynamic vertical stress field used in the simulations.
-  real_simulation **txz; //!< Dynamic shear stress field used in the simulations.
+  real_simulation *vx;  //!< Dynamic horizontal velocity field used in the simulations.
+  real_simulation *vz;  //!< Dynamic vertical velocity field used in the simulations.
+  real_simulation *txx; //!< Dynamic horizontal stress field used in the simulations.
+  real_simulation *tzz; //!< Dynamic vertical stress field used in the simulations.
+  real_simulation *txz; //!< Dynamic shear stress field used in the simulations.
   // | Static physical fields
-  real_simulation **lm;
-  real_simulation **la;
-  real_simulation **mu;
-  real_simulation **b_vx;
-  real_simulation **b_vz;
-  real_simulation **rho;
-  real_simulation **vp;
-  real_simulation **vs;
+  real_simulation *lm;
+  real_simulation *la;
+  real_simulation *mu;
+  real_simulation *b_vx;
+  real_simulation *b_vz;
+  real_simulation *rho;
+  real_simulation *vp;
+  real_simulation *vs;
   // | Sensitivity kernels in Lamé's basis
-  real_simulation **lambda_kernel;
-  real_simulation **mu_kernel;
-  real_simulation **density_l_kernel;
+  real_simulation *lambda_kernel;
+  real_simulation *mu_kernel;
+  real_simulation *density_l_kernel;
   // | Sensitivity kernels in velocity basis
-  real_simulation **vp_kernel;
-  real_simulation **vs_kernel;
-  real_simulation **density_v_kernel;
+  real_simulation *vp_kernel;
+  real_simulation *vs_kernel;
+  real_simulation *density_v_kernel;
   // | Static physical fields for the starting model
-  real_simulation **starting_rho;
-  real_simulation **starting_vp;
-  real_simulation **starting_vs;
+  real_simulation *starting_rho;
+  real_simulation *starting_vp;
+  real_simulation *starting_vs;
   // | Taper field
-  real_simulation **taper;
+  real_simulation *taper;
 
   // |--< Time dependent signals >--
   real_simulation *t;
-  real_simulation **stf;
-  real_simulation ***moment;
-  real_simulation ***rtf_ux;
-  real_simulation ***rtf_uz;
-  real_simulation ***rtf_ux_true;
-  real_simulation ***rtf_uz_true;
-  real_simulation ***a_stf_ux;
-  real_simulation ***a_stf_uz;
-  real_simulation ****accu_vx;
-  real_simulation ****accu_vz;
-  real_simulation ****accu_txx;
-  real_simulation ****accu_tzz;
-  real_simulation ****accu_txz;
+  real_simulation *stf;
+  real_simulation *moment;
+  real_simulation *rtf_ux;
+  real_simulation *rtf_uz;
+  real_simulation *rtf_ux_true;
+  real_simulation *rtf_uz_true;
+  real_simulation *a_stf_ux;
+  real_simulation *a_stf_uz;
+  real_simulation *accu_vx;
+  real_simulation *accu_vz;
+  real_simulation *accu_txx;
+  real_simulation *accu_tzz;
+  real_simulation *accu_txz;
+
+  std::vector<int> shape_grid;
+  std::vector<int> shape_t;
+  std::vector<int> shape_stf;
+  std::vector<int> shape_moment;
+  std::vector<int> shape_receivers;
+  std::vector<int> shape_accu;
 
   // -- Definition of simulation --
   // | Domain
