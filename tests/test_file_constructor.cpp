@@ -10,7 +10,8 @@
 #include <omp.h>
 #include <tgmath.h>
 
-int main() {
+int main()
+{
   std::cout << "Maximum amount of OpenMP threads:" << omp_get_max_threads()
             << std::endl;
 
@@ -23,17 +24,27 @@ int main() {
   std::cout << "Running forward simulation " << n_tests << " times." << std::endl;
   auto deterministic_sum = new real_simulation[n_tests];
 
-  for (int i_test = 0; i_test < n_tests; ++i_test) {
-    for (int is = 0; is < model->n_shots; ++is) {
+  for (int i_test = 0; i_test < n_tests; ++i_test)
+  {
+    for (int is = 0; is < model->n_shots; ++is)
+    {
       model->forward_simulate(is, false, true);
     }
 
     deterministic_sum[i_test] = 0;
 
-    for (int i_shot = 0; i_shot < model->n_shots; ++i_shot) {
-      for (int i_receiver = 0; i_receiver < model->nr; ++i_receiver) {
-        for (int it = 0; it < model->nt; ++it) {
-          deterministic_sum[i_test] += model->rtf_ux[i_shot][i_receiver][it];
+    for (int i_shot = 0; i_shot < model->n_shots; ++i_shot)
+    {
+      for (int i_receiver = 0; i_receiver < model->nr; ++i_receiver)
+      {
+        for (int it = 0; it < model->nt; ++it)
+        {
+          auto idx = linear_IDX(i_shot, i_receiver, it,
+                                model->n_shots,
+                                model->nr,
+                                model->nt);
+
+          deterministic_sum[i_test] += model->rtf_ux[idx];
         }
       }
     }
@@ -46,8 +57,10 @@ int main() {
   model->write_sources();
 
   // Check deterministic output
-  for (int i = 0; i < n_tests; i++) {
-    if (deterministic_sum[i] != deterministic_sum[0]) {
+  for (int i = 0; i < n_tests; i++)
+  {
+    if (deterministic_sum[i] != deterministic_sum[0])
+    {
       std::cout << "Simulations were not consistent. The test failed." << std::endl
                 << std::endl;
       exit(1);

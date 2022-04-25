@@ -41,9 +41,9 @@ def get_dictionary():
     basis = {}
     output = {}
 
-    domain["nt"] = 1000
-    domain["nx_inner"] = 100
-    domain["nz_inner"] = 100
+    domain["nt"] = 2000
+    domain["nx_inner"] = 400
+    domain["nz_inner"] = 400
     domain["nx_inner_boundary"] = 10
     domain["nz_inner_boundary"] = 10
     domain["dx"] = 1.249
@@ -65,14 +65,14 @@ def get_dictionary():
     sources["source_timeshift"] = 0.005
     sources["delay_cycles_per_shot"] = 24
     sources["moment_angles"] = [90, 180]
-    sources["ix_sources"] = [10, 90]
-    sources["iz_sources"] = [10, 10]
+    sources["ix_sources"] = [150, 350]
+    sources["iz_sources"] = [50, 50]
     sources["which_source_to_fire_in_which_shot"] = [[0, 1]]
 
     # [receivers]
     receivers["nr"] = 4
-    receivers["ix_receivers"] = [20, 40, 60, 80]
-    receivers["iz_receivers"] = [90, 90, 90, 90]
+    receivers["ix_receivers"] = [50, 150, 250, 350]
+    receivers["iz_receivers"] = [350, 350, 350, 350]
 
     # [inversion]
     inversion["snapshot_interval"] = 10

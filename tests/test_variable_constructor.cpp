@@ -51,7 +51,7 @@ int main()
   std::vector<real_simulation> moment_angles_vector{90, 180, 90, 180};
   std::vector<std::vector<int>> which_source_to_fire_in_which_shot{{0, 1, 2, 3}};
   int nr = 19;
-  std::vector<int> ix_receivers_vector{10,  20,  30,  40,  50,  60,  70,  80,  90, 100,
+  std::vector<int> ix_receivers_vector{10, 20, 30, 40, 50, 60, 70, 80, 90, 100,
                                        110, 120, 130, 140, 150, 160, 170, 180, 190};
   std::vector<int> iz_receivers_vector{90, 90, 90, 90, 90, 90, 90, 90, 90, 90,
                                        90, 90, 90, 90, 90, 90, 90, 90, 90};
@@ -72,17 +72,28 @@ int main()
   std::cout << "Running forward simulation " << n_tests << " times." << std::endl;
   auto deterministic_sum = new real_simulation[n_tests];
 
-  for (int i_test = 0; i_test < n_tests; ++i_test) {
-    for (int is = 0; is < model->n_shots; ++is) {
+  for (int i_test = 0; i_test < n_tests; ++i_test)
+  {
+    for (int is = 0; is < model->n_shots; ++is)
+    {
       model->forward_simulate(is, false, true);
     }
 
     deterministic_sum[i_test] = 0;
 
-    for (int i_shot = 0; i_shot < model->n_shots; ++i_shot) {
-      for (int i_receiver = 0; i_receiver < model->nr; ++i_receiver) {
-        for (int it = 0; it < model->nt; ++it) {
-          deterministic_sum[i_test] += model->rtf_ux[i_shot][i_receiver][it];
+    for (int i_shot = 0; i_shot < model->n_shots; ++i_shot)
+    {
+      for (int i_receiver = 0; i_receiver < model->nr; ++i_receiver)
+      {
+        for (int it = 0; it < model->nt; ++it)
+        {
+
+          auto idx = linear_IDX(i_shot, i_receiver, it,
+                                model->n_shots,
+                                model->nr,
+                                model->nt);
+
+          deterministic_sum[i_test] += model->rtf_ux[idx];
         }
       }
     }
@@ -95,8 +106,10 @@ int main()
   model->write_sources();
 
   // Check deterministic output
-  for (int i = 0; i < n_tests; i++) {
-    if (deterministic_sum[i] != deterministic_sum[0]) {
+  for (int i = 0; i < n_tests; i++)
+  {
+    if (deterministic_sum[i] != deterministic_sum[0])
+    {
       std::cout << "Simulations were not consistent. The test failed." << std::endl
                 << std::endl;
       exit(1);

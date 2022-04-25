@@ -9,8 +9,10 @@
 #include <iostream>
 #include <omp.h>
 #include <tgmath.h>
+#include "../src/contiguous_arrays.h"
 
-int main() {
+int main()
+{
   std::cout << "Maximum amount of OpenMP threads:" << omp_get_max_threads()
             << std::endl;
 
@@ -42,7 +44,7 @@ int main() {
   std::vector<real_simulation> moment_angles_vector{90, 180, 90, 180};
   std::vector<std::vector<int>> which_source_to_fire_in_which_shot{{0, 1, 2, 3}};
   int nr = 19;
-  std::vector<int> ix_receivers_vector{10,  20,  30,  40,  50,  60,  70,  80,  90, 100,
+  std::vector<int> ix_receivers_vector{10, 20, 30, 40, 50, 60, 70, 80, 90, 100,
                                        110, 120, 130, 140, 150, 160, 170, 180, 190};
   std::vector<int> iz_receivers_vector{90, 90, 90, 90, 90, 90, 90, 90, 90, 90,
                                        90, 90, 90, 90, 90, 90, 90, 90, 90};
@@ -63,26 +65,38 @@ int main() {
   real_simulation deterministic_sum_1 = 0.0;
   real_simulation deterministic_sum_2 = 0.0;
 
-  for (int is = 0; is < model_1->n_shots; ++is) {
+  for (int is = 0; is < model_1->n_shots; ++is)
+  {
     model_1->forward_simulate(is, false, true);
     model_2->forward_simulate(is, false, true);
 
-    for (int i_shot = 0; i_shot < model_1->n_shots; ++i_shot) {
-      for (int i_receiver = 0; i_receiver < model_1->nr; ++i_receiver) {
-        for (int it = 0; it < model_1->nt; ++it) {
-          deterministic_sum_1 += model_1->rtf_ux[i_shot][i_receiver][it];
-          deterministic_sum_2 += model_2->rtf_ux[i_shot][i_receiver][it];
+    for (int i_shot = 0; i_shot < model_1->n_shots; ++i_shot)
+    {
+      for (int i_receiver = 0; i_receiver < model_1->nr; ++i_receiver)
+      {
+        for (int it = 0; it < model_1->nt; ++it)
+        {
+
+          auto idx = linear_IDX(i_shot, i_receiver, it,
+                                model_1->n_shots,
+                                model_1->nr,
+                                model_1->nt);
+          deterministic_sum_1 += model_1->rtf_ux[idx];
+          deterministic_sum_2 += model_2->rtf_ux[idx];
         }
       }
     }
   }
 
-  if (deterministic_sum_1 == deterministic_sum_2) {
+  if (deterministic_sum_1 == deterministic_sum_2)
+  {
     std::cout << "All simulations produced the same seismograms. The test succeeded."
               << std::endl
               << std::endl;
     exit(0);
-  } else {
+  }
+  else
+  {
     std::cout << "Simulations were not consistent. The test failed." << std::endl
               << std::endl;
     exit(1);
