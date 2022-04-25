@@ -309,10 +309,19 @@ export SUFFIX=`python3-config --extension-suffix`
 Compiling the Python interface is done by running CMake in the cloned repo:
 
 ```bash
-mkdir build
-cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
-make psvWave
+cmake -DCMAKE_BUILD_TYPE=Release .
+make psvWave_cpp
+```
+
+If you are on MacOS, I advise against trying to get CLang to work. Instead, use GCC
+compilers from homebrew:
+
+```bash
+cmake -DCMAKE_C_COMPILER=/opt/homebrew/Cellar/gcc/11.2.0_3/bin/gcc-11 \
+      -DCMAKE_CXX_COMPILER=/opt/homebrew/Cellar/gcc/11.2.0_3/bin/g++-11  \
+      -DCMAKE_BUILD_TYPE=Release \
+      .
+make psvWave_cpp
 ```
 
 ### Using the Python interface
