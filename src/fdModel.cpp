@@ -23,8 +23,20 @@ fdModel::fdModel(MTL::Device *gpu_device,
   // Parse configuration from supplied file
   parse_configuration_file(configuration_file_relative_path);
 
-  // Allocate all fields dynamically (grouped by type)
+  float temp_dx = dx[0];
+  float temp_dz = dz[0];
+  float temp_dt = dt[0];
+
+  delete[] dx;
+  delete[] dz;
+  delete[] dt;
+
+  // Allocate all fields dynamically (grouped by type). Overwrites contents of dx,dz,dt
   allocate_memory();
+
+  dx[0] = temp_dx;
+  dz[0] = temp_dz;
+  dt[0] = temp_dt;
 
   initialize_arrays();
 
@@ -34,8 +46,8 @@ fdModel::fdModel(MTL::Device *gpu_device,
 fdModel::fdModel(
     MTL::Device *gpu_device,
     const int nt, const int nx_inner, const int nz_inner, const int nx_inner_boundary,
-    const int nz_inner_boundary, const float dx, const float dz,
-    const float dt, const int np_boundary, const float np_factor,
+    const int nz_inner_boundary, const float _dx, const float _dz,
+    const float _dt, const int np_boundary, const float np_factor,
     const float scalar_rho, const float scalar_vp,
     const float scalar_vs, const int npx, const int npz,
     const float peak_frequency, const float source_timeshift,
@@ -48,7 +60,7 @@ fdModel::fdModel(
     const std::string observed_data_folder, const std::string stf_folder)
     : gpu_device(gpu_device), nt(nt), nx_inner(nx_inner), nz_inner(nz_inner),
       nx_inner_boundary(nx_inner_boundary), nz_inner_boundary(nz_inner_boundary),
-      dx(dx), dz(dz), dt(dt), np_boundary(np_boundary), np_factor(np_factor),
+      np_boundary(np_boundary), np_factor(np_factor),
       scalar_rho(scalar_rho), scalar_vp(scalar_vp), scalar_vs(scalar_vs),
       basis_gridpoints_x(npx), basis_gridpoints_z(npz), peak_frequency(peak_frequency),
       t0(source_timeshift), delay_cycles_per_shot(delay_cycles_per_shot),
@@ -64,6 +76,10 @@ fdModel::fdModel(
   // Allocate all fields dynamically (grouped by type)
   allocate_memory();
 
+  dx[0] = _dx;
+  dz[0] = _dz;
+  dt[0] = _dt;
+
   initialize_arrays();
 
   mtl_ops = new MetalOperations(gpu_device);
@@ -72,8 +88,7 @@ fdModel::fdModel(
 fdModel::fdModel(MTL::Device *gpu_device, const fdModel &model)
     : gpu_device(gpu_device), nt(model.nt), nx_inner(model.nx_inner), nz_inner(model.nz_inner),
       nx_inner_boundary(model.nx_inner_boundary),
-      nz_inner_boundary(model.nz_inner_boundary), dx(model.dx), dz(model.dz),
-      dt(model.dt), np_boundary(model.np_boundary), np_factor(model.np_factor),
+      nz_inner_boundary(model.nz_inner_boundary), np_boundary(model.np_boundary), np_factor(model.np_factor),
       scalar_rho(model.scalar_rho), scalar_vp(model.scalar_vp),
       scalar_vs(model.scalar_vs), basis_gridpoints_x(model.basis_gridpoints_x),
       basis_gridpoints_z(model.basis_gridpoints_z),
@@ -100,6 +115,10 @@ fdModel::fdModel(MTL::Device *gpu_device, const fdModel &model)
                    ix_receivers_vector, iz_receivers_vector);
 
   allocate_memory();
+
+  dx[0] = model.dx[0];
+  dz[0] = model.dz[0];
+  dt[0] = model.dt[0];
 
   mtl_ops = new MetalOperations(gpu_device);
 
@@ -177,6 +196,11 @@ void fdModel::allocate_memory()
   shape_t = {nt};
   allocate_array(gpu_device, t_gpu, t, shape_t);
 
+  shape_0 = {1}; // scalars
+  allocate_array(gpu_device, dx_gpu, dx, shape_0);
+  allocate_array(gpu_device, dz_gpu, dz, shape_0);
+  allocate_array(gpu_device, dt_gpu, dt, shape_0);
+
   shape_stf = {n_sources, nt};
   allocate_array(gpu_device, stf_gpu, stf, shape_stf);
 
@@ -228,7 +252,7 @@ void fdModel::initialize_arrays()
     {
       for (unsigned int it = 0; it < nt; ++it)
       {
-        t[it] = it * dt;
+        t[it] = it * dt[0];
         auto f = static_cast<float>(1.0 / alpha);
         auto shiftedTime = static_cast<float>(
             t[it] - 1.4 / f - delay_cycles_per_shot * i_source / f);
@@ -493,9 +517,14 @@ void fdModel::parse_configuration_file(const char *configuration_file_relative_p
   nz_inner = reader.GetInteger("domain", "nz_inner");
   nx_inner_boundary = reader.GetInteger("domain", "nx_inner_boundary");
   nz_inner_boundary = reader.GetInteger("domain", "nz_inner_boundary");
-  dx = reader.GetReal("domain", "dx");
-  dz = reader.GetReal("domain", "dz");
-  dt = reader.GetReal("domain", "dt");
+
+  dx = new float[1];
+  dz = new float[1];
+  dt = new float[1];
+
+  dx[0] = reader.GetReal("domain", "dx");
+  dz[0] = reader.GetReal("domain", "dz");
+  dt[0] = reader.GetReal("domain", "dt");
   np_boundary = reader.GetInteger("boundary", "np_boundary");
   np_factor = reader.GetReal("boundary", "np_factor");
   scalar_rho = reader.GetReal("medium", "scalar_rho");
@@ -535,6 +564,7 @@ void fdModel::parse_configuration_file(const char *configuration_file_relative_p
 void fdModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
                                bool output_wavefields)
 {
+
 // Set dynamic physical fields to zero to reflect initial conditions.
 #pragma omp parallel for collapse(2)
   for (int ix = 0; ix < nx; ++ix)
@@ -590,66 +620,74 @@ void fdModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
 
       if (it == 0)
       {
-        rtf_ux[idx_rtf] = dt * vx[idx_loc] / (dx * dz);
-        rtf_uz[idx_rtf] = dt * vz[idx_loc] / (dx * dz);
+        rtf_ux[idx_rtf] = dt[0] * vx[idx_loc] / (dx[0] * dz[0]);
+        rtf_uz[idx_rtf] = dt[0] * vz[idx_loc] / (dx[0] * dz[0]);
       }
       else
       {
         auto idx_rtf_t_min_1 = linear_IDX(i_shot, i_receiver, it - 1, n_shots, nr, nt);
 
         rtf_ux[idx_rtf] =
-            rtf_ux[idx_rtf_t_min_1] + dt * vx[idx_loc] / (dx * dz);
+            rtf_ux[idx_rtf_t_min_1] + dt[0] * vx[idx_loc] / (dx[0] * dz[0]);
         rtf_uz[idx_rtf] =
-            rtf_uz[idx_rtf_t_min_1] + dt * vz[idx_loc] / (dx * dz);
+            rtf_uz[idx_rtf_t_min_1] + dt[0] * vz[idx_loc] / (dx[0] * dz[0]);
       }
     }
 
-// Time integrate dynamic fields for stress ...
-#pragma omp parallel for collapse(2)
-    for (int ix = 2; ix < nx - 2; ++ix)
+    // Time integrate dynamic fields for stress ...
+    if (true)
     {
-      for (int iz = 2; iz < nz - 2; ++iz)
+#pragma omp parallel for collapse(2)
+      for (int ix = 2; ix < nx - 2; ++ix)
       {
+        for (int iz = 2; iz < nz - 2; ++iz)
+        {
+          int idx = linear_IDX(ix, iz, nx, nz);
+          int idx_xp1 = linear_IDX(ix + 1, iz, nx, nz);
+          int idx_xp2 = linear_IDX(ix + 2, iz, nx, nz);
+          int idx_xm1 = linear_IDX(ix - 1, iz, nx, nz);
+          int idx_xm2 = linear_IDX(ix - 2, iz, nx, nz);
+          int idx_zm1 = linear_IDX(ix, iz - 1, nx, nz);
+          int idx_zm2 = linear_IDX(ix, iz - 2, nx, nz);
+          int idx_zp1 = linear_IDX(ix, iz + 1, nx, nz);
+          int idx_zp2 = linear_IDX(ix, iz + 2, nx, nz);
 
-        int idx = linear_IDX(ix, iz, nx, nz);
-        int idx_xp1 = linear_IDX(ix + 1, iz, nx, nz);
-        int idx_xp2 = linear_IDX(ix + 2, iz, nx, nz);
-        int idx_xm1 = linear_IDX(ix - 1, iz, nx, nz);
-        int idx_xm2 = linear_IDX(ix - 2, iz, nx, nz);
-        int idx_zm1 = linear_IDX(ix, iz - 1, nx, nz);
-        int idx_zm2 = linear_IDX(ix, iz - 2, nx, nz);
-        int idx_zp1 = linear_IDX(ix, iz + 1, nx, nz);
-        int idx_zp2 = linear_IDX(ix, iz + 2, nx, nz);
-
-        txx[idx] =
-            taper[idx] *
-            (txx[idx] + dt * (lm[idx] *
-                                  (c1 * (vx[idx_xp1] - vx[idx]) +
-                                   c2 * (vx[idx_xm1] - vx[idx_xp2])) /
-                                  dx +
-                              la[idx] *
-                                  (c1 * (vz[idx] - vz[idx_zm1]) +
-                                   c2 * (vz[idx_zm2] - vz[idx_zp1])) /
-                                  dz));
-        tzz[idx] =
-            taper[idx] *
-            (tzz[idx] + dt * (la[idx] *
-                                  (c1 * (vx[idx_xp1] - vx[idx]) +
-                                   c2 * (vx[idx_xm1] - vx[idx_xp2])) /
-                                  dx +
-                              (lm[idx]) *
-                                  (c1 * (vz[idx] - vz[idx_zm1]) +
-                                   c2 * (vz[idx_zm2] - vz[idx_zp1])) /
-                                  dz));
-        txz[idx] = taper[idx] *
-                   (txz[idx] + dt * mu[idx] *
-                                   ((c1 * (vx[idx_zp1] - vx[idx]) +
-                                     c2 * (vx[idx_zm1] - vx[idx_zp2])) /
-                                        dz +
-                                    (c1 * (vz[idx] - vz[idx_xm1]) +
-                                     c2 * (vz[idx_xm2] - vz[idx_xp1])) /
-                                        dx));
+          txx[idx] =
+              taper[idx] *
+              (txx[idx] + dt[0] * (lm[idx] *
+                                       (c1 * (vx[idx_xp1] - vx[idx]) +
+                                        c2 * (vx[idx_xm1] - vx[idx_xp2])) /
+                                       dx[0] +
+                                   la[idx] *
+                                       (c1 * (vz[idx] - vz[idx_zm1]) +
+                                        c2 * (vz[idx_zm2] - vz[idx_zp1])) /
+                                       dz[0]));
+          tzz[idx] =
+              taper[idx] *
+              (tzz[idx] + dt[0] * (la[idx] *
+                                       (c1 * (vx[idx_xp1] - vx[idx]) +
+                                        c2 * (vx[idx_xm1] - vx[idx_xp2])) /
+                                       dx[0] +
+                                   (lm[idx]) *
+                                       (c1 * (vz[idx] - vz[idx_zm1]) +
+                                        c2 * (vz[idx_zm2] - vz[idx_zp1])) /
+                                       dz[0]));
+          txz[idx] = taper[idx] *
+                     (txz[idx] + dt[0] * mu[idx] *
+                                     ((c1 * (vx[idx_zp1] - vx[idx]) +
+                                       c2 * (vx[idx_zm1] - vx[idx_zp2])) /
+                                          dz[0] +
+                                      (c1 * (vz[idx] - vz[idx_xm1]) +
+                                       c2 * (vz[idx_xm2] - vz[idx_xp1])) /
+                                          dx[0]));
+        }
       }
+    }
+    else
+    {
+      mtl_ops->stress_integrate_2d(
+          txx_gpu, tzz_gpu, txz_gpu, taper_gpu, dt_gpu, dx_gpu, dz_gpu, vx_gpu,
+          vz_gpu, lm_gpu, la_gpu, mu_gpu, nx, nz);
     }
 // ... and time integrate dynamic fields for velocity.
 #pragma omp parallel for collapse(2)
@@ -668,21 +706,21 @@ void fdModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
         int idx_zp2 = linear_IDX(ix, iz + 2, nx, nz);
 
         vx[idx] = taper[idx] *
-                  (vx[idx] + b_vx[idx] * dt *
+                  (vx[idx] + b_vx[idx] * dt[0] *
                                  ((c1 * (txx[idx] - txx[idx_xm1]) +
                                    c2 * (txx[idx_xm2] - txx[idx_xp1])) /
-                                      dx +
+                                      dx[0] +
                                   (c1 * (txz[idx] - txz[idx_zm1]) +
                                    c2 * (txz[idx_zm2] - txz[idx_zp1])) /
-                                      dz));
+                                      dz[0]));
         vz[idx] = taper[idx] *
-                  (vz[idx] + b_vz[idx] * dt *
+                  (vz[idx] + b_vz[idx] * dt[0] *
                                  ((c1 * (txz[idx_xp1] - txz[idx]) +
                                    c2 * (txz[idx_xm1] - txz[idx_xp2])) /
-                                      dx +
+                                      dx[0] +
                                   (c1 * (tzz[idx_zp1] - tzz[idx]) +
                                    c2 * (tzz[idx_zm1] - tzz[idx_zp2])) /
-                                      dz));
+                                      dz[0]));
       }
     }
 
@@ -709,54 +747,54 @@ void fdModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
       auto idx_xm1zm1 = linear_IDX(ix_sources[i_source] - 1, iz_sources[i_source] - 1, nx, nz);
 
       vx[idx_xm1] -=
-          moment[idx_mt] * stf[idx_stf] * dt *
-          b_vz[idx_xm1] / (dx * dx * dx * dx);
+          moment[idx_mt] * stf[idx_stf] * dt[0] *
+          b_vz[idx_xm1] / (dx[0] * dx[0] * dx[0] * dx[0]);
       vx[idx] +=
-          moment[idx_mt] * stf[idx_stf] * dt *
-          b_vz[idx] / (dx * dx * dx * dx);
+          moment[idx_mt] * stf[idx_stf] * dt[0] *
+          b_vz[idx] / (dx[0] * dx[0] * dx[0] * dx[0]);
 
       // | (z,z)-couple
       idx_mt = linear_IDX(i_source, 1, 1, n_sources, 2, 2);
       vz[idx_zm1] -=
-          moment[idx_mt] * stf[idx_stf] * dt *
-          b_vz[idx_zm1] / (dz * dz * dz * dz);
+          moment[idx_mt] * stf[idx_stf] * dt[0] *
+          b_vz[idx_zm1] / (dz[0] * dz[0] * dz[0] * dz[0]);
       vz[idx] +=
-          moment[idx_mt] * stf[idx_stf] * dt *
-          b_vz[idx] / (dz * dz * dz * dz);
+          moment[idx_mt] * stf[idx_stf] * dt[0] *
+          b_vz[idx] / (dz[0] * dz[0] * dz[0] * dz[0]);
 
       // | (x,z)-couple
       idx_mt = linear_IDX(i_source, 0, 1, n_sources, 2, 2);
       vx[idx_xm1zp1] +=
-          0.25 * moment[idx_mt] * stf[idx_stf] * dt *
+          0.25 * moment[idx_mt] * stf[idx_stf] * dt[0] *
           b_vz[idx_xm1zp1] /
-          (dx * dx * dx * dx);
+          (dx[0] * dx[0] * dx[0] * dx[0]);
       vx[idx_zp1] +=
-          0.25 * moment[idx_mt] * stf[idx_stf] * dt *
-          b_vz[idx_zp1] / (dx * dx * dx * dx);
+          0.25 * moment[idx_mt] * stf[idx_stf] * dt[0] *
+          b_vz[idx_zp1] / (dx[0] * dx[0] * dx[0] * dx[0]);
       vx[idx_xm1zm1] -=
-          0.25 * moment[idx_mt] * stf[idx_stf] * dt *
+          0.25 * moment[idx_mt] * stf[idx_stf] * dt[0] *
           b_vz[idx_xm1zm1] /
-          (dx * dx * dx * dx);
+          (dx[0] * dx[0] * dx[0] * dx[0]);
       vx[idx_zm1] -=
-          0.25 * moment[idx_mt] * stf[idx_stf] * dt *
-          b_vz[idx_zm1] / (dx * dx * dx * dx);
+          0.25 * moment[idx_mt] * stf[idx_stf] * dt[0] *
+          b_vz[idx_zm1] / (dx[0] * dx[0] * dx[0] * dx[0]);
 
       // | (z,x)-couple
       idx_mt = linear_IDX(i_source, 1, 0, n_sources, 2, 2);
       vz[idx_xp1zm1] +=
-          0.25 * moment[idx_mt] * stf[idx_stf] * dt *
+          0.25 * moment[idx_mt] * stf[idx_stf] * dt[0] *
           b_vz[idx_xp1zm1] /
-          (dz * dz * dz * dz);
+          (dz[0] * dz[0] * dz[0] * dz[0]);
       vz[idx_xp1] +=
-          0.25 * moment[idx_mt] * stf[idx_stf] * dt *
-          b_vz[idx_xp1] / (dz * dz * dz * dz);
+          0.25 * moment[idx_mt] * stf[idx_stf] * dt[0] *
+          b_vz[idx_xp1] / (dz[0] * dz[0] * dz[0] * dz[0]);
       vz[idx_xm1zm1] -=
-          0.25 * moment[idx_mt] * stf[idx_stf] * dt *
+          0.25 * moment[idx_mt] * stf[idx_stf] * dt[0] *
           b_vz[idx_xm1zm1] /
-          (dz * dz * dz * dz);
+          (dz[0] * dz[0] * dz[0] * dz[0]);
       vz[idx_xm1] -=
-          0.25 * moment[idx_mt] * stf[idx_stf] * dt *
-          b_vz[idx_xm1] / (dz * dz * dz * dz);
+          0.25 * moment[idx_mt] * stf[idx_stf] * dt[0] *
+          b_vz[idx_xm1] / (dz[0] * dz[0] * dz[0] * dz[0]);
     }
 
     if (it % 10 == 0 and output_wavefields)
@@ -839,11 +877,11 @@ void fdModel::adjoint_simulate(int i_shot, bool verbose)
           auto idx_accu = linear_IDX(i_shot, it / snapshot_interval, ix, iz, n_shots, snapshots, nx, nz);
 
           density_l_kernel[idx] -=
-              snapshot_interval * dt *
+              snapshot_interval * dt[0] *
               (accu_vx[idx_accu] * vx[idx] + accu_vz[idx_accu] * vz[idx]);
 
           lambda_kernel[idx] +=
-              snapshot_interval * dt *
+              snapshot_interval * dt[0] *
               (((accu_txx[idx_accu] - (accu_tzz[idx_accu] * la[idx]) /
                                           lm[idx]) +
                 (accu_tzz[idx_accu] - (accu_txx[idx_accu] * la[idx]) /
@@ -854,7 +892,7 @@ void fdModel::adjoint_simulate(int i_shot, bool verbose)
                (lm[idx] - ((la[idx] * la[idx]) / (lm[idx]))));
 
           mu_kernel[idx] +=
-              snapshot_interval * dt * 2 *
+              snapshot_interval * dt[0] * 2 *
               ((((txx[idx] - (tzz[idx] * la[idx]) / lm[idx]) *
                  (accu_txx[idx_accu] - (accu_tzz[idx_accu] * la[idx]) /
                                            lm[idx])) +
@@ -890,32 +928,32 @@ void fdModel::adjoint_simulate(int i_shot, bool verbose)
 
         txx[idx] =
             taper[idx] *
-            (txx[idx] - dt * (lm[idx] *
-                                  (c1 * (vx[idx_xp1] - vx[idx]) +
-                                   c2 * (vx[idx_xm1] - vx[idx_xp2])) /
-                                  dx +
-                              la[idx] *
-                                  (c1 * (vz[idx] - vz[idx_zm1]) +
-                                   c2 * (vz[idx_zm2] - vz[idx_zp1])) /
-                                  dz));
+            (txx[idx] - dt[0] * (lm[idx] *
+                                     (c1 * (vx[idx_xp1] - vx[idx]) +
+                                      c2 * (vx[idx_xm1] - vx[idx_xp2])) /
+                                     dx[0] +
+                                 la[idx] *
+                                     (c1 * (vz[idx] - vz[idx_zm1]) +
+                                      c2 * (vz[idx_zm2] - vz[idx_zp1])) /
+                                     dz[0]));
         tzz[idx] =
             taper[idx] *
-            (tzz[idx] - dt * (la[idx] *
-                                  (c1 * (vx[idx_xp1] - vx[idx]) +
-                                   c2 * (vx[idx_xm1] - vx[idx_xp2])) /
-                                  dx +
-                              (lm[idx]) *
-                                  (c1 * (vz[idx] - vz[idx_zm1]) +
-                                   c2 * (vz[idx_zm2] - vz[idx_zp1])) /
-                                  dz));
+            (tzz[idx] - dt[0] * (la[idx] *
+                                     (c1 * (vx[idx_xp1] - vx[idx]) +
+                                      c2 * (vx[idx_xm1] - vx[idx_xp2])) /
+                                     dx[0] +
+                                 (lm[idx]) *
+                                     (c1 * (vz[idx] - vz[idx_zm1]) +
+                                      c2 * (vz[idx_zm2] - vz[idx_zp1])) /
+                                     dz[0]));
         txz[idx] = taper[idx] *
-                   (txz[idx] - dt * mu[idx] *
+                   (txz[idx] - dt[0] * mu[idx] *
                                    ((c1 * (vx[idx_zp1] - vx[idx]) +
                                      c2 * (vx[idx_zm1] - vx[idx_zp2])) /
-                                        dz +
+                                        dz[0] +
                                     (c1 * (vz[idx] - vz[idx_xm1]) +
                                      c2 * (vz[idx_xm2] - vz[idx_xp1])) /
-                                        dx));
+                                        dx[0]));
       }
     }
 // Reverse time integrate dynamic fields for velocity
@@ -938,21 +976,21 @@ void fdModel::adjoint_simulate(int i_shot, bool verbose)
         auto idx_zp2 = linear_IDX(ix, iz + 2, nx, nz);
 
         vx[idx] = taper[idx] *
-                  (vx[idx] - b_vx[idx] * dt *
+                  (vx[idx] - b_vx[idx] * dt[0] *
                                  ((c1 * (txx[idx] - txx[idx_xm1]) +
                                    c2 * (txx[idx_xm2] - txx[idx_xp1])) /
-                                      dx +
+                                      dx[0] +
                                   (c1 * (txz[idx] - txz[idx_zm1]) +
                                    c2 * (txz[idx_zm2] - txz[idx_zp1])) /
-                                      dz));
+                                      dz[0]));
         vz[idx] = taper[idx] *
-                  (vz[idx] - b_vz[idx] * dt *
+                  (vz[idx] - b_vz[idx] * dt[0] *
                                  ((c1 * (txz[idx_xp1] - txz[idx]) +
                                    c2 * (txz[idx_xm1] - txz[idx_xp2])) /
-                                      dx +
+                                      dx[0] +
                                   (c1 * (tzz[idx_zp1] - tzz[idx]) +
                                    c2 * (tzz[idx_zm1] - tzz[idx_zp2])) /
-                                      dz));
+                                      dz[0]));
       }
     }
 
@@ -962,8 +1000,8 @@ void fdModel::adjoint_simulate(int i_shot, bool verbose)
       auto idx_rec_loc = linear_IDX(ix_receivers[ir], iz_receivers[ir], nx, nz);
       auto idx_rec = linear_IDX(i_shot, ir, it, n_shots, nr, nt);
 
-      vx[idx_rec_loc] += dt * b_vx[idx_rec_loc] * a_stf_ux[idx_rec] / (dx * dz);
-      vz[idx_rec_loc] += dt * b_vz[idx_rec_loc] * a_stf_uz[idx_rec] / (dx * dz);
+      vx[idx_rec_loc] += dt[0] * b_vx[idx_rec_loc] * a_stf_ux[idx_rec] / (dx[0] * dz[0]);
+      vz[idx_rec_loc] += dt[0] * b_vz[idx_rec_loc] * a_stf_uz[idx_rec] / (dx[0] * dz[0]);
     }
   }
 
@@ -1146,8 +1184,8 @@ void fdModel::calculate_l2_misfit()
 
         auto idx_receiver = linear_IDX(i_shot, i_receiver, it, n_shots, nr, nt);
 
-        misfit += 0.5 * dt * pow(rtf_ux_true[idx_receiver] - rtf_ux[idx_receiver], 2);
-        misfit += 0.5 * dt * pow(rtf_uz_true[idx_receiver] - rtf_uz[idx_receiver], 2);
+        misfit += 0.5 * dt[0] * pow(rtf_ux_true[idx_receiver] - rtf_ux[idx_receiver], 2);
+        misfit += 0.5 * dt[0] * pow(rtf_uz_true[idx_receiver] - rtf_uz[idx_receiver], 2);
       }
     }
   }
@@ -1397,7 +1435,7 @@ dynamic_vector fdModel::get_model_vector()
 
       // Average over the points in the cell
       // We could easily just retrieve one of the values in the block, but when
-      // loading a model onto the grid, all the gridpoindts might not be the
+      // loading a model onto the grid, all the gridpoints might not be the
       // same value.
       for (int sub_ix = 0; sub_ix < basis_gridpoints_x; sub_ix++)
       {
@@ -1446,7 +1484,7 @@ void fdModel::set_model_vector(dynamic_vector m)
 
       // Average over the points in the cell
       // We could easily just retrieve one of the values in the block, but when
-      // loading a model onto the grid, all the gridpoindts might not be the
+      // loading a model onto the grid, all the gridpoints might not be the
       // same value.
       for (int sub_ix = 0; sub_ix < basis_gridpoints_x; sub_ix++)
       {
@@ -1498,7 +1536,7 @@ dynamic_vector fdModel::get_gradient_vector()
 
       // Average over the points in the cell
       // We could easily just retrieve one of the values in the block, but when
-      // loading a model onto the grid, all the gridpoindts might not be the
+      // loading a model onto the grid, all the gridpoints might not be the
       // same value.
       for (int sub_ix = 0; sub_ix < basis_gridpoints_x; sub_ix++)
       {

@@ -301,6 +301,7 @@ public:
 
   std::vector<int> shape_grid;
   std::vector<int> shape_t;
+  std::vector<int> shape_0; // scalars
   std::vector<int> shape_stf;
   std::vector<int> shape_moment;
   std::vector<int> shape_receivers;
@@ -313,9 +314,14 @@ public:
   int nz_inner;
   int nx_inner_boundary;
   int nz_inner_boundary;
-  float dx;
-  float dz;
-  float dt;
+  float *dx;
+  float *dz;
+  float *dt;
+
+  MTL::Buffer *dx_gpu;
+  MTL::Buffer *dz_gpu;
+  MTL::Buffer *dt_gpu;
+
   // | Boundary
   int np_boundary;
   float np_factor;
