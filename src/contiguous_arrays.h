@@ -1,17 +1,29 @@
 #ifndef CONTIGUOUS_H
 #define CONTIGUOUS_H
 
+#include <Metal/Metal.hpp>
 #include <vector>
 
 template <class T>
-void allocate_array(T *&pointer, std::vector<int> shape)
+void allocate_array(MTL::Device *gpu_device,
+                    MTL::Buffer *buffer_pointer,
+                    T *&pointer,
+                    std::vector<int> shape)
 {
+    // Compute number of elements and byte size
     int total_size = 1;
     for (auto &&dimension_length : shape)
     {
         total_size *= dimension_length;
     }
-    pointer = new T[total_size];
+    auto byte_size = total_size * sizeof(T);
+
+    // Create buffer on gpu device
+    buffer_pointer = gpu_device->newBuffer(byte_size, MTL::ResourceStorageModeManaged);
+
+    // Get contents pointer to first element
+    pointer = (T *)buffer_pointer->contents(); // M1 allocation
+    // pointer = new T[total_size]; // CPU allocation
 };
 
 template <class T>

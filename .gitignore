@@ -3,6 +3,11 @@ build
 *.npy
 *.mp4
 docs-source/xml
+test_*
+*.x
+*.dSYM
+*.ini
+.DS_Store
 
 # Created by .ignore support plugin (hsz.mobi)
 ### C++ template

@@ -3,6 +3,14 @@
 //
 #include "fdModel.h"
 #include "INIReader.h"
+
+// #define NS_PRIVATE_IMPLEMENTATION
+// #define CA_PRIVATE_IMPLEMENTATION
+// #define MTL_PRIVATE_IMPLEMENTATION
+// #include "Foundation.hpp"
+// #include "Metal.hpp"
+// #include "QuartzCore.hpp"
+
 #include <cmath>
 #include <fstream>
 #include <iomanip>
@@ -13,7 +21,8 @@
 
 #define PI 3.14159265
 
-fdModel::fdModel(const char *configuration_file_relative_path)
+fdModel::fdModel(MTL::Device *gpu_device,
+                 const char *configuration_file_relative_path) : gpu_device(gpu_device)
 {
   // --- Initialization section ---
 
@@ -27,20 +36,21 @@ fdModel::fdModel(const char *configuration_file_relative_path)
 }
 
 fdModel::fdModel(
+    MTL::Device *gpu_device,
     const int nt, const int nx_inner, const int nz_inner, const int nx_inner_boundary,
-    const int nz_inner_boundary, const real_simulation dx, const real_simulation dz,
-    const real_simulation dt, const int np_boundary, const real_simulation np_factor,
-    const real_simulation scalar_rho, const real_simulation scalar_vp,
-    const real_simulation scalar_vs, const int npx, const int npz,
-    const real_simulation peak_frequency, const real_simulation source_timeshift,
-    const real_simulation delay_cycles_per_shot, const int n_sources, const int n_shots,
+    const int nz_inner_boundary, const float dx, const float dz,
+    const float dt, const int np_boundary, const float np_factor,
+    const float scalar_rho, const float scalar_vp,
+    const float scalar_vs, const int npx, const int npz,
+    const float peak_frequency, const float source_timeshift,
+    const float delay_cycles_per_shot, const int n_sources, const int n_shots,
     const std::vector<int> ix_sources_vector, const std::vector<int> iz_sources_vector,
-    const std::vector<real_simulation> moment_angles_vector,
+    const std::vector<float> moment_angles_vector,
     const std::vector<std::vector<int>> which_source_to_fire_in_which_shot,
     const int nr, const std::vector<int> ix_receivers_vector,
     const std::vector<int> iz_receivers_vector, const int snapshot_interval,
     const std::string observed_data_folder, const std::string stf_folder)
-    : nt(nt), nx_inner(nx_inner), nz_inner(nz_inner),
+    : gpu_device(gpu_device), nt(nt), nx_inner(nx_inner), nz_inner(nz_inner),
       nx_inner_boundary(nx_inner_boundary), nz_inner_boundary(nz_inner_boundary),
       dx(dx), dz(dz), dt(dt), np_boundary(np_boundary), np_factor(np_factor),
       scalar_rho(scalar_rho), scalar_vp(scalar_vp), scalar_vs(scalar_vs),
@@ -61,8 +71,8 @@ fdModel::fdModel(
   initialize_arrays();
 }
 
-fdModel::fdModel(const fdModel &model)
-    : nt(model.nt), nx_inner(model.nx_inner), nz_inner(model.nz_inner),
+fdModel::fdModel(MTL::Device *gpu_device, const fdModel &model)
+    : gpu_device(gpu_device), nt(model.nt), nx_inner(model.nx_inner), nz_inner(model.nz_inner),
       nx_inner_boundary(model.nx_inner_boundary),
       nz_inner_boundary(model.nz_inner_boundary), dx(model.dx), dz(model.dz),
       dt(model.dt), np_boundary(model.np_boundary), np_factor(model.np_factor),
@@ -81,7 +91,7 @@ fdModel::fdModel(const fdModel &model)
                                      model.ix_sources + model.n_sources);
   std::vector<int> iz_sources_vector(model.iz_sources,
                                      model.iz_sources + model.n_sources);
-  std::vector<real_simulation> moment_angles_vector(
+  std::vector<float> moment_angles_vector(
       model.moment_angles, model.moment_angles + model.n_sources);
   std::vector<int> ix_receivers_vector(model.ix_receivers,
                                        model.ix_receivers + model.nr);
@@ -140,54 +150,53 @@ void fdModel::allocate_memory()
 {
   shape_grid = {nx, nz};
 
-  allocate_array(vx, shape_grid);
-  allocate_array(vz, shape_grid);
-  allocate_array(txx, shape_grid);
-  allocate_array(tzz, shape_grid);
-  allocate_array(txz, shape_grid);
-  allocate_array(lm, shape_grid);
-  allocate_array(la, shape_grid);
-  allocate_array(mu, shape_grid);
-  allocate_array(b_vx, shape_grid);
-  allocate_array(b_vz, shape_grid);
-  allocate_array(rho, shape_grid);
-  allocate_array(vp, shape_grid);
-  allocate_array(vs, shape_grid);
-  allocate_array(density_l_kernel, shape_grid);
-  allocate_array(lambda_kernel, shape_grid);
-  allocate_array(mu_kernel, shape_grid);
-  allocate_array(vp_kernel, shape_grid);
-  allocate_array(vs_kernel, shape_grid);
-  allocate_array(density_v_kernel, shape_grid);
-  allocate_array(starting_rho, shape_grid);
-  allocate_array(starting_vp, shape_grid);
-  allocate_array(starting_vs, shape_grid);
-  allocate_array(taper, shape_grid);
+  allocate_array(gpu_device, vx_gpu, vx, shape_grid);
+  allocate_array(gpu_device, vz_gpu, vz, shape_grid);
+  allocate_array(gpu_device, txx_gpu, txx, shape_grid);
+  allocate_array(gpu_device, tzz_gpu, tzz, shape_grid);
+  allocate_array(gpu_device, txz_gpu, txz, shape_grid);
+  allocate_array(gpu_device, lm_gpu, lm, shape_grid);
+  allocate_array(gpu_device, la_gpu, la, shape_grid);
+  allocate_array(gpu_device, mu_gpu, mu, shape_grid);
+  allocate_array(gpu_device, b_vx_gpu, b_vx, shape_grid);
+  allocate_array(gpu_device, b_vz_gpu, b_vz, shape_grid);
+  allocate_array(gpu_device, rho_gpu, rho, shape_grid);
+  allocate_array(gpu_device, vp_gpu, vp, shape_grid);
+  allocate_array(gpu_device, vs_gpu, vs, shape_grid);
+  allocate_array(gpu_device, density_l_kernel_gpu, density_l_kernel, shape_grid);
+  allocate_array(gpu_device, lambda_kernel_gpu, lambda_kernel, shape_grid);
+  allocate_array(gpu_device, mu_kernel_gpu, mu_kernel, shape_grid);
+  allocate_array(gpu_device, vp_kernel_gpu, vp_kernel, shape_grid);
+  allocate_array(gpu_device, vs_kernel_gpu, vs_kernel, shape_grid);
+  allocate_array(gpu_device, density_v_kernel_gpu, density_v_kernel, shape_grid);
+  allocate_array(gpu_device, starting_rho_gpu, starting_rho, shape_grid);
+  allocate_array(gpu_device, starting_vp_gpu, starting_vp, shape_grid);
+  allocate_array(gpu_device, starting_vs_gpu, starting_vs, shape_grid);
+  allocate_array(gpu_device, taper_gpu, taper, shape_grid);
 
   shape_t = {nt};
-
-  allocate_array(t, shape_t);
+  allocate_array(gpu_device, t_gpu, t, shape_t);
 
   shape_stf = {n_sources, nt};
-  allocate_array(stf, shape_stf);
+  allocate_array(gpu_device, stf_gpu, stf, shape_stf);
 
   shape_moment = {n_sources, 2, 2};
-  allocate_array(moment, shape_moment);
+  allocate_array(gpu_device, moment_gpu, moment, shape_moment);
 
   shape_receivers = {n_shots, nr, nt};
-  allocate_array(rtf_ux, shape_receivers);
-  allocate_array(rtf_uz, shape_receivers);
-  allocate_array(rtf_ux_true, shape_receivers);
-  allocate_array(rtf_uz_true, shape_receivers);
-  allocate_array(a_stf_ux, shape_receivers);
-  allocate_array(a_stf_uz, shape_receivers);
+  allocate_array(gpu_device, rtf_ux_gpu, rtf_ux, shape_receivers);
+  allocate_array(gpu_device, rtf_uz_gpu, rtf_uz, shape_receivers);
+  allocate_array(gpu_device, rtf_ux_true_gpu, rtf_ux_true, shape_receivers);
+  allocate_array(gpu_device, rtf_uz_true_gpu, rtf_uz_true, shape_receivers);
+  allocate_array(gpu_device, a_stf_ux_gpu, a_stf_ux, shape_receivers);
+  allocate_array(gpu_device, a_stf_uz_gpu, a_stf_uz, shape_receivers);
 
   shape_accu = {n_shots, snapshots, nx, nz};
-  allocate_array(accu_vx, shape_accu);
-  allocate_array(accu_vz, shape_accu);
-  allocate_array(accu_txx, shape_accu);
-  allocate_array(accu_tzz, shape_accu);
-  allocate_array(accu_txz, shape_accu);
+  allocate_array(gpu_device, accu_vx_gpu, accu_vx, shape_accu);
+  allocate_array(gpu_device, accu_vz_gpu, accu_vz, shape_accu);
+  allocate_array(gpu_device, accu_txx_gpu, accu_txx, shape_accu);
+  allocate_array(gpu_device, accu_tzz_gpu, accu_tzz, shape_accu);
+  allocate_array(gpu_device, accu_txz_gpu, accu_txz, shape_accu);
 }
 
 void fdModel::initialize_arrays()
@@ -220,12 +229,12 @@ void fdModel::initialize_arrays()
       for (unsigned int it = 0; it < nt; ++it)
       {
         t[it] = it * dt;
-        auto f = static_cast<real_simulation>(1.0 / alpha);
-        auto shiftedTime = static_cast<real_simulation>(
+        auto f = static_cast<float>(1.0 / alpha);
+        auto shiftedTime = static_cast<float>(
             t[it] - 1.4 / f - delay_cycles_per_shot * i_source / f);
         stf[linear_IDX(which_source_to_fire_in_which_shot[i_shot][i_source], it, n_sources, nt)] =
-            real_simulation((1 - 2 * pow(M_PI * f * shiftedTime, 2)) *
-                            exp(-pow(M_PI * f * shiftedTime, 2)));
+            float((1 - 2 * pow(M_PI * f * shiftedTime, 2)) *
+                  exp(-pow(M_PI * f * shiftedTime, 2)));
       }
     }
   }
@@ -236,13 +245,13 @@ void fdModel::initialize_arrays()
   { // todo allow for more complex moment tensors
 
     moment[linear_IDX(i_source, 0, 0, n_sources, 2, 2)] =
-        static_cast<real_simulation>(cos(moment_angles[i_source] * PI / 180.0) * 1e15);
+        static_cast<float>(cos(moment_angles[i_source] * PI / 180.0) * 1e15);
     moment[linear_IDX(i_source, 0, 1, n_sources, 2, 2)] =
-        static_cast<real_simulation>(-sin(moment_angles[i_source] * PI / 180.0) * 1e15);
+        static_cast<float>(-sin(moment_angles[i_source] * PI / 180.0) * 1e15);
     moment[linear_IDX(i_source, 1, 0, n_sources, 2, 2)] =
-        static_cast<real_simulation>(-sin(moment_angles[i_source] * PI / 180.0) * 1e15);
+        static_cast<float>(-sin(moment_angles[i_source] * PI / 180.0) * 1e15);
     moment[linear_IDX(i_source, 1, 1, n_sources, 2, 2)] =
-        static_cast<real_simulation>(-cos(moment_angles[i_source] * PI / 180.0) * 1e15);
+        static_cast<float>(-cos(moment_angles[i_source] * PI / 180.0) * 1e15);
   }
 
 // Set all fields to background value so as to at least initialize.
@@ -292,7 +301,7 @@ void fdModel::initialize_arrays()
     for (int iz = 0; iz < nz; ++iz)
     {
       auto lin_idx = linear_IDX(ix, iz, nx, nz);
-      taper[lin_idx] = static_cast<real_simulation>(
+      taper[lin_idx] = static_cast<float>(
           exp(-pow(np_factor * (np_boundary - taper[lin_idx]), 2)));
     }
   }
@@ -389,7 +398,7 @@ void fdModel::copy_arrays(const fdModel &model)
 
 void fdModel::parse_parameters(const std::vector<int> ix_sources_vector,
                                const std::vector<int> iz_sources_vector,
-                               const std::vector<real_simulation> moment_angles_vector,
+                               const std::vector<float> moment_angles_vector,
                                const std::vector<int> ix_receivers_vector,
                                const std::vector<int> iz_receivers_vector)
 {
@@ -409,7 +418,7 @@ void fdModel::parse_parameters(const std::vector<int> ix_sources_vector,
   // Parse source setup.
   ix_sources = new int[n_sources];
   iz_sources = new int[n_sources];
-  moment_angles = new real_simulation[n_sources];
+  moment_angles = new float[n_sources];
 
   if (ix_sources_vector.size() != n_sources or iz_sources_vector.size() != n_sources or
       moment_angles_vector.size() != n_sources)
@@ -457,11 +466,11 @@ void fdModel::parse_parameters(const std::vector<int> ix_sources_vector,
   }
 
   // Final calculations
-  alpha = static_cast<real_simulation>(1.0 / peak_frequency);
+  alpha = static_cast<float>(1.0 / peak_frequency);
   snapshots = ceil(nt / snapshot_interval);
 
   // Check if the amount of snapshots satisfies the other parameters.
-  if (floor(double(nt) / snapshot_interval) != snapshots)
+  if (floor(float(nt) / snapshot_interval) != snapshots)
   {
     throw std::length_error("Snapshot interval and size of accumulator don't match!");
   }
@@ -501,7 +510,7 @@ void fdModel::parse_configuration_file(const char *configuration_file_relative_p
   n_shots = reader.GetInteger("sources", "n_shots");
   std::vector<int> ix_sources_vector;
   std::vector<int> iz_sources_vector;
-  std::vector<real_simulation> moment_angles_vector;
+  std::vector<float> moment_angles_vector;
   parse_string_to_vector(reader.Get("sources", "ix_sources"), &ix_sources_vector);
   parse_string_to_vector(reader.Get("sources", "iz_sources"), &iz_sources_vector);
   parse_string_to_vector(reader.Get("sources", "moment_angles"), &moment_angles_vector);
@@ -545,7 +554,7 @@ void fdModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
   double startTime = 0, stopTime = 0, secsElapsed = 0;
   if (verbose)
   {
-    startTime = real_simulation(omp_get_wtime());
+    startTime = omp_get_wtime();
   }
 
   // Time-loop starts here
@@ -808,7 +817,7 @@ void fdModel::adjoint_simulate(int i_shot, bool verbose)
   double startTime = 0, stopTime = 0, secsElapsed = 0;
   if (verbose)
   {
-    startTime = real_simulation(omp_get_wtime());
+    startTime = omp_get_wtime();
   }
 
   for (int it = nt - 1; it >= 0; --it)
@@ -986,8 +995,8 @@ void fdModel::write_receivers(const std::string prefix)
     receiver_file_ux.open(filename_ux);
     receiver_file_uz.open(filename_uz);
 
-    receiver_file_ux.precision(std::numeric_limits<real_simulation>::digits10 + 10);
-    receiver_file_uz.precision(std::numeric_limits<real_simulation>::digits10 + 10);
+    receiver_file_ux.precision(std::numeric_limits<float>::digits10 + 10);
+    receiver_file_uz.precision(std::numeric_limits<float>::digits10 + 10);
 
     for (int i_receiver = 0; i_receiver < nr; ++i_receiver)
     {
@@ -1016,7 +1025,7 @@ void fdModel::write_sources()
 
     shot_file.open(filename_sources);
 
-    shot_file.precision(std::numeric_limits<real_simulation>::digits10 + 10);
+    shot_file.precision(std::numeric_limits<float>::digits10 + 10);
 
     for (int i_source : which_source_to_fire_in_which_shot[i_shot])
     {
@@ -1041,10 +1050,10 @@ void fdModel::update_from_velocity()
 
       auto idx = linear_IDX(ix, iz, nx, nz);
 
-      mu[idx] = real_simulation(pow(vs[idx], 2) * rho[idx]);
-      lm[idx] = real_simulation(pow(vp[idx], 2) * rho[idx]);
+      mu[idx] = float(pow(vs[idx], 2) * rho[idx]);
+      lm[idx] = float(pow(vp[idx], 2) * rho[idx]);
       la[idx] = lm[idx] - 2 * mu[idx];
-      b_vx[idx] = real_simulation(1.0 / rho[idx]);
+      b_vx[idx] = float(1.0 / rho[idx]);
       b_vz[idx] = b_vx[idx];
     }
   }
@@ -1083,8 +1092,8 @@ void fdModel::load_receivers(bool verbose)
       throw std::invalid_argument("Not all data is present!");
     }
 
-    real_simulation placeholder_ux;
-    real_simulation placeholder_uz;
+    float placeholder_ux;
+    float placeholder_uz;
 
     for (int i_receiver = 0; i_receiver < nr; ++i_receiver)
     {
@@ -1221,9 +1230,9 @@ void fdModel::load_model(const std::string &de_path, const std::string &vp_path,
                                 vs_path + "\r\n");
   }
 
-  real_simulation placeholder_de;
-  real_simulation placeholder_vp;
-  real_simulation placeholder_vs;
+  float placeholder_de;
+  float placeholder_vp;
+  float placeholder_vs;
 
   int iter = 0;
 
@@ -1541,7 +1550,7 @@ dynamic_vector fdModel::load_vector(const std::string &model_vector_path,
                                 model_vector_path + "\r\n");
   }
 
-  real_simulation placeholder_model_vector;
+  float placeholder_model_vector;
   for (int i = 0; i < n_free_per_par * 3; ++i)
   {
     model_vector_file >> placeholder_model_vector;
