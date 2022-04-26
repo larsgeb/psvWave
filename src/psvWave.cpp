@@ -206,7 +206,7 @@ public:
 
   py::tuple get_coordinates(bool in_units)
   {
-    real_simulation *IX, *IZ;
+    float *IX, *IZ;
 
     allocate_array(IX, shape_grid);
     allocate_array(IZ, shape_grid);
@@ -253,9 +253,9 @@ public:
     return py::make_tuple(array_vp, array_vs, array_rho);
   }
 
-  void set_parameter_fields(py::array_t<real_simulation> _vp,
-                            py::array_t<real_simulation> _vs,
-                            py::array_t<real_simulation> _rho)
+  void set_parameter_fields(py::array_t<float> _vp,
+                            py::array_t<float> _vs,
+                            py::array_t<float> _rho)
   {
     // Get buffer information for the passed arrays
     py::buffer_info _vp_buffer = _vp.request();
@@ -283,9 +283,9 @@ public:
     int buffer_size = _vp_buffer.shape[0] * _vp_buffer.shape[1];
 
     // Get pointer to the start of the (contiguous) buffer
-    real_simulation *_vp_ptr = (real_simulation *)_vp_buffer.ptr;
-    real_simulation *_vs_ptr = (real_simulation *)_vs_buffer.ptr;
-    real_simulation *_rho_ptr = (real_simulation *)_rho_buffer.ptr;
+    float *_vp_ptr = (float *)_vp_buffer.ptr;
+    float *_vs_ptr = (float *)_vs_buffer.ptr;
+    float *_rho_ptr = (float *)_rho_buffer.ptr;
 
     // Copy the data
     copy_data(vp, _vp_ptr, buffer_size);
@@ -324,29 +324,29 @@ public:
   py::tuple get_receivers(bool in_units, bool include_absorbing_boundary_as_index)
   {
     // Create new arrays
-    py::array_t<real_simulation> x_receivers(py::buffer_info(
-        nullptr, sizeof(real_simulation),
-        py::format_descriptor<real_simulation>::format(), 1, std::vector<ssize_t>{nr},
-        std::vector<size_t>{sizeof(real_simulation)}));
-    py::array_t<real_simulation> z_receivers(py::buffer_info(
-        nullptr, sizeof(real_simulation),
-        py::format_descriptor<real_simulation>::format(), 1, std::vector<ssize_t>{nr},
-        std::vector<size_t>{sizeof(real_simulation)}));
+    py::array_t<float> x_receivers(py::buffer_info(
+        nullptr, sizeof(float),
+        py::format_descriptor<float>::format(), 1, std::vector<ssize_t>{nr},
+        std::vector<size_t>{sizeof(float)}));
+    py::array_t<float> z_receivers(py::buffer_info(
+        nullptr, sizeof(float),
+        py::format_descriptor<float>::format(), 1, std::vector<ssize_t>{nr},
+        std::vector<size_t>{sizeof(float)}));
 
-    copy_data_cast((real_simulation *)x_receivers.request().ptr, ix_receivers, nr);
+    copy_data_cast((float *)x_receivers.request().ptr, ix_receivers, nr);
 
-    copy_data_cast((real_simulation *)z_receivers.request().ptr, iz_receivers, nr);
+    copy_data_cast((float *)z_receivers.request().ptr, iz_receivers, nr);
 
     if (!include_absorbing_boundary_as_index || in_units)
     {
       for (int ir = 0; ir < nr; ir++)
       {
-        ((real_simulation *)x_receivers.request().ptr)[ir] -= np_boundary;
-        ((real_simulation *)z_receivers.request().ptr)[ir] -= np_boundary;
+        ((float *)x_receivers.request().ptr)[ir] -= np_boundary;
+        ((float *)z_receivers.request().ptr)[ir] -= np_boundary;
         if (in_units)
         {
-          ((real_simulation *)x_receivers.request().ptr)[ir] *= dx;
-          ((real_simulation *)z_receivers.request().ptr)[ir] *= dz;
+          ((float *)x_receivers.request().ptr)[ir] *= dx;
+          ((float *)z_receivers.request().ptr)[ir] *= dz;
         }
       }
     }
@@ -356,29 +356,29 @@ public:
   py::tuple get_sources(bool in_units, bool include_absorbing_boundary_as_index)
   {
     // Create new arrays
-    py::array_t<real_simulation> x_sources(py::buffer_info(
-        nullptr, sizeof(real_simulation),
-        py::format_descriptor<real_simulation>::format(), 1,
-        std::vector<ssize_t>{n_sources}, std::vector<size_t>{sizeof(real_simulation)}));
-    py::array_t<real_simulation> z_sources(py::buffer_info(
-        nullptr, sizeof(real_simulation),
-        py::format_descriptor<real_simulation>::format(), 1,
-        std::vector<ssize_t>{n_sources}, std::vector<size_t>{sizeof(real_simulation)}));
+    py::array_t<float> x_sources(py::buffer_info(
+        nullptr, sizeof(float),
+        py::format_descriptor<float>::format(), 1,
+        std::vector<ssize_t>{n_sources}, std::vector<size_t>{sizeof(float)}));
+    py::array_t<float> z_sources(py::buffer_info(
+        nullptr, sizeof(float),
+        py::format_descriptor<float>::format(), 1,
+        std::vector<ssize_t>{n_sources}, std::vector<size_t>{sizeof(float)}));
 
-    copy_data_cast((real_simulation *)x_sources.request().ptr, ix_sources, n_sources);
+    copy_data_cast((float *)x_sources.request().ptr, ix_sources, n_sources);
 
-    copy_data_cast((real_simulation *)z_sources.request().ptr, iz_sources, n_sources);
+    copy_data_cast((float *)z_sources.request().ptr, iz_sources, n_sources);
 
     if (!include_absorbing_boundary_as_index || in_units)
     {
       for (int ir = 0; ir < n_sources; ir++)
       {
-        ((real_simulation *)x_sources.request().ptr)[ir] -= np_boundary;
-        ((real_simulation *)z_sources.request().ptr)[ir] -= np_boundary;
+        ((float *)x_sources.request().ptr)[ir] -= np_boundary;
+        ((float *)z_sources.request().ptr)[ir] -= np_boundary;
         if (in_units)
         {
-          ((real_simulation *)x_sources.request().ptr)[ir] *= dx;
-          ((real_simulation *)z_sources.request().ptr)[ir] *= dz;
+          ((float *)x_sources.request().ptr)[ir] *= dx;
+          ((float *)z_sources.request().ptr)[ir] *= dz;
         }
       }
     }
@@ -386,8 +386,8 @@ public:
     return py::make_tuple(x_sources, z_sources);
   }
 
-  void set_synthetic_data(py::array_t<real_simulation> ux,
-                          py::array_t<real_simulation> uz)
+  void set_synthetic_data(py::array_t<float> ux,
+                          py::array_t<float> uz)
   {
     // Get buffer information for the passed arrays
     py::buffer_info ux_buffer = ux.request();
@@ -410,8 +410,8 @@ public:
     int buffer_size = ux_buffer.shape[0] * ux_buffer.shape[1] * ux_buffer.shape[2];
 
     // Get pointer to the start of the (contiguous) buffer
-    real_simulation *ptr_ux = (real_simulation *)ux_buffer.ptr;
-    real_simulation *ptr_uz = (real_simulation *)uz_buffer.ptr;
+    float *ptr_ux = (float *)ux_buffer.ptr;
+    float *ptr_uz = (float *)uz_buffer.ptr;
 
     // Copy the data
     copy_data(rtf_ux, ptr_ux, buffer_size);
@@ -424,8 +424,8 @@ public:
     return std::move(new fdModelExtended(*this));
   }
 
-  void set_observed_data(py::array_t<real_simulation> ux,
-                         py::array_t<real_simulation> uz)
+  void set_observed_data(py::array_t<float> ux,
+                         py::array_t<float> uz)
   {
     // Get buffer information for the passed arrays
     py::buffer_info ux_buffer = ux.request();
@@ -448,8 +448,8 @@ public:
     int buffer_size = ux_buffer.shape[0] * ux_buffer.shape[1] * ux_buffer.shape[2];
 
     // Get pointer to the start of the (contiguous) buffer
-    real_simulation *ux_ptr = (real_simulation *)ux_buffer.ptr;
-    real_simulation *uz_ptr = (real_simulation *)uz_buffer.ptr;
+    float *ux_ptr = (float *)ux_buffer.ptr;
+    float *uz_ptr = (float *)uz_buffer.ptr;
 
     // Copy the data
     copy_data(rtf_ux_true, ux_ptr, buffer_size);
@@ -547,7 +547,7 @@ PYBIND11_MODULE(__psvWave_cpp, m)
            "load_vector(relative_path: str, verbose: bool) -> numpy.ndarray\n"
            "\n"
            "Loads a vector of shape (free_parameters, 1) from a text file. Read in "
-           "precision `real_simulation`.\n")
+           "precision `float`.\n")
       .def("get_snapshots", &fdModelExtended::get_snapshots,
            py::return_value_policy::move,
            "get_snapshots() -> Tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray, "
