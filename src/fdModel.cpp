@@ -2,14 +2,8 @@
 // Created by Lars Gebraad on 25.01.19.
 //
 #include "fdModel.h"
+#include "MetalOperations.hpp"
 #include "INIReader.h"
-
-// #define NS_PRIVATE_IMPLEMENTATION
-// #define CA_PRIVATE_IMPLEMENTATION
-// #define MTL_PRIVATE_IMPLEMENTATION
-// #include "Foundation.hpp"
-// #include "Metal.hpp"
-// #include "QuartzCore.hpp"
 
 #include <cmath>
 #include <fstream>
@@ -33,6 +27,8 @@ fdModel::fdModel(MTL::Device *gpu_device,
   allocate_memory();
 
   initialize_arrays();
+
+  mtl_ops = new MetalOperations(gpu_device);
 }
 
 fdModel::fdModel(
@@ -69,6 +65,8 @@ fdModel::fdModel(
   allocate_memory();
 
   initialize_arrays();
+
+  mtl_ops = new MetalOperations(gpu_device);
 }
 
 fdModel::fdModel(MTL::Device *gpu_device, const fdModel &model)
@@ -102,6 +100,8 @@ fdModel::fdModel(MTL::Device *gpu_device, const fdModel &model)
                    ix_receivers_vector, iz_receivers_vector);
 
   allocate_memory();
+
+  mtl_ops = new MetalOperations(gpu_device);
 
   copy_arrays(model);
 }

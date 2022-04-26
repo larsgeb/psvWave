@@ -17,6 +17,8 @@
 #include "Foundation/Foundation.hpp"
 #include "QuartzCore/QuartzCore.hpp"
 
+#include "MetalOperations.hpp"
+
 //! Typedef that is a shorthand for the correct precision column vector.
 //! This vector has the right precision and shape to be used in matrix equations.
 //! It is of dynamic size.
@@ -193,6 +195,7 @@ public:
   void reset_kernels();
 
   MTL::Device *gpu_device;
+  MetalOperations *mtl_ops;
 
   // ----  FIELDS ----
   // |--< Utility fields >--
