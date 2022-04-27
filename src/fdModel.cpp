@@ -635,7 +635,7 @@ void fdModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
     }
 
     // Time integrate dynamic fields for stress ...
-    if (true)
+    if (false)
     {
 #pragma omp parallel for collapse(2)
       for (int ix = 2; ix < nx - 2; ++ix)
@@ -682,46 +682,56 @@ void fdModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
                                           dx[0]));
         }
       }
-    }
-    else
-    {
-      mtl_ops->stress_integrate_2d(
-          txx_gpu, tzz_gpu, txz_gpu, taper_gpu, dt_gpu, dx_gpu, dz_gpu, vx_gpu,
-          vz_gpu, lm_gpu, la_gpu, mu_gpu, nx, nz);
-    }
+
 // ... and time integrate dynamic fields for velocity.
 #pragma omp parallel for collapse(2)
-    for (int ix = 2; ix < nx - 2; ++ix)
-    {
-      for (int iz = 2; iz < nz - 2; ++iz)
+      for (int ix = 2; ix < nx - 2; ++ix)
       {
-        int idx = linear_IDX(ix, iz, nx, nz);
-        int idx_xp1 = linear_IDX(ix + 1, iz, nx, nz);
-        int idx_xp2 = linear_IDX(ix + 2, iz, nx, nz);
-        int idx_xm1 = linear_IDX(ix - 1, iz, nx, nz);
-        int idx_xm2 = linear_IDX(ix - 2, iz, nx, nz);
-        int idx_zm1 = linear_IDX(ix, iz - 1, nx, nz);
-        int idx_zm2 = linear_IDX(ix, iz - 2, nx, nz);
-        int idx_zp1 = linear_IDX(ix, iz + 1, nx, nz);
-        int idx_zp2 = linear_IDX(ix, iz + 2, nx, nz);
+        for (int iz = 2; iz < nz - 2; ++iz)
+        {
+          int idx = linear_IDX(ix, iz, nx, nz);
+          int idx_xp1 = linear_IDX(ix + 1, iz, nx, nz);
+          int idx_xp2 = linear_IDX(ix + 2, iz, nx, nz);
+          int idx_xm1 = linear_IDX(ix - 1, iz, nx, nz);
+          int idx_xm2 = linear_IDX(ix - 2, iz, nx, nz);
+          int idx_zm1 = linear_IDX(ix, iz - 1, nx, nz);
+          int idx_zm2 = linear_IDX(ix, iz - 2, nx, nz);
+          int idx_zp1 = linear_IDX(ix, iz + 1, nx, nz);
+          int idx_zp2 = linear_IDX(ix, iz + 2, nx, nz);
 
-        vx[idx] = taper[idx] *
-                  (vx[idx] + b_vx[idx] * dt[0] *
-                                 ((c1 * (txx[idx] - txx[idx_xm1]) +
-                                   c2 * (txx[idx_xm2] - txx[idx_xp1])) /
-                                      dx[0] +
-                                  (c1 * (txz[idx] - txz[idx_zm1]) +
-                                   c2 * (txz[idx_zm2] - txz[idx_zp1])) /
-                                      dz[0]));
-        vz[idx] = taper[idx] *
-                  (vz[idx] + b_vz[idx] * dt[0] *
-                                 ((c1 * (txz[idx_xp1] - txz[idx]) +
-                                   c2 * (txz[idx_xm1] - txz[idx_xp2])) /
-                                      dx[0] +
-                                  (c1 * (tzz[idx_zp1] - tzz[idx]) +
-                                   c2 * (tzz[idx_zm1] - tzz[idx_zp2])) /
-                                      dz[0]));
+          vx[idx] = taper[idx] *
+                    (vx[idx] + b_vx[idx] * dt[0] *
+                                   ((c1 * (txx[idx] - txx[idx_xm1]) +
+                                     c2 * (txx[idx_xm2] - txx[idx_xp1])) /
+                                        dx[0] +
+                                    (c1 * (txz[idx] - txz[idx_zm1]) +
+                                     c2 * (txz[idx_zm2] - txz[idx_zp1])) /
+                                        dz[0]));
+          vz[idx] = taper[idx] *
+                    (vz[idx] + b_vz[idx] * dt[0] *
+                                   ((c1 * (txz[idx_xp1] - txz[idx]) +
+                                     c2 * (txz[idx_xm1] - txz[idx_xp2])) /
+                                        dx[0] +
+                                    (c1 * (tzz[idx_zp1] - tzz[idx]) +
+                                     c2 * (tzz[idx_zm1] - tzz[idx_zp2])) /
+                                        dz[0]));
+        }
       }
+    }
+    // else if (false)
+    // {
+    //   mtl_ops->stress_integrate_2d(
+    //       txx_gpu, tzz_gpu, txz_gpu, taper_gpu, dt_gpu, dx_gpu, dz_gpu, vx_gpu, vz_gpu,
+    //       lm_gpu, la_gpu, mu_gpu, b_vx_gpu, b_vz_gpu, nx, nz);
+    //   mtl_ops->velocity_integrate_2d(
+    //       txx_gpu, tzz_gpu, txz_gpu, taper_gpu, dt_gpu, dx_gpu, dz_gpu, vx_gpu, vz_gpu,
+    //       lm_gpu, la_gpu, mu_gpu, b_vx_gpu, b_vz_gpu, nx, nz);
+    // }
+    else
+    {
+      mtl_ops->combined_integrate_2d(
+          txx_gpu, tzz_gpu, txz_gpu, taper_gpu, dt_gpu, dx_gpu, dz_gpu, vx_gpu, vz_gpu,
+          lm_gpu, la_gpu, mu_gpu, b_vx_gpu, b_vz_gpu, nx, nz);
     }
 
     // Inject sources at appropriate location and times.
@@ -907,91 +917,100 @@ void fdModel::adjoint_simulate(int i_shot, bool verbose)
       }
     }
 
+    if (false)
+    {
 // Reverse time integrate dynamic fields for stress
 #pragma omp parallel for collapse(2)
-    for (int ix = 2; ix < nx - 2; ++ix)
-    {
-      for (int iz = 2; iz < nz - 2; ++iz)
+      for (int ix = 2; ix < nx - 2; ++ix)
       {
+        for (int iz = 2; iz < nz - 2; ++iz)
+        {
 
-        auto idx = linear_IDX(ix, iz, nx, nz);
+          auto idx = linear_IDX(ix, iz, nx, nz);
 
-        auto idx_xp1 = linear_IDX(ix + 1, iz, nx, nz);
-        auto idx_xp2 = linear_IDX(ix + 2, iz, nx, nz);
-        auto idx_xm1 = linear_IDX(ix - 1, iz, nx, nz);
-        auto idx_xm2 = linear_IDX(ix - 2, iz, nx, nz);
+          auto idx_xp1 = linear_IDX(ix + 1, iz, nx, nz);
+          auto idx_xp2 = linear_IDX(ix + 2, iz, nx, nz);
+          auto idx_xm1 = linear_IDX(ix - 1, iz, nx, nz);
+          auto idx_xm2 = linear_IDX(ix - 2, iz, nx, nz);
 
-        auto idx_zm1 = linear_IDX(ix, iz - 1, nx, nz);
-        auto idx_zm2 = linear_IDX(ix, iz - 2, nx, nz);
-        auto idx_zp1 = linear_IDX(ix, iz + 1, nx, nz);
-        auto idx_zp2 = linear_IDX(ix, iz + 2, nx, nz);
+          auto idx_zm1 = linear_IDX(ix, iz - 1, nx, nz);
+          auto idx_zm2 = linear_IDX(ix, iz - 2, nx, nz);
+          auto idx_zp1 = linear_IDX(ix, iz + 1, nx, nz);
+          auto idx_zp2 = linear_IDX(ix, iz + 2, nx, nz);
 
-        txx[idx] =
-            taper[idx] *
-            (txx[idx] - dt[0] * (lm[idx] *
-                                     (c1 * (vx[idx_xp1] - vx[idx]) +
-                                      c2 * (vx[idx_xm1] - vx[idx_xp2])) /
-                                     dx[0] +
-                                 la[idx] *
-                                     (c1 * (vz[idx] - vz[idx_zm1]) +
-                                      c2 * (vz[idx_zm2] - vz[idx_zp1])) /
-                                     dz[0]));
-        tzz[idx] =
-            taper[idx] *
-            (tzz[idx] - dt[0] * (la[idx] *
-                                     (c1 * (vx[idx_xp1] - vx[idx]) +
-                                      c2 * (vx[idx_xm1] - vx[idx_xp2])) /
-                                     dx[0] +
-                                 (lm[idx]) *
-                                     (c1 * (vz[idx] - vz[idx_zm1]) +
-                                      c2 * (vz[idx_zm2] - vz[idx_zp1])) /
-                                     dz[0]));
-        txz[idx] = taper[idx] *
-                   (txz[idx] - dt[0] * mu[idx] *
-                                   ((c1 * (vx[idx_zp1] - vx[idx]) +
-                                     c2 * (vx[idx_zm1] - vx[idx_zp2])) /
-                                        dz[0] +
-                                    (c1 * (vz[idx] - vz[idx_xm1]) +
-                                     c2 * (vz[idx_xm2] - vz[idx_xp1])) /
-                                        dx[0]));
+          txx[idx] =
+              taper[idx] *
+              (txx[idx] - dt[0] * (lm[idx] *
+                                       (c1 * (vx[idx_xp1] - vx[idx]) +
+                                        c2 * (vx[idx_xm1] - vx[idx_xp2])) /
+                                       dx[0] +
+                                   la[idx] *
+                                       (c1 * (vz[idx] - vz[idx_zm1]) +
+                                        c2 * (vz[idx_zm2] - vz[idx_zp1])) /
+                                       dz[0]));
+          tzz[idx] =
+              taper[idx] *
+              (tzz[idx] - dt[0] * (la[idx] *
+                                       (c1 * (vx[idx_xp1] - vx[idx]) +
+                                        c2 * (vx[idx_xm1] - vx[idx_xp2])) /
+                                       dx[0] +
+                                   (lm[idx]) *
+                                       (c1 * (vz[idx] - vz[idx_zm1]) +
+                                        c2 * (vz[idx_zm2] - vz[idx_zp1])) /
+                                       dz[0]));
+          txz[idx] = taper[idx] *
+                     (txz[idx] - dt[0] * mu[idx] *
+                                     ((c1 * (vx[idx_zp1] - vx[idx]) +
+                                       c2 * (vx[idx_zm1] - vx[idx_zp2])) /
+                                          dz[0] +
+                                      (c1 * (vz[idx] - vz[idx_xm1]) +
+                                       c2 * (vz[idx_xm2] - vz[idx_xp1])) /
+                                          dx[0]));
+        }
       }
-    }
 // Reverse time integrate dynamic fields for velocity
 #pragma omp parallel for collapse(2)
-    for (int ix = 2; ix < nx - 2; ++ix)
-    {
-      for (int iz = 2; iz < nz - 2; ++iz)
+      for (int ix = 2; ix < nx - 2; ++ix)
       {
+        for (int iz = 2; iz < nz - 2; ++iz)
+        {
 
-        auto idx = linear_IDX(ix, iz, nx, nz);
+          auto idx = linear_IDX(ix, iz, nx, nz);
 
-        auto idx_xp1 = linear_IDX(ix + 1, iz, nx, nz);
-        auto idx_xp2 = linear_IDX(ix + 2, iz, nx, nz);
-        auto idx_xm1 = linear_IDX(ix - 1, iz, nx, nz);
-        auto idx_xm2 = linear_IDX(ix - 2, iz, nx, nz);
+          auto idx_xp1 = linear_IDX(ix + 1, iz, nx, nz);
+          auto idx_xp2 = linear_IDX(ix + 2, iz, nx, nz);
+          auto idx_xm1 = linear_IDX(ix - 1, iz, nx, nz);
+          auto idx_xm2 = linear_IDX(ix - 2, iz, nx, nz);
 
-        auto idx_zm1 = linear_IDX(ix, iz - 1, nx, nz);
-        auto idx_zm2 = linear_IDX(ix, iz - 2, nx, nz);
-        auto idx_zp1 = linear_IDX(ix, iz + 1, nx, nz);
-        auto idx_zp2 = linear_IDX(ix, iz + 2, nx, nz);
+          auto idx_zm1 = linear_IDX(ix, iz - 1, nx, nz);
+          auto idx_zm2 = linear_IDX(ix, iz - 2, nx, nz);
+          auto idx_zp1 = linear_IDX(ix, iz + 1, nx, nz);
+          auto idx_zp2 = linear_IDX(ix, iz + 2, nx, nz);
 
-        vx[idx] = taper[idx] *
-                  (vx[idx] - b_vx[idx] * dt[0] *
-                                 ((c1 * (txx[idx] - txx[idx_xm1]) +
-                                   c2 * (txx[idx_xm2] - txx[idx_xp1])) /
-                                      dx[0] +
-                                  (c1 * (txz[idx] - txz[idx_zm1]) +
-                                   c2 * (txz[idx_zm2] - txz[idx_zp1])) /
-                                      dz[0]));
-        vz[idx] = taper[idx] *
-                  (vz[idx] - b_vz[idx] * dt[0] *
-                                 ((c1 * (txz[idx_xp1] - txz[idx]) +
-                                   c2 * (txz[idx_xm1] - txz[idx_xp2])) /
-                                      dx[0] +
-                                  (c1 * (tzz[idx_zp1] - tzz[idx]) +
-                                   c2 * (tzz[idx_zm1] - tzz[idx_zp2])) /
-                                      dz[0]));
+          vx[idx] = taper[idx] *
+                    (vx[idx] - b_vx[idx] * dt[0] *
+                                   ((c1 * (txx[idx] - txx[idx_xm1]) +
+                                     c2 * (txx[idx_xm2] - txx[idx_xp1])) /
+                                        dx[0] +
+                                    (c1 * (txz[idx] - txz[idx_zm1]) +
+                                     c2 * (txz[idx_zm2] - txz[idx_zp1])) /
+                                        dz[0]));
+          vz[idx] = taper[idx] *
+                    (vz[idx] - b_vz[idx] * dt[0] *
+                                   ((c1 * (txz[idx_xp1] - txz[idx]) +
+                                     c2 * (txz[idx_xm1] - txz[idx_xp2])) /
+                                        dx[0] +
+                                    (c1 * (tzz[idx_zp1] - tzz[idx]) +
+                                     c2 * (tzz[idx_zm1] - tzz[idx_zp2])) /
+                                        dz[0]));
+        }
       }
+    }
+    else
+    {
+      mtl_ops->combined_integrate_2d(
+          txx_gpu, tzz_gpu, txz_gpu, taper_gpu, dt_gpu, dx_gpu, dz_gpu, vx_gpu, vz_gpu,
+          lm_gpu, la_gpu, mu_gpu, b_vx_gpu, b_vz_gpu, nx, nz);
     }
 
     // Inject adjoint sources
