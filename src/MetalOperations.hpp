@@ -9,9 +9,8 @@ A class to manage all of the Metal objects this app creates.
 */
 #pragma once
 
-#include "Metal/Metal.hpp"
 #include "Foundation/Foundation.hpp"
-#include "QuartzCore/QuartzCore.hpp"
+#include "Metal/Metal.hpp"
 
 #include "map"
 
@@ -24,6 +23,11 @@ public:
 
     void Blocking1D(std::vector<MTL::Buffer *> buffers,
                     size_t arrayLength,
+                    const char *method);
+
+    void Blocking2D(std::vector<MTL::Buffer *> buffers,
+                    size_t rows,
+                    size_t columns,
                     const char *method);
 
     void addArrays(MTL::Buffer *x_array,
@@ -41,6 +45,11 @@ public:
                         MTL::Buffer *r_array,
                         size_t arrayLength);
 
+    void multiplyArrayConstant(MTL::Buffer *x_array,
+                               MTL::Buffer *alpha,
+                               MTL::Buffer *r_array,
+                               size_t arrayLength);
+
     void saxpyArrays(MTL::Buffer *alpha,
                      MTL::Buffer *x_array,
                      MTL::Buffer *y_array,
@@ -51,6 +60,68 @@ public:
                             MTL::Buffer *x_array,
                             MTL::Buffer *r_array,
                             size_t arrayLength);
+
+    void quadratic2d(MTL::Buffer *X,
+                     MTL::Buffer *Y,
+                     MTL::Buffer *R,
+                     size_t rows,
+                     size_t columns);
+
+    void laplacian2d(MTL::Buffer *X,
+                     MTL::Buffer *R,
+                     size_t rows,
+                     size_t columns);
+
+    void stress_integrate_2d(MTL::Buffer *&txx,
+                             MTL::Buffer *&tzz,
+                             MTL::Buffer *&txz,
+                             MTL::Buffer *&taper,
+                             MTL::Buffer *&_dt,
+                             MTL::Buffer *&_dx,
+                             MTL::Buffer *&_dz,
+                             MTL::Buffer *&vx,
+                             MTL::Buffer *&vz,
+                             MTL::Buffer *&lm,
+                             MTL::Buffer *&la,
+                             MTL::Buffer *&mu,
+                             MTL::Buffer *&b_vx,
+                             MTL::Buffer *&b_vz,
+                             size_t rows,
+                             size_t columns);
+
+    void velocity_integrate_2d(MTL::Buffer *&txx,
+                               MTL::Buffer *&tzz,
+                               MTL::Buffer *&txz,
+                               MTL::Buffer *&taper,
+                               MTL::Buffer *&_dt,
+                               MTL::Buffer *&_dx,
+                               MTL::Buffer *&_dz,
+                               MTL::Buffer *&vx,
+                               MTL::Buffer *&vz,
+                               MTL::Buffer *&lm,
+                               MTL::Buffer *&la,
+                               MTL::Buffer *&mu,
+                               MTL::Buffer *&b_vx,
+                               MTL::Buffer *&b_vz,
+                               size_t rows,
+                               size_t columns);
+
+    void combined_integrate_2d(MTL::Buffer *&txx,
+                               MTL::Buffer *&tzz,
+                               MTL::Buffer *&txz,
+                               MTL::Buffer *&taper,
+                               MTL::Buffer *&_dt,
+                               MTL::Buffer *&_dx,
+                               MTL::Buffer *&_dz,
+                               MTL::Buffer *&vx,
+                               MTL::Buffer *&vz,
+                               MTL::Buffer *&lm,
+                               MTL::Buffer *&la,
+                               MTL::Buffer *&mu,
+                               MTL::Buffer *&b_vx,
+                               MTL::Buffer *&b_vz,
+                               size_t rows,
+                               size_t columns);
 
     void inspector(MTL::Buffer *x_array,
                    MTL::Buffer *r_array,
