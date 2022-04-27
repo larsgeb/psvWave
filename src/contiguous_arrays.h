@@ -3,10 +3,11 @@
 
 #include <Metal/Metal.hpp>
 #include <vector>
+#include <iostream>
 
 template <class T>
 void allocate_array(MTL::Device *gpu_device,
-                    MTL::Buffer *buffer_pointer,
+                    MTL::Buffer *&buffer_pointer,
                     T *&pointer,
                     std::vector<int> shape)
 {
@@ -22,8 +23,19 @@ void allocate_array(MTL::Device *gpu_device,
     buffer_pointer = gpu_device->newBuffer(byte_size, MTL::ResourceStorageModeManaged);
 
     // Get contents pointer to first element
-    pointer = (T *)buffer_pointer->contents(); // M1 allocation
+    pointer = (float *)buffer_pointer->contents(); // M1 allocation
     // pointer = new T[total_size]; // CPU allocation
+
+    // Initialize to zero.
+    for (size_t i = 0; i < total_size; i++)
+    {
+        pointer[i] = (T)0.0;
+    }
+
+    if (buffer_pointer == nullptr)
+    {
+        throw std::invalid_argument("Somehow, we already lost a variable");
+    }
 };
 
 template <class T>
