@@ -15,6 +15,12 @@
 
 #define PI 3.14159265
 
+fdModel::fdModel(
+    const char *configuration_file_relative_path) : fdModel(MTL::CreateSystemDefaultDevice(),
+                                                            configuration_file_relative_path)
+{
+}
+
 fdModel::fdModel(MTL::Device *gpu_device,
                  const char *configuration_file_relative_path) : gpu_device(gpu_device)
 {
@@ -85,8 +91,8 @@ fdModel::fdModel(
   mtl_ops = new MetalOperations(gpu_device);
 }
 
-fdModel::fdModel(MTL::Device *gpu_device, const fdModel &model)
-    : gpu_device(gpu_device), nt(model.nt), nx_inner(model.nx_inner), nz_inner(model.nz_inner),
+fdModel::fdModel(const fdModel &model)
+    : gpu_device(model.gpu_device), nt(model.nt), nx_inner(model.nx_inner), nz_inner(model.nz_inner),
       nx_inner_boundary(model.nx_inner_boundary),
       nz_inner_boundary(model.nz_inner_boundary), np_boundary(model.np_boundary), np_factor(model.np_factor),
       scalar_rho(model.scalar_rho), scalar_vp(model.scalar_vp),
@@ -127,42 +133,43 @@ fdModel::fdModel(MTL::Device *gpu_device, const fdModel &model)
 
 fdModel::~fdModel()
 {
-  deallocate_array(vx);
-  deallocate_array(vz);
-  deallocate_array(txx);
-  deallocate_array(tzz);
-  deallocate_array(txz);
-  deallocate_array(lm);
-  deallocate_array(la);
-  deallocate_array(mu);
-  deallocate_array(b_vx);
-  deallocate_array(b_vz);
-  deallocate_array(rho);
-  deallocate_array(vp);
-  deallocate_array(vs);
-  deallocate_array(density_l_kernel);
-  deallocate_array(lambda_kernel);
-  deallocate_array(mu_kernel);
-  deallocate_array(vp_kernel);
-  deallocate_array(vs_kernel);
-  deallocate_array(density_v_kernel);
-  deallocate_array(starting_rho);
-  deallocate_array(starting_vp);
-  deallocate_array(starting_vs);
-  deallocate_array(taper);
-  deallocate_array(t);
-  deallocate_array(stf);
-  deallocate_array(moment);
-  deallocate_array(accu_vx);
-  deallocate_array(accu_vz);
-  deallocate_array(accu_txx);
-  deallocate_array(accu_tzz);
-  deallocate_array(accu_txz);
-  deallocate_array(ix_receivers);
-  deallocate_array(iz_receivers);
-  deallocate_array(ix_sources);
-  deallocate_array(iz_sources);
-  deallocate_array(moment_angles);
+
+  vx_gpu->release();
+  vz_gpu->release();
+  txx_gpu->release();
+  tzz_gpu->release();
+  txz_gpu->release();
+  lm_gpu->release();
+  la_gpu->release();
+  mu_gpu->release();
+  b_vx_gpu->release();
+  b_vz_gpu->release();
+  rho_gpu->release();
+  vp_gpu->release();
+  vs_gpu->release();
+  density_l_kernel_gpu->release();
+  lambda_kernel_gpu->release();
+  mu_kernel_gpu->release();
+  vp_kernel_gpu->release();
+  vs_kernel_gpu->release();
+  density_v_kernel_gpu->release();
+  starting_rho_gpu->release();
+  starting_vp_gpu->release();
+  starting_vs_gpu->release();
+  taper_gpu->release();
+  t_gpu->release();
+  stf_gpu->release();
+  moment_gpu->release();
+  accu_vx_gpu->release();
+  accu_vz_gpu->release();
+  accu_txx_gpu->release();
+  accu_tzz_gpu->release();
+  accu_txz_gpu->release();
+  // ix_receivers_gpu->release();
+  // iz_receivers_gpu->release();
+  // ix_sources_gpu->release();
+  // iz_sources_gpu->release();
+  // moment_angles_gpu->release();
 }
 
 void fdModel::allocate_memory()
@@ -562,7 +569,7 @@ void fdModel::parse_configuration_file(const char *configuration_file_relative_p
 
 // Forward modeller
 void fdModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
-                               bool output_wavefields)
+                               bool output_wavefields, bool GPU)
 {
 
 // Set dynamic physical fields to zero to reflect initial conditions.
@@ -635,7 +642,7 @@ void fdModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
     }
 
     // Time integrate dynamic fields for stress ...
-    if (false)
+    if (!GPU)
     {
 #pragma omp parallel for collapse(2)
       for (int ix = 2; ix < nx - 2; ++ix)
@@ -718,15 +725,6 @@ void fdModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
         }
       }
     }
-    // else if (false)
-    // {
-    //   mtl_ops->stress_integrate_2d(
-    //       txx_gpu, tzz_gpu, txz_gpu, taper_gpu, dt_gpu, dx_gpu, dz_gpu, vx_gpu, vz_gpu,
-    //       lm_gpu, la_gpu, mu_gpu, b_vx_gpu, b_vz_gpu, nx, nz);
-    //   mtl_ops->velocity_integrate_2d(
-    //       txx_gpu, tzz_gpu, txz_gpu, taper_gpu, dt_gpu, dx_gpu, dz_gpu, vx_gpu, vz_gpu,
-    //       lm_gpu, la_gpu, mu_gpu, b_vx_gpu, b_vz_gpu, nx, nz);
-    // }
     else
     {
       mtl_ops->combined_integrate_2d(
@@ -840,10 +838,11 @@ void fdModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
     secsElapsed = stopTime - startTime;
     std::cout << "Seconds elapsed for forward wave simulation: " << secsElapsed
               << std::endl;
+    std::cout << "Running on: " << (GPU ? "GPU" : "CPU") << std::endl;
   }
 }
 
-void fdModel::adjoint_simulate(int i_shot, bool verbose)
+void fdModel::adjoint_simulate(int i_shot, bool verbose, bool GPU)
 {
   // Reset dynamical fields
   for (int ix = 0; ix < nx; ++ix)
@@ -917,7 +916,7 @@ void fdModel::adjoint_simulate(int i_shot, bool verbose)
       }
     }
 
-    if (false)
+    if (!GPU)
     {
 // Reverse time integrate dynamic fields for stress
 #pragma omp parallel for collapse(2)

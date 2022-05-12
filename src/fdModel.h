@@ -44,7 +44,8 @@ public:
   //!  .ini file. This file should contain all the fields needed for simulation.
   //!  Arbitrary defaults are hardcoded into the binary as backup within the
   //!  parse_configuration() method.
-  explicit fdModel(MTL::Device *gpu_device, const char *configuration_file_relative_path);
+  fdModel(const char *configuration_file_relative_path);
+  fdModel(MTL::Device *gpu_device, const char *configuration_file_relative_path);
 
   fdModel(MTL::Device *gpu_device, const int nt, const int nx_inner, const int nz_inner,
           const int nx_inner_boundary, const int nz_inner_boundary,
@@ -62,7 +63,7 @@ public:
           const std::vector<int> iz_receivers_vector, const int snapshot_interval,
           const std::string observed_data_folder, const std::string stf_folder);
 
-  fdModel(MTL::Device *gpu_device, const fdModel &model);
+  fdModel(const fdModel &model);
 
   //!  \brief Destructor for the class.
   //!
@@ -100,7 +101,7 @@ public:
   //!  faster without storage.
   //!  @param verbose Boolean controlling if modelling should be verbose.
   void forward_simulate(int i_shot, bool store_fields, bool verbose,
-                        bool output_wavefields = false);
+                        bool output_wavefields = false, bool GPU = false);
 
   //!  \brief Method to adjoint simulate wavefields for a specific shot.
   //!
@@ -109,7 +110,7 @@ public:
   //!
   //!  @param i_shot Integer controlling which shot to simulate.
   //!  @param verbose Boolean controlling if modelling should be verbose.
-  void adjoint_simulate(int i_shot, bool verbose);
+  void adjoint_simulate(int i_shot, bool verbose, bool GPU = false);
 
   //!  \brief Method to write out synthetic seismograms to plaintext.
   //!

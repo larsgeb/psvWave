@@ -3,23 +3,28 @@
 #include <pybind11/eigen.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+
+#define NS_PRIVATE_IMPLEMENTATION
+#define CA_PRIVATE_IMPLEMENTATION
+#define MTL_PRIVATE_IMPLEMENTATION
+#include "Metal/Metal.hpp"
+#include "Foundation/Foundation.hpp"
+
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
-
 #include <iostream>
 #include <thread>
 #include <vector>
-
-#include "fdModel.h"
-
-#include "contiguous_arrays.h"
-
-namespace py = pybind11;
-
 #include <algorithm>
 #include <iterator>
 #include <vector>
+
+#include <omp.h>
+
+#include "fdModel.h"
+
+namespace py = pybind11;
 
 template <typename T>
 std::ostream &operator<<(std::ostream &os, std::vector<T> vec)
@@ -57,9 +62,36 @@ py::array_t<T> array_to_numpy(T **pointer, std::vector<ssize_t> shape)
 template <class T>
 py::array_t<T> array_to_numpy(T *pointer, std::vector<ssize_t> shape)
 {
+
+  std::vector<size_t> strides;
+  if (shape.size() == 4)
+  {
+    strides = {shape[3] * shape[2] * shape[1] * sizeof(T),
+               shape[3] * shape[2] * sizeof(T),
+               shape[3] * sizeof(T),
+               sizeof(T)};
+  }
+  else if (shape.size() == 3)
+  {
+    strides = {shape[2] * shape[1] * sizeof(T),
+               shape[2] * sizeof(T),
+               sizeof(T)};
+  }
+  else if (shape.size() == 2)
+  {
+    strides = {shape[1] * sizeof(T),
+               sizeof(T)};
+  }
+  else if (shape.size() == 1)
+  {
+    strides = {sizeof(T)};
+  }
+
   return py::array_t<T>(py::buffer_info(pointer, sizeof(T),
-                                        py::format_descriptor<T>::format(), 1, shape,
-                                        std::vector<size_t>{sizeof(T)}));
+                                        py::format_descriptor<T>::format(),
+                                        shape.size(),
+                                        shape,
+                                        strides));
 }
 
 template <class T>
@@ -100,18 +132,18 @@ public:
   {
     if (include_absorbing_boundary)
     {
-      return py::make_tuple(-np_boundary, dx * (nx_inner + np_boundary), -np_boundary,
-                            dz * (nz_inner + np_boundary));
+      return py::make_tuple(-np_boundary, *dx * (nx_inner + np_boundary), -np_boundary,
+                            *dz * (nz_inner + np_boundary));
     }
     else
     {
-      return py::make_tuple(0, dx * nx_inner, 0, dz * nz_inner);
+      return py::make_tuple(0, *dx * nx_inner, 0, *dz * nz_inner);
     }
   };
 
   void forward_simulate_explicit_threads(int i_shot, bool store_fields, bool verbose,
                                          bool output_wavefields,
-                                         int omp_threads_override)
+                                         int omp_threads_override, bool use_gpu)
   {
     const auto old_limit = omp_get_max_threads();
     const auto optimal = std::thread::hardware_concurrency();
@@ -147,7 +179,7 @@ public:
       std::cout << "  Actual threads: " << omp_get_max_threads() << std::endl;
     }
 
-    forward_simulate(i_shot, store_fields, verbose, output_wavefields);
+    forward_simulate(i_shot, store_fields, verbose, output_wavefields, use_gpu);
 
     if (verbose)
     {
@@ -158,7 +190,7 @@ public:
   }
 
   void adjoint_simulate_explicit_threads(int i_shot, bool verbose,
-                                         int omp_threads_override)
+                                         int omp_threads_override, bool use_gpu)
   {
     const auto old_limit = omp_get_max_threads();
     const auto optimal = std::thread::hardware_concurrency();
@@ -194,7 +226,7 @@ public:
       std::cout << "  Actual threads: " << omp_get_max_threads() << std::endl;
     }
 
-    adjoint_simulate(i_shot, verbose);
+    adjoint_simulate(i_shot, verbose, use_gpu);
 
     if (verbose)
     {
@@ -208,8 +240,8 @@ public:
   {
     float *IX, *IZ;
 
-    allocate_array(IX, shape_grid);
-    allocate_array(IZ, shape_grid);
+    IX = new float[nx * nz];
+    IZ = new float[nx * nz];
 
     if (in_units)
     {
@@ -218,8 +250,8 @@ public:
         for (int iz = 0; iz < nz; ++iz)
         {
           auto idx = linear_IDX(ix, iz, nx, nz);
-          IX[idx] = (ix - np_boundary) * dx;
-          IZ[idx] = (iz - np_boundary) * dz;
+          IX[idx] = (ix - np_boundary) * *dx;
+          IZ[idx] = (iz - np_boundary) * *dz;
         }
       }
     }
@@ -239,8 +271,8 @@ public:
     auto array_IX = array_to_numpy(IX, std::vector<ssize_t>{nx, nz});
     auto array_IZ = array_to_numpy(IZ, std::vector<ssize_t>{nx, nz});
 
-    deallocate_array(IX);
-    deallocate_array(IZ);
+    delete[] IX;
+    delete[] IZ;
 
     return py::make_tuple(array_IX, array_IZ);
   }
@@ -345,8 +377,8 @@ public:
         ((float *)z_receivers.request().ptr)[ir] -= np_boundary;
         if (in_units)
         {
-          ((float *)x_receivers.request().ptr)[ir] *= dx;
-          ((float *)z_receivers.request().ptr)[ir] *= dz;
+          ((float *)x_receivers.request().ptr)[ir] *= *dx;
+          ((float *)z_receivers.request().ptr)[ir] *= *dz;
         }
       }
     }
@@ -377,8 +409,8 @@ public:
         ((float *)z_sources.request().ptr)[ir] -= np_boundary;
         if (in_units)
         {
-          ((float *)x_sources.request().ptr)[ir] *= dx;
-          ((float *)z_sources.request().ptr)[ir] *= dz;
+          ((float *)x_sources.request().ptr)[ir] *= *dx;
+          ((float *)z_sources.request().ptr)[ir] *= *dz;
         }
       }
     }
@@ -476,7 +508,7 @@ PYBIND11_MODULE(__psvWave_cpp, m)
       .def("forward_simulate", &fdModelExtended::forward_simulate_explicit_threads,
            py::arg("i_shot"), py::arg("store_fields") = true,
            py::arg("verbose") = false, py::arg("output_wavefields") = false,
-           py::arg("omp_threads_override") = 0,
+           py::arg("omp_threads_override") = 0, py::arg("use_gpu") = true,
            "forward_simulate(i_shot: int, store_fields: bool = True, verbose: bool = "
            "False, output_wavefields: bool = False, omp_threads_override: int = 0)\n"
            "\n"
@@ -633,7 +665,7 @@ PYBIND11_MODULE(__psvWave_cpp, m)
            "different misfit per shot).\n")
       .def("adjoint_simulate", &fdModelExtended::adjoint_simulate_explicit_threads,
            py::arg("i_shot"), py::arg("verbose") = false,
-           py::arg("omp_threads_override") = 0,
+           py::arg("omp_threads_override") = 0, py::arg("use_gpu") = true,
            "adjoint_simulate(i_shot: int, verbose: bool, omp_threads_override: int)\n"
            "\n"
            "Adjoint simulate the wavefield for a given shot. This additionally "
