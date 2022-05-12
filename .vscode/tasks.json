@@ -1,0 +1,162 @@
+{
+	"version": "2.0.0",
+	"tasks": [{
+		"type": "cppbuild",
+		"label": "Build GPU benchmark",
+		"command": "/opt/homebrew/opt/llvm/bin/clang++",
+		"args": [
+			"-fdiagnostics-color=always",
+			"-std=c++17",
+			// "-stdlib=libc++",
+			"-O2",
+			"-L/opt/homebrew/opt/libomp/lib", "-fopenmp",
+			"-I./metal-cpp", "-I./ext/eigen", "-I./ext/inih",
+			"-framework", "Metal",
+			"-framework", "Foundation",
+			"-framework", "MetalKit",
+			// "-framework", "MetalPerformanceShaders",
+			// "-I/Library/Developer/CommandLineTools/SDKs/MacOSX12.3.sdk/System/Library/Frameworks/MetalPerformanceShaders.framework/Versions/A/Headers/",
+			//"-g",
+			"${workspaceFolder}/src/fdModel.cpp",
+			"${workspaceFolder}/src/contiguous_arrays.cpp",
+			"${workspaceFolder}/src/MetalOperations.cpp",
+			"${workspaceFolder}/tests/benchmark_gpu.cpp",
+			"-o",
+			"build/benchmark_gpu.x"
+		],
+		"options": {
+			"cwd": "${workspaceFolder}"
+		},
+		"problemMatcher": [
+			"$gcc"
+		],
+		"group": {
+			"kind": "build",
+			"isDefault": true
+		},
+		"detail": "compiler: /usr/bin/clang++",
+		"dependsOn": ["Build .metallib"]
+	}, {
+		"type": "shell",
+		"label": "Build .metallib",
+		"command": "xcrun",
+		"args": [
+			"-sdk", "macosx", "metallib", "${workspaceFolder}/build/ops.air",
+			"-o", "${workspaceFolder}/build/ops.metallib"
+		],
+		"dependsOn": ["Build .air"]
+
+	}, {
+		"type": "shell",
+		"label": "Build .air",
+		"command": "xcrun",
+		"args": [
+			"-sdk", "macosx", "metal",
+			"-c", "${workspaceFolder}/src/ops.metal",
+			"-o", "${workspaceFolder}/build/ops.air"
+		]
+	}, {
+		"type": "cppbuild",
+		"label": "Build shared library",
+		"command": "/opt/homebrew/opt/llvm/bin/clang++",
+		"args": [
+			"-dynamiclib",
+			"-undefined", "dynamic_lookup",
+			"-fdiagnostics-color=always",
+			"-std=c++17",
+			// "-stdlib=libc++",
+			"-O2",
+			"-L/opt/homebrew/opt/libomp/lib", "-fopenmp",
+			"-I../metal-cpp", "-I../ext/eigen", "-I../ext/inih",
+			"-framework", "Metal",
+			"-framework", "Foundation",
+			"-framework", "MetalKit",
+			//"-g",
+			"${workspaceFolder}/src/fdModel.cpp",
+			"${workspaceFolder}/src/contiguous_arrays.cpp",
+			"${workspaceFolder}/src/MetalOperations.cpp",
+			"-o",
+			"fdModel.dylib"
+		],
+		"options": {
+			"cwd": "${workspaceFolder}/build"
+		},
+		"problemMatcher": [
+			"$gcc"
+		],
+		"group": {
+			"kind": "build",
+			"isDefault": true
+		},
+		"detail": "compiler: /usr/bin/clang++"
+	}, {
+		"type": "cppbuild",
+		"label": "Build GPU benchmark using shared library",
+		"command": "/opt/homebrew/opt/llvm/bin/clang++",
+		"args": [
+			"-fdiagnostics-color=always",
+			"-std=c++17",
+			// "-stdlib=libc++",
+			"-O2",
+			"-L/opt/homebrew/opt/libomp/lib", "-fopenmp",
+			"-I../metal-cpp", "-I../ext/eigen", "-I../ext/inih",
+			"-framework", "Metal",
+			"-framework", "Foundation",
+			"-framework", "MetalKit",
+			//"-g",
+			"${workspaceFolder}/tests/benchmark_gpu.cpp",
+			"-o",
+			"benchmark_gpu.shared.x",
+			"fdModel.dylib"
+		],
+		"options": {
+			"cwd": "${workspaceFolder}/build"
+		},
+		"problemMatcher": [
+			"$gcc"
+		],
+		"group": {
+			"kind": "build",
+			"isDefault": true
+		},
+		"detail": "compiler: /usr/bin/clang++",
+		"dependsOn": ["Build .metallib", "Build shared library"]
+	}, {
+		"type": "cppbuild",
+		"label": "Build shared library with Python",
+		"command": "/opt/homebrew/opt/llvm/bin/clang++",
+		"args": [
+			"-dynamiclib",
+			"-undefined", "dynamic_lookup",
+			"-fdiagnostics-color=always",
+			"-std=c++17", "-O2",
+			"-L/opt/homebrew/opt/libomp/lib", "-fopenmp",
+			"-I../metal-cpp", //"-I../metal-cpp/Foundation",
+			"-I../ext/eigen", "-I../ext/inih",
+			"-I/opt/miniforge3/envs/psvWave-gpu/lib/python3.8/site-packages/pybind11/include",
+			"-I/opt/miniforge3/envs/psvWave-gpu/include/python3.8",
+			"-framework", "Metal",
+			"-framework", "Foundation",
+			"-framework", "MetalKit",
+			//"-g",
+			"${workspaceFolder}/src/psvWave.cpp",
+			"${workspaceFolder}/src/fdModel.cpp",
+			"${workspaceFolder}/src/contiguous_arrays.cpp",
+			"${workspaceFolder}/src/MetalOperations.cpp",
+			"-o",
+			"__psvWave_cpp.cpython-38-darwin.so"
+		],
+		"options": {
+			"cwd": "${workspaceFolder}/build"
+		},
+		"problemMatcher": [
+			"$gcc"
+		],
+		"group": {
+			"kind": "build",
+			"isDefault": true
+		},
+		"detail": "compiler: /usr/bin/clang++",
+		"dependsOn": ["Build .metallib"]
+	}]
+}

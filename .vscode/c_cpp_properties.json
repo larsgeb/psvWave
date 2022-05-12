@@ -1,0 +1,28 @@
+{
+    "env": {
+        "myDefaultIncludePath": [
+            "${workspaceFolder}",
+            "${workspaceFolder}/src",
+            "${workspaceFolder}/ext/eigen",
+            "${workspaceFolder}/metal-cpp",
+            "/opt/miniforge3/envs/psvWave-gpu/lib/python3.8/site-packages/pybind11/include",
+            "/opt/miniforge3/envs/psvWave-gpu/include/python3.8",
+        ],
+        "myCompilerPath": "/opt/homebrew/opt/llvm/bin/clang++"
+    },
+    "configurations": [{
+        "name": "MacOS",
+        "intelliSenseMode": "clang-x64",
+        "includePath": ["${myDefaultIncludePath}"],
+        "macFrameworkPath": ["/System/Library/Frameworks"],
+        "compilerPath": "/opt/homebrew/opt/llvm/bin/clang++",
+        "cStandard": "c11",
+        "cppStandard": "c++17",
+        "browse": {
+            "path": ["${workspaceFolder}"],
+            "limitSymbolsToIncludedHeaders": true,
+            "databaseFilename": ""
+        }
+    }],
+    "version": 4
+}

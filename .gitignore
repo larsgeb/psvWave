@@ -1,5 +1,4 @@
 .idea
-build
 *.npy
 *.mp4
 docs-source/xml
@@ -56,7 +55,6 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-build/
 develop-eggs/
 dist/
 downloads/
@@ -158,5 +156,3 @@ Makefile
 .mypy_cache/
 
 /docs-source/source/doxygen/xml/
-
-.vscode
