@@ -569,7 +569,7 @@ void fdModel::parse_configuration_file(const char *configuration_file_relative_p
 
 // Forward modeller
 void fdModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
-                               bool output_wavefields, bool GPU)
+                               bool output_wavefields, bool GPU, bool hybrid)
 {
 
 // Set dynamic physical fields to zero to reflect initial conditions.
@@ -727,9 +727,82 @@ void fdModel::forward_simulate(int i_shot, bool store_fields, bool verbose,
     }
     else
     {
-      mtl_ops->combined_integrate_2d(
-          txx_gpu, tzz_gpu, txz_gpu, taper_gpu, dt_gpu, dx_gpu, dz_gpu, vx_gpu, vz_gpu,
-          lm_gpu, la_gpu, mu_gpu, b_vx_gpu, b_vz_gpu, nx, nz);
+
+      if (!hybrid)
+      {
+        mtl_ops->combined_integrate_2d(
+            txx_gpu, tzz_gpu, txz_gpu, taper_gpu, dt_gpu, dx_gpu, dz_gpu, vx_gpu, vz_gpu,
+            lm_gpu, la_gpu, mu_gpu, b_vx_gpu, b_vz_gpu, nx, nz);
+      }
+      else
+      {
+
+        MTL::CommandBuffer *commandBuffer;
+
+        mtl_ops->shared_cpu_txx_tzz(
+            txx_gpu, tzz_gpu, txz_gpu, taper_gpu, dt_gpu, dx_gpu, dz_gpu, vx_gpu, vz_gpu,
+            lm_gpu, la_gpu, mu_gpu, b_vx_gpu, b_vz_gpu, nx, nz, commandBuffer);
+
+#pragma omp parallel for collapse(2)
+        for (int ix = 2; ix < nx - 2; ++ix)
+        {
+          for (int iz = 2; iz < nz - 2; ++iz)
+          {
+            int idx = linear_IDX(ix, iz, nx, nz);
+            int idx_xp1 = linear_IDX(ix + 1, iz, nx, nz);
+            int idx_xm1 = linear_IDX(ix - 1, iz, nx, nz);
+            int idx_xm2 = linear_IDX(ix - 2, iz, nx, nz);
+            int idx_zm1 = linear_IDX(ix, iz - 1, nx, nz);
+            int idx_zp1 = linear_IDX(ix, iz + 1, nx, nz);
+            int idx_zp2 = linear_IDX(ix, iz + 2, nx, nz);
+
+            txz[idx] = taper[idx] *
+                       (txz[idx] + dt[0] * mu[idx] *
+                                       ((c1 * (vx[idx_zp1] - vx[idx]) +
+                                         c2 * (vx[idx_zm1] - vx[idx_zp2])) /
+                                            dz[0] +
+                                        (c1 * (vz[idx] - vz[idx_xm1]) +
+                                         c2 * (vz[idx_xm2] - vz[idx_xp1])) /
+                                            dx[0]));
+          }
+        }
+
+        // Wait for GPU (txx & tzz)
+        commandBuffer->waitUntilCompleted();
+        commandBuffer->release();
+
+        mtl_ops->shared_cpu_vx(
+            txx_gpu, tzz_gpu, txz_gpu, taper_gpu, dt_gpu, dx_gpu, dz_gpu, vx_gpu, vz_gpu,
+            lm_gpu, la_gpu, mu_gpu, b_vx_gpu, b_vz_gpu, nx, nz, commandBuffer);
+
+#pragma omp parallel for collapse(2)
+        for (int ix = 2; ix < nx - 2; ++ix)
+        {
+          for (int iz = 2; iz < nz - 2; ++iz)
+          {
+            int idx = linear_IDX(ix, iz, nx, nz);
+            int idx_xp1 = linear_IDX(ix + 1, iz, nx, nz);
+            int idx_xp2 = linear_IDX(ix + 2, iz, nx, nz);
+            int idx_xm1 = linear_IDX(ix - 1, iz, nx, nz);
+            int idx_zm1 = linear_IDX(ix, iz - 1, nx, nz);
+            int idx_zp1 = linear_IDX(ix, iz + 1, nx, nz);
+            int idx_zp2 = linear_IDX(ix, iz + 2, nx, nz);
+
+            vz[idx] = taper[idx] *
+                      (vz[idx] + b_vz[idx] * dt[0] *
+                                     ((c1 * (txz[idx_xp1] - txz[idx]) +
+                                       c2 * (txz[idx_xm1] - txz[idx_xp2])) /
+                                          dx[0] +
+                                      (c1 * (tzz[idx_zp1] - tzz[idx]) +
+                                       c2 * (tzz[idx_zm1] - tzz[idx_zp2])) /
+                                          dz[0]));
+          }
+        }
+
+        // Wait for GPU vxX)
+        commandBuffer->waitUntilCompleted();
+        commandBuffer->release();
+      }
     }
 
     // Inject sources at appropriate location and times.

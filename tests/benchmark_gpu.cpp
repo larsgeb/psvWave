@@ -26,9 +26,9 @@ int main()
             << std::endl;
 
   auto conf_file = "tests/test_configurations/default_testing_configuration.ini";
-  int nt = 2000;
-  int nx_inner = 2000;
-  int nz_inner = 2000;
+  int nt = 200;
+  int nx_inner = 6000;
+  int nz_inner = 6000;
   int nx_inner_boundary = 10;
   int nz_inner_boundary = 20;
   float dx = 1.249;
@@ -67,21 +67,28 @@ int main()
       which_source_to_fire_in_which_shot, nr, ix_receivers_vector, iz_receivers_vector,
       snapshot_interval, observed_data_folder, stf_folder);
 
-  for (int is = 0; is < model_1->n_shots; ++is)
-  {
-    std::cout << "Forward simulating on CPU:" << std::endl;
-    model_1->forward_simulate(is, true, true, false, false);
-    std::cout << "Forward simulating on GPU:" << std::endl;
-    model_1->forward_simulate(is, true, true, false, true);
-  }
+  // Warming up the CPU/GPU
+  model_1->forward_simulate(0, true, false, false, false, false);
+  model_1->forward_simulate(0, true, false, false, true, false);
+  model_1->forward_simulate(0, true, false, false, true, true);
 
   for (int is = 0; is < model_1->n_shots; ++is)
   {
-    std::cout << "Adjoint simulating on GPU:" << std::endl;
-    model_1->adjoint_simulate(is, true, true);
-    std::cout << "Adjoint simulating on CPU:" << std::endl;
-    model_1->adjoint_simulate(is, true, false);
+    std::cout << "Forward simulating on CPU:" << std::endl;
+    model_1->forward_simulate(is, true, true, false, false, false);
+    std::cout << "Forward simulating on GPU:" << std::endl;
+    model_1->forward_simulate(is, true, true, false, true, false);
+    std::cout << "Forward simulating on hybrid GPU & CPU:" << std::endl;
+    model_1->forward_simulate(is, true, true, false, true, true);
   }
+
+  // for (int is = 0; is < model_1->n_shots; ++is)
+  // {
+  //   std::cout << "Adjoint simulating on GPU:" << std::endl;
+  //   model_1->adjoint_simulate(is, true, true);
+  //   std::cout << "Adjoint simulating on CPU:" << std::endl;
+  //   model_1->adjoint_simulate(is, true, false);
+  // }
 
   delete model_1;
 }

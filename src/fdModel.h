@@ -101,7 +101,8 @@ public:
   //!  faster without storage.
   //!  @param verbose Boolean controlling if modelling should be verbose.
   void forward_simulate(int i_shot, bool store_fields, bool verbose,
-                        bool output_wavefields = false, bool GPU = false);
+                        bool output_wavefields = false, bool GPU = false,
+                        bool hybrid = false);
 
   //!  \brief Method to adjoint simulate wavefields for a specific shot.
   //!

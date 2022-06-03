@@ -369,6 +369,170 @@ void MetalOperations::combined_integrate_2d(MTL::Buffer *&txx,
     commandBuffer->waitUntilCompleted();
 }
 
+void MetalOperations::combined_integrate_2d_non_blocking(MTL::Buffer *&txx,
+                                                         MTL::Buffer *&tzz,
+                                                         MTL::Buffer *&txz,
+                                                         MTL::Buffer *&taper,
+                                                         MTL::Buffer *&_dt,
+                                                         MTL::Buffer *&_dx,
+                                                         MTL::Buffer *&_dz,
+                                                         MTL::Buffer *&vx,
+                                                         MTL::Buffer *&vz,
+                                                         MTL::Buffer *&lm,
+                                                         MTL::Buffer *&la,
+                                                         MTL::Buffer *&mu,
+                                                         MTL::Buffer *&b_vx,
+                                                         MTL::Buffer *&b_vz,
+                                                         size_t rows,
+                                                         size_t columns,
+                                                         MTL::CommandBuffer *&commandBuffer)
+{
+
+    commandBuffer = _mCommandQueue->commandBuffer();
+    assert(commandBuffer != nullptr);
+    MTL::ComputeCommandEncoder *computeEncoder = commandBuffer->computeCommandEncoder();
+    assert(computeEncoder != nullptr);
+
+    NS::UInteger maxThreadGroupSize =
+        functionPipelineMap["stress_integrate_2d"]->maxTotalThreadsPerThreadgroup();
+    MTL::Size threadgroupSize = MTL::Size::Make(4, 256, 1);
+    assert(threadgroupSize.width * threadgroupSize.height * threadgroupSize.depth <= maxThreadGroupSize);
+    MTL::Size gridSize = MTL::Size::Make(rows, columns, 1);
+
+    computeEncoder->setBuffer(txx, 0, 0);
+    computeEncoder->setBuffer(tzz, 0, 1);
+    computeEncoder->setBuffer(txz, 0, 2);
+    computeEncoder->setBuffer(taper, 0, 3);
+    computeEncoder->setBuffer(_dt, 0, 4);
+    computeEncoder->setBuffer(_dx, 0, 5);
+    computeEncoder->setBuffer(_dz, 0, 6);
+    computeEncoder->setBuffer(vx, 0, 7);
+    computeEncoder->setBuffer(vz, 0, 8);
+    computeEncoder->setBuffer(lm, 0, 9);
+    computeEncoder->setBuffer(la, 0, 10);
+    computeEncoder->setBuffer(mu, 0, 11);
+    computeEncoder->setBuffer(b_vx, 0, 12);
+    computeEncoder->setBuffer(b_vz, 0, 13);
+
+    computeEncoder->setComputePipelineState(functionPipelineMap["stress_integrate_2d"]);
+    computeEncoder->dispatchThreads(gridSize, threadgroupSize);
+    computeEncoder->setComputePipelineState(functionPipelineMap["velocity_integrate_2d"]);
+    computeEncoder->dispatchThreads(gridSize, threadgroupSize);
+
+    computeEncoder->endEncoding();
+
+    commandBuffer->commit();
+    // commandBuffer->waitUntilCompleted();
+}
+
+void MetalOperations::shared_cpu_txx_tzz(MTL::Buffer *&txx,
+                                         MTL::Buffer *&tzz,
+                                         MTL::Buffer *&txz,
+                                         MTL::Buffer *&taper,
+                                         MTL::Buffer *&_dt,
+                                         MTL::Buffer *&_dx,
+                                         MTL::Buffer *&_dz,
+                                         MTL::Buffer *&vx,
+                                         MTL::Buffer *&vz,
+                                         MTL::Buffer *&lm,
+                                         MTL::Buffer *&la,
+                                         MTL::Buffer *&mu,
+                                         MTL::Buffer *&b_vx,
+                                         MTL::Buffer *&b_vz,
+                                         size_t rows,
+                                         size_t columns,
+                                         MTL::CommandBuffer *&commandBuffer)
+{
+
+    commandBuffer = _mCommandQueue->commandBuffer();
+    assert(commandBuffer != nullptr);
+    MTL::ComputeCommandEncoder *computeEncoder = commandBuffer->computeCommandEncoder();
+    assert(computeEncoder != nullptr);
+
+    NS::UInteger maxThreadGroupSize =
+        functionPipelineMap["txx_tzz_integrate_2d"]->maxTotalThreadsPerThreadgroup();
+    MTL::Size threadgroupSize = MTL::Size::Make(4, 256, 1);
+    assert(threadgroupSize.width * threadgroupSize.height * threadgroupSize.depth <= maxThreadGroupSize);
+    MTL::Size gridSize = MTL::Size::Make(rows, columns, 1);
+
+    computeEncoder->setBuffer(txx, 0, 0);
+    computeEncoder->setBuffer(tzz, 0, 1);
+    computeEncoder->setBuffer(txz, 0, 2);
+    computeEncoder->setBuffer(taper, 0, 3);
+    computeEncoder->setBuffer(_dt, 0, 4);
+    computeEncoder->setBuffer(_dx, 0, 5);
+    computeEncoder->setBuffer(_dz, 0, 6);
+    computeEncoder->setBuffer(vx, 0, 7);
+    computeEncoder->setBuffer(vz, 0, 8);
+    computeEncoder->setBuffer(lm, 0, 9);
+    computeEncoder->setBuffer(la, 0, 10);
+    computeEncoder->setBuffer(mu, 0, 11);
+    computeEncoder->setBuffer(b_vx, 0, 12);
+    computeEncoder->setBuffer(b_vz, 0, 13);
+
+    computeEncoder->setComputePipelineState(functionPipelineMap["txx_tzz_integrate_2d"]);
+    computeEncoder->dispatchThreads(gridSize, threadgroupSize);
+
+    computeEncoder->endEncoding();
+
+    commandBuffer->commit();
+    // commandBuffer->waitUntilCompleted();
+}
+
+void MetalOperations::shared_cpu_vx(MTL::Buffer *&txx,
+                                    MTL::Buffer *&tzz,
+                                    MTL::Buffer *&txz,
+                                    MTL::Buffer *&taper,
+                                    MTL::Buffer *&_dt,
+                                    MTL::Buffer *&_dx,
+                                    MTL::Buffer *&_dz,
+                                    MTL::Buffer *&vx,
+                                    MTL::Buffer *&vz,
+                                    MTL::Buffer *&lm,
+                                    MTL::Buffer *&la,
+                                    MTL::Buffer *&mu,
+                                    MTL::Buffer *&b_vx,
+                                    MTL::Buffer *&b_vz,
+                                    size_t rows,
+                                    size_t columns,
+                                    MTL::CommandBuffer *&commandBuffer)
+{
+
+    commandBuffer = _mCommandQueue->commandBuffer();
+    assert(commandBuffer != nullptr);
+    MTL::ComputeCommandEncoder *computeEncoder = commandBuffer->computeCommandEncoder();
+    assert(computeEncoder != nullptr);
+
+    NS::UInteger maxThreadGroupSize =
+        functionPipelineMap["vx_integrate_2d"]->maxTotalThreadsPerThreadgroup();
+    MTL::Size threadgroupSize = MTL::Size::Make(4, 256, 1);
+    assert(threadgroupSize.width * threadgroupSize.height * threadgroupSize.depth <= maxThreadGroupSize);
+    MTL::Size gridSize = MTL::Size::Make(rows, columns, 1);
+
+    computeEncoder->setBuffer(txx, 0, 0);
+    computeEncoder->setBuffer(tzz, 0, 1);
+    computeEncoder->setBuffer(txz, 0, 2);
+    computeEncoder->setBuffer(taper, 0, 3);
+    computeEncoder->setBuffer(_dt, 0, 4);
+    computeEncoder->setBuffer(_dx, 0, 5);
+    computeEncoder->setBuffer(_dz, 0, 6);
+    computeEncoder->setBuffer(vx, 0, 7);
+    computeEncoder->setBuffer(vz, 0, 8);
+    computeEncoder->setBuffer(lm, 0, 9);
+    computeEncoder->setBuffer(la, 0, 10);
+    computeEncoder->setBuffer(mu, 0, 11);
+    computeEncoder->setBuffer(b_vx, 0, 12);
+    computeEncoder->setBuffer(b_vz, 0, 13);
+
+    computeEncoder->setComputePipelineState(functionPipelineMap["vx_integrate_2d"]);
+    computeEncoder->dispatchThreads(gridSize, threadgroupSize);
+
+    computeEncoder->endEncoding();
+
+    commandBuffer->commit();
+    // commandBuffer->waitUntilCompleted();
+}
+
 void MetalOperations::inspector(MTL::Buffer *x_array,
                                 MTL::Buffer *r_array,
                                 MTL::Buffer *store,
